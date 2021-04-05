@@ -9,8 +9,8 @@ import time
 
 @jit(nopython=True)
 def f(x,y,z):
-    r = 7
-    return 1 if r**2 > ((1*x)**2 + y**2 + z**2) else 0
+    r = 3
+    return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
 
 
 @jit(nopython=True)
@@ -40,7 +40,7 @@ def findNorm(fun, startPnt, d, r, res):
     cr = np.zeros((10,3))
     i = 0
     for delta in np.array([[0,0,0],[1,0,0],[0,1,0],[0,0,1]]):
-        p, suc, dr = findSurfacePoint(fun,startPnt+3000*r*delta/(2**res),d,r,res)
+        p, suc, dr = findSurfacePoint(fun,startPnt+300000*r*delta/(2**res),d,r,res)
         if 1 == suc:
             ps[i] = p
             i += 1

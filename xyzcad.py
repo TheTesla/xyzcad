@@ -11,7 +11,7 @@ cube = mesh.Mesh(np.zeros(6400000, dtype=mesh.Mesh.dtype))
 @jit(nopython=True)
 def f(x,y,z):
     r = 180
-    return 1 if r**2 > (x**2 + y**2 + z**2) else 0
+    return 1 if r**2 > ((2*x)**2 + y**2 + z**2) else 0
 
 @jit(nopython=True,parallel=False)
 def render(fun,v,xmin,xmax):

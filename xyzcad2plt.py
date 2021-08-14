@@ -100,6 +100,12 @@ for i in range(1000000):
     p = ptsList.pop()
     p = np.floor(1000*p+0.5)/1000
     #print(p)
+    s = sum([f(p+np.array([-r,0,0])), f(p+np.array([+r,0,0])),
+             f(p+np.array([0,-r,0])), f(p+np.array([0,+r,0])),
+             f(p+np.array([0,0,-r])), f(p+np.array([0,0,+r]))
+        ])
+    if s == 6 or s == 0:
+        continue
     if p[0] not in ptsResDict:
         ptsResDict[p[0]] = {}
     if p[1] not in ptsResDict[p[0]]:
@@ -107,12 +113,6 @@ for i in range(1000000):
     if p[2] not in ptsResDict[p[0]][p[1]]:
         ptsResDict[p[0]][p[1]][p[2]] = {}
     else:
-        continue
-    s = sum([f(p+np.array([-r,0,0])), f(p+np.array([+r,0,0])),
-             f(p+np.array([0,-r,0])), f(p+np.array([0,+r,0])),
-             f(p+np.array([0,0,-r])), f(p+np.array([0,0,+r]))
-        ])
-    if s == 6 or s == 0:
         continue
     #print (f(p+np.array([+r,0,0])))
     #if f(p+np.array([-r,0,0])) == f(p+np.array([+r,0,0])):

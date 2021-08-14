@@ -91,7 +91,7 @@ sp = findSurfacePoint(f, np.array([-10,0,0]), np.array([1,0,0]),10, 1000)
 print(sp)
 
 p = sp[0]
-r = 0.1
+r = 0.3
 ptsList = [p]
 ptsResDict = {}
 for i in range(1000000):
@@ -104,6 +104,7 @@ for i in range(1000000):
              f(p+np.array([0,-r,0])), f(p+np.array([0,+r,0])),
              f(p+np.array([0,0,-r])), f(p+np.array([0,0,+r]))
         ])
+
     if s == 6 or s == 0:
         continue
     if p[0] not in ptsResDict:
@@ -111,12 +112,17 @@ for i in range(1000000):
     if p[1] not in ptsResDict[p[0]]:
         ptsResDict[p[0]][p[1]] = {}
     if p[2] not in ptsResDict[p[0]][p[1]]:
-        ptsResDict[p[0]][p[1]][p[2]] = {}
+        n = np.array([0,0,0])
+        n[0] = f(p+np.array([-r,0,0])) - f(p+np.array([+r,0,0]))
+        n[1] = f(p+np.array([0,-r,0])) - f(p+np.array([0,+r,0]))
+        n[2] = f(p+np.array([0,0,-r])) - f(p+np.array([0,0,+r]))
+        ptsResDict[p[0]][p[1]][p[2]] = n
     else:
         continue
     #print (f(p+np.array([+r,0,0])))
     #if f(p+np.array([-r,0,0])) == f(p+np.array([+r,0,0])):
     #    print('test')
+    n = np.array([0,0,0])
     ptsList.append(p+np.array([-r,0,0]))
     ptsList.append(p+np.array([+r,0,0]))
     #if f(p+np.array([0,-r,0])) == f(p+np.array([0,+r,0])):
@@ -125,18 +131,29 @@ for i in range(1000000):
     #if f(p+np.array([0,0,-r])) == f(p+np.array([0,0,+r])):
     ptsList.append(p+np.array([0,0,-r]))
     ptsList.append(p+np.array([0,0,+r]))
-
 #print(ptsList)
 #print(ptsResDict)
 
-ptsResArray = np.array([np.array([x,y,z]) for x in ptsResDict.keys() for y in
-    ptsResDict[x].keys() for z in
-        ptsResDict[x][y].keys()])
+ptsResArray = np.array([np.array([x,y,z,n[0],n[1],n[2]]) for x in ptsResDict.keys() for y in
+    ptsResDict[x].keys() for z, n in
+        ptsResDict[x][y].items()])
 
 print(time.time() - t0)
+pcd = o3d.geometry.PointCloud()
+pcd.points = o3d.utility.Vector3dVector(ptsResArray[:,:3])
+n = len(ptsResArray)
+pcd.colors = o3d.utility.Vector3dVector(np.array(n*[np.array([1,0,0])]))
+pcd.normals = o3d.utility.Vector3dVector(ptsResArray[:,3:])
+
+mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(pcd, depth=8, width=0, scale=1.2, linear_fit=False)[0]
+mesh = o3d.geometry.TriangleMesh.compute_triangle_normals(mesh)
+bbox = pcd.get_axis_aligned_bounding_box()
+meshcrp = mesh.crop(bbox)
+
+o3d.io.write_triangle_mesh("sphere3.stl", meshcrp)
 
 ax = plt.axes(projection='3d')
-ax.scatter(ptsResArray[:,0], ptsResArray[:,1], ptsResArray[:,2], s=0.01)
+ax.scatter(ptsResArray[:,0], ptsResArray[:,1], ptsResArray[:,2], s=0.1)
 plt.show()
 
 

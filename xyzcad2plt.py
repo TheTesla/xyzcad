@@ -1,7 +1,11 @@
 import numpy as np
 import open3d as o3d
 from stl import mesh
-from numba import jit, prange
+from numba import njit, jit, prange
+from numba.typed import Dict
+from numba.core import types
+
+
 import time
 
 import matplotlib.pyplot as plt
@@ -10,15 +14,11 @@ import matplotlib.pyplot as plt
 
 
 
-#@jit(nopython=True)
-def f(x,y=None,z=None):
-    if y is None:
-        z = x[2]
-        y = x[1]
-        x = x[0]
+@jit(nopython=True)
+def f(x,y,z):
     r = 3
-    #return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
-    return 1 if r**2 > (x**2 + y**2 + z**2) else 0
+    return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
+    #return 1 if r**2 > (x**2 + y**2 + z**2) else 0
 
 
 #@jit(nopython=True)
@@ -85,58 +85,57 @@ def getPoints(fun,pnts,nrms):
 p = np.zeros((100000,3), dtype=np.dtype('f8'))
 nrm = np.zeros((100000,3), dtype=np.dtype('f8'))
 t0 = time.time()
-#n = getPoints(f,p,nrm)
 
-sp = findSurfacePoint(f, np.array([-10,0,0]), np.array([1,0,0]),10, 1000)
+sp = findSurfacePoint(f, np.array([-3,0,0]), np.array([1,0,0]),3, 1000)
 print(sp)
 
-p = sp[0]
-r = 0.3
-ptsList = [p]
-ptsResDict = {}
-for i in range(1000000):
-    if len(ptsList) == 0:
-        break
-    p = ptsList.pop()
-    p = np.floor(1000*p+0.5)/1000
-    #print(p)
-    s = sum([f(p+np.array([-r,0,0])), f(p+np.array([+r,0,0])),
-             f(p+np.array([0,-r,0])), f(p+np.array([0,+r,0])),
-             f(p+np.array([0,0,-r])), f(p+np.array([0,0,+r]))
-        ])
 
-    if s == 6 or s == 0:
-        continue
-    if p[0] not in ptsResDict:
-        ptsResDict[p[0]] = {}
-    if p[1] not in ptsResDict[p[0]]:
-        ptsResDict[p[0]][p[1]] = {}
-    if p[2] not in ptsResDict[p[0]][p[1]]:
+#@jit(nopython=True)
+#@njit
+def getSurface(func, startPnt, res=0.1, maxIter=1000000):
+    ptsList = [startPnt]
+    ptsResDict = dict()
+    r = res
+    f = lambda a: func(a[0],a[1],a[2])
+    for i in range(maxIter):
+        if len(ptsList) == 0:
+            break
+        p = ptsList.pop()
+        p = np.floor(1000*p+0.5)/1000
+        xu = 1 if f(p+np.array([-r,0,0])) else 0
+        xo = 1 if f(p+np.array([+r,0,0])) else 0
+        yu = 1 if f(p+np.array([0,-r,0])) else 0
+        yo = 1 if f(p+np.array([0,+r,0])) else 0
+        zu = 1 if f(p+np.array([0,0,-r])) else 0
+        zo = 1 if f(p+np.array([0,0,+r])) else 0
+        s = xu + xo + yu + yo + zu + zo
+        #s = int(sum([xu, xo, yu, yo, zu, zo]))
+        if s == 6 or s == 0:
+            continue
+        if p[0] not in ptsResDict:
+            ptsResDict[p[0]] = dict()
+        if p[1] not in ptsResDict[p[0]]:
+            ptsResDict[p[0]][p[1]] = dict()
+        if p[2] not in ptsResDict[p[0]][p[1]]:
+            ptsResDict[p[0]][p[1]][p[2]] = np.array([xu - xo, yu - yo, zu - zo])
+        else:
+            continue
         n = np.array([0,0,0])
-        n[0] = f(p+np.array([-r,0,0])) - f(p+np.array([+r,0,0]))
-        n[1] = f(p+np.array([0,-r,0])) - f(p+np.array([0,+r,0]))
-        n[2] = f(p+np.array([0,0,-r])) - f(p+np.array([0,0,+r]))
-        ptsResDict[p[0]][p[1]][p[2]] = n
-    else:
-        continue
-    #print (f(p+np.array([+r,0,0])))
-    #if f(p+np.array([-r,0,0])) == f(p+np.array([+r,0,0])):
-    #    print('test')
-    n = np.array([0,0,0])
-    ptsList.append(p+np.array([-r,0,0]))
-    ptsList.append(p+np.array([+r,0,0]))
-    #if f(p+np.array([0,-r,0])) == f(p+np.array([0,+r,0])):
-    ptsList.append(p+np.array([0,-r,0]))
-    ptsList.append(p+np.array([0,+r,0]))
-    #if f(p+np.array([0,0,-r])) == f(p+np.array([0,0,+r])):
-    ptsList.append(p+np.array([0,0,-r]))
-    ptsList.append(p+np.array([0,0,+r]))
-#print(ptsList)
-#print(ptsResDict)
+        ptsList.append(p+np.array([-r,0,0]))
+        ptsList.append(p+np.array([+r,0,0]))
+        ptsList.append(p+np.array([0,-r,0]))
+        ptsList.append(p+np.array([0,+r,0]))
+        ptsList.append(p+np.array([0,0,-r]))
+        ptsList.append(p+np.array([0,0,+r]))
 
-ptsResArray = np.array([np.array([x,y,z,n[0],n[1],n[2]]) for x in ptsResDict.keys() for y in
-    ptsResDict[x].keys() for z, n in
-        ptsResDict[x][y].items()])
+    ptsResArray = np.array([np.array([x,y,z,n[0],n[1],n[2]]) for x in ptsResDict.keys() for y in
+        ptsResDict[x].keys() for z, n in
+            ptsResDict[x][y].items()])
+    return ptsResArray
+
+
+ptsResArray = getSurface(f, sp[0])
+
 
 print(time.time() - t0)
 pcd = o3d.geometry.PointCloud()
@@ -152,9 +151,9 @@ meshcrp = mesh.crop(bbox)
 
 o3d.io.write_triangle_mesh("sphere3.stl", meshcrp)
 
-ax = plt.axes(projection='3d')
-ax.scatter(ptsResArray[:,0], ptsResArray[:,1], ptsResArray[:,2], s=0.1)
-plt.show()
+#ax = plt.axes(projection='3d')
+#ax.scatter(ptsResArray[:,0], ptsResArray[:,1], ptsResArray[:,2], s=0.1)
+#plt.show()
 
 
 

@@ -17,8 +17,8 @@ import matplotlib.pyplot as plt
 @jit(nopython=True)
 def f(x,y,z):
     r = 3
-    return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
-    #return 1 if r**2 > (x**2 + y**2 + z**2) else 0
+    #return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
+    return 1 if r**2 > ((x-1)**2 + (y+13)**2 + z**2) else 0
 
 
 #@jit(nopython=True)
@@ -82,12 +82,61 @@ def getPoints(fun,pnts,nrms):
     return i
 
 
+
+
+@jit(nopython=True)
+def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
+    s0 = func(0,0,0)
+    xOld = 0
+    yOld = 0
+    zOld = 0
+    for d in np.arange(resSteps):
+        print(d)
+        #iterVals = np.arange((maxVal-minVal)/(2**(d+1))-minVal,maxVal,(maxVal-minVal)/(2**d))
+        iterVals = np.arange(1/(2**(d+1)),1,1/(2**d))
+        iterVals = iterVals*(maxVal-minVal)+minVal
+        print(iterVals)
+        for x in iterVals:
+            for y in iterVals:
+                for z in iterVals:
+                    s = func(x,y,z)
+                    if s != s0:
+                        return x,y,z,xOld,yOld,zOld
+                    xOld = x
+                    yOld = y
+                    zOld = z
+    return 0,0,0,0,0,0
+
+@jit(nopython=True)
+def getSurfacePnt(func, p0, p1, resSteps=24):
+    s0 = func(p0[0],p0[1],p0[2])
+    u = 0
+    d = +1
+    for i in range(resSteps):
+        print(i)
+        print(d)
+        p = p0 * (1-u) + p1 * u
+        print(p)
+        s = func(p[0],p[1],p[2])
+        if s != s0:
+            s0 = s
+            d = -d
+        u += d*1/2**i
+    return p
+
+
+
+
+def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
+    ps = np.array(getInitPnt(func, minVal, maxVal, resSteps))
+    return getSurfacePnt(func, ps[:3], ps[3:], resSteps)
+
+
 p = np.zeros((100000,3), dtype=np.dtype('f8'))
 nrm = np.zeros((100000,3), dtype=np.dtype('f8'))
 t0 = time.time()
 
-sp = findSurfacePoint(f, np.array([-3,0,0]), np.array([1,0,0]),3, 1000)
-print(sp)
+#sp = findSurfacePoint(f, np.array([-3,0,0]), np.array([1,0,0]),3, 1000)
 
 
 #@jit(nopython=True)
@@ -133,8 +182,10 @@ def getSurface(func, startPnt, res=0.1, maxIter=1000000):
             ptsResDict[x][y].items()])
     return ptsResArray
 
+sp = findSurfacePnt(f)
+print(sp)
 
-ptsResArray = getSurface(f, sp[0])
+ptsResArray = getSurface(f, sp)
 
 
 print(time.time() - t0)

@@ -5,13 +5,8 @@ import math
 from xyzcad import render
 
 
-
-
 @jit(nopython=True)
 def f(x,y,z):
-
-
-
     r = 70/2
     rb = 34/2
     hb = 40
@@ -20,8 +15,6 @@ def f(x,y,z):
     hm = 5
     mh = r - 4
     mhr = 3/2
-    #return 1 if r**2 > ((1.+(x+3)/10)*(x+3)**2 + y**2 + z**2) else 0
-    #return 1 if r**2 > ((x-1)**2 + (y+13)**2 + z**2) else 0
     if z < 0:
         return 0
     ang = math.atan2(x,y)/math.pi*180 + 180

@@ -1,3 +1,6 @@
+
+[example image](demo.png)
+
 # xyzCad - functional cad software
 
 xyzCad is an eays to use cad software generating 3d printable stl files from a function f(x, y, z) = {True : False}.

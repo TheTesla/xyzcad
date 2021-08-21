@@ -1,5 +1,5 @@
 
-[example image](demo.png)
+![example image](demo.png)
 
 # xyzCad - functional cad software
 

@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-# -*- encoding: UTF8 -*-
+# -*- coding: utf-8 -*-
+
+
+#######################################################################
+#
+#    xyzCad - functional cad software for 3d printing
+#    Copyright (c) 2021 Stefan Helmert <stefan.helmert@t-online.de>
+#
+#######################################################################
+
 
 import os
 

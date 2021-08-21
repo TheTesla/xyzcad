@@ -6,7 +6,7 @@ x, y and z are the coordinates in 3d space in mm. The function f(x, y, z) return
 
 ## Theory of operation
 
-It looks like the software iterates over alle points in the 3d raster space. But this would be very slow. So the algorithm is a bit mor optimized.
+It looks like the software iterates over alle points in the 3d raster space. But this would be very slow. So the algorithm is a bit more optimized.
 
 1. At first it searches for two points, one inside the solid (=True), one outside (=False).
 

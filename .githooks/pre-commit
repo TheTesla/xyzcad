@@ -1,0 +1,9 @@
+#!/bin/bash
+
+
+python3 cryptdomainmgr/__init__.py
+
+
+# add before commit
+git add -A
+

@@ -87,7 +87,6 @@ def getSurface(func, startPnt=None, res=1.3, maxIter=10000000):
             ptsResDict[p[0]][p[1]][p[2]] = np.array([xu - xo, yu - yo, zu - zo])
         else:
             continue
-        n = np.array([0,0,0])
         ptsList.append(p+np.array([-r,0,0]))
         ptsList.append(p+np.array([+r,0,0]))
         ptsList.append(p+np.array([0,-r,0]))

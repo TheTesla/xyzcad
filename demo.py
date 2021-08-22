@@ -13,6 +13,7 @@
 from numba import jit
 import math
 from xyzcad import render
+import time
 
 
 @jit(nopython=True)
@@ -58,4 +59,8 @@ def f(x,y,z):
             return 1
     return 0
 
+t0 = time.time()
+
 render.renderAndSave(f, 'demo.stl', 0.4)
+
+print(time.time() - t0)

@@ -40,7 +40,7 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
     s0 = func(p0[0],p0[1],p0[2])
     u = 0
     d = +1
-    for i in range(resSteps):
+    for i in np.arange(resSteps):
         p = p0 * (1-u) + p1 * u
         s = func(p[0],p[1],p[2])
         if s != s0:
@@ -65,7 +65,7 @@ def getSurface(func, startPnt=None, res=1.3, maxIter=10000000):
     ptsResDict = dict()
     r = res
     f = lambda a: func(a[0],a[1],a[2])
-    for i in range(maxIter):
+    for i in np.arange(maxIter):
         if len(ptsList) == 0:
             break
         p = ptsList.pop()

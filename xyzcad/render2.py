@@ -60,62 +60,38 @@ def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
 
 
 
-@jit(nopython=True)
-def checkCache(pt, cacheDict):
-    if tuple(pt) not in cacheDict:
-        return False
-    return True
-
-
-#@jit(nopython=True)
-def getPt(pt, cacheDict, func):
-    #if not checkCache(pt, cacheDict):
-    if (pt[0],pt[1],pt[2]) not in cacheDict:
-        cacheDict[(pt[0],pt[1],pt[2])] = func(pt)
-    return cacheDict[(pt[0],pt[1],pt[2])]
-
 
 
 @jit(nopython=True)
-def getSurface(func, startPnt=None, res=1.3, maxIter=10000000):
+def getSurface(func, startPnt=None, res=1.3, maxIter=100000000):
     if startPnt is None:
         startPnt = findSurfacePnt(func)
     ptsList = [(startPnt[0],startPnt[1],startPnt[2])]
-    ptsResDict = set()
+    ptsSet = set()
     ptsResList = []
-    #cacheDict = dict()
     r = res
-    #f = lambda a: func(a[0],a[1],a[2])
+
     for i in np.arange(maxIter):
         if len(ptsList) == 0:
             break
         p = ptsList.pop()
-        p = [np.floor(1000*e+0.5)/1000 for e in p]
-        x,y,z = p[0],p[1],p[2]
-        #c = 1 if f(p) else 0
-        #if (p[0],p[1],p[2]) not in cacheDict:
-        #    cacheDict[(p[0],p[1],p[2])] = f(p)
-        #c = 1 if cacheDict[(p[0],p[1],p[2])] else 0
-        xu = 1 if func(x-r,y,z) else 0
-        xo = 1 if func(x+r,y,z) else 0
-        yu = 1 if func(x,y-r,z) else 0
-        yo = 1 if func(x,y+r,z) else 0
-        zu = 1 if func(x,y,z-r) else 0
-        zo = 1 if func(x,y,z+r) else 0
-        #xu = 1 if f(p+np.array([-r,0,0])) else 0
-        #xo = 1 if f(p+np.array([+r,0,0])) else 0
-        #yu = 1 if f(p+np.array([0,-r,0])) else 0
-        #yo = 1 if f(p+np.array([0,+r,0])) else 0
-        #zu = 1 if f(p+np.array([0,0,-r])) else 0
-        #zo = 1 if f(p+np.array([0,0,+r])) else 0
+        pl = [np.floor(1000*e+0.5)/1000 for e in p]
+        x,y,z = pl[0],pl[1],pl[2]
+        if (x,y,z) in ptsSet:
+            continue
+        ptsSet.add((x,y,z))
+
+        xu = func(x-r,y,z)
+        xo = func(x+r,y,z)
+        yu = func(x,y-r,z)
+        yo = func(x,y+r,z)
+        zu = func(x,y,z-r)
+        zo = func(x,y,z+r)
+
         s = xu + xo + yu + yo + zu + zo
         if s == 6 or s == 0:
             continue
-        if (x,y,z) not in ptsResDict:
-            ptsResDict.add((x,y,z))
-            ptsResList.append([x,y,z,xu-xo,yu-yo,zu-zo])
-        else:
-            continue
+        ptsResList.append((x,y,z,xu-xo,yu-yo,zu-zo))
 
         ptsList.append((x-r,y,z))
         ptsList.append((x+r,y,z))
@@ -123,15 +99,7 @@ def getSurface(func, startPnt=None, res=1.3, maxIter=10000000):
         ptsList.append((x,y+r,z))
         ptsList.append((x,y,z-r))
         ptsList.append((x,y,z+r))
-        #ptsList.append(p+np.array([-r,0,0]))
-        #ptsList.append(p+np.array([+r,0,0]))
-        #ptsList.append(p+np.array([0,-r,0]))
-        #ptsList.append(p+np.array([0,+r,0]))
-        #ptsList.append(p+np.array([0,0,-r]))
-        #ptsList.append(p+np.array([0,0,+r]))
 
-    #ptsResArray = np.array([np.array([z[0],z[1],z[2],n[0],n[1],n[2]])
-    #                        for z, n in ptsResDict.items()])
     ptsResArray = np.array(ptsResList)
     return ptsResArray
 

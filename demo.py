@@ -16,7 +16,7 @@ from xyzcad import render2
 import time
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def f(x,y,z):
     r = 70/2
     rb = 34/2
@@ -61,6 +61,6 @@ def f(x,y,z):
 
 t0 = time.time()
 
-render2.renderAndSave(f, 'demo.stl', 0.1)
+render2.renderAndSave(f, 'demo.stl', 0.4)
 
 print(time.time() - t0)

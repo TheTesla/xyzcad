@@ -16,7 +16,7 @@ import time
 from numba import jit
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     s0 = func(0,0,0)
     xOld = 0
@@ -36,7 +36,7 @@ def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
                     zOld = z
     return 0,0,0,0,0,0
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def getSurfacePnt(func, p0, p1, resSteps=24):
     s0 = func(p0[0],p0[1],p0[2])
     u = 0
@@ -53,7 +53,7 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     ps = np.array(getInitPnt(func, minVal, maxVal, resSteps))
     return getSurfacePnt(func, ps[:3], ps[3:], resSteps)
@@ -62,7 +62,7 @@ def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
 
 
 
-@jit(nopython=True)
+@jit(nopython=True,cache=True)
 def getSurface(func, startPnt=None, res=1.3):
     if startPnt is None:
         startPnt = findSurfacePnt(func)

@@ -63,45 +63,115 @@ def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
 
 
 @jit(nopython=True)
-def getSurface(func, startPnt=None, res=1.3, maxIter=100000000):
+def getSurface(func, startPnt=None, res=1.3):
     if startPnt is None:
         startPnt = findSurfacePnt(func)
-    ptsList = [(startPnt[0],startPnt[1],startPnt[2])]
+    ptsList = [(np.floor(1000*startPnt[0]+0.5)/1000,
+                np.floor(1000*startPnt[1]+0.5)/1000,
+                np.floor(1000*startPnt[2]+0.5)/1000) ]
+    x,y,z = ptsList[0]
     ptsSet = set()
+    ptsSet.add((x,y,z))
     ptsResList = []
     r = res
 
-    for i in np.arange(maxIter):
-        if len(ptsList) == 0:
-            break
-        p = ptsList.pop()
-        pl = [np.floor(1000*e+0.5)/1000 for e in p]
-        x,y,z = pl[0],pl[1],pl[2]
-        if (x,y,z) in ptsSet:
-            continue
-        ptsSet.add((x,y,z))
+    while ptsList:
+        x,y,z = ptsList.pop()
 
-        xu = func(x-r,y,z)
-        xo = func(x+r,y,z)
-        yu = func(x,y-r,z)
-        yo = func(x,y+r,z)
-        zu = func(x,y,z-r)
-        zo = func(x,y,z+r)
+        xl = np.floor(1000*(x-r)+0.5)/1000
+        xh = np.floor(1000*(x+r)+0.5)/1000
+        yl = np.floor(1000*(y-r)+0.5)/1000
+        yh = np.floor(1000*(y+r)+0.5)/1000
+        zl = np.floor(1000*(z-r)+0.5)/1000
+        zh = np.floor(1000*(z+r)+0.5)/1000
+
+        xu = func(xl,y,z)
+        xo = func(xh,y,z)
+        yu = func(x,yl,z)
+        yo = func(x,yh,z)
+        zu = func(x,y,zl)
+        zo = func(x,y,zh)
 
         s = xu + xo + yu + yo + zu + zo
         if s == 6 or s == 0:
             continue
+
         ptsResList.append((x,y,z,xu-xo,yu-yo,zu-zo))
 
-        ptsList.append((x-r,y,z))
-        ptsList.append((x+r,y,z))
-        ptsList.append((x,y-r,z))
-        ptsList.append((x,y+r,z))
-        ptsList.append((x,y,z-r))
-        ptsList.append((x,y,z+r))
+        if s == 5:
+            if (xl,y,z) not in ptsSet:
+                if xo:
+                    ptsSet.add((xl,y,z))
+                    ptsList.append((xl,y,z))
+            if (xh,y,z) not in ptsSet:
+                if xu:
+                    ptsSet.add((xh,y,z))
+                    ptsList.append((xh,y,z))
+            if (x,yl,z) not in ptsSet:
+                if yo:
+                    ptsSet.add((x,yl,z))
+                    ptsList.append((x,yl,z))
+            if (x,yh,z) not in ptsSet:
+                if yu:
+                    ptsSet.add((x,yh,z))
+                    ptsList.append((x,yh,z))
+            if (x,y,zl) not in ptsSet:
+                if zo:
+                    ptsSet.add((x,y,zl))
+                    ptsList.append((x,y,zl))
+            if (x,y,zh) not in ptsSet:
+                if zu:
+                    ptsSet.add((x,y,zh))
+                    ptsList.append((x,y,zh))
+        elif s == 2:
+            if (xl,y,z) not in ptsSet:
+                if not xo:
+                    ptsSet.add((xl,y,z))
+                    ptsList.append((xl,y,z))
+            if (xh,y,z) not in ptsSet:
+                if not xu:
+                    ptsSet.add((xh,y,z))
+                    ptsList.append((xh,y,z))
+            if (x,yl,z) not in ptsSet:
+                if not yo:
+                    ptsSet.add((x,yl,z))
+                    ptsList.append((x,yl,z))
+            if (x,yh,z) not in ptsSet:
+                if not yu:
+                    ptsSet.add((x,yh,z))
+                    ptsList.append((x,yh,z))
+            if (x,y,zl) not in ptsSet:
+                if not zo:
+                    ptsSet.add((x,y,zl))
+                    ptsList.append((x,y,zl))
+            if (x,y,zh) not in ptsSet:
+                if not zu:
+                    ptsSet.add((x,y,zh))
+                    ptsList.append((x,y,zh))
+        else:
+            if (xl,y,z) not in ptsSet:
+                ptsSet.add((xl,y,z))
+                ptsList.append((xl,y,z))
+            if (xh,y,z) not in ptsSet:
+                ptsSet.add((xh,y,z))
+                ptsList.append((xh,y,z))
+            if (x,yl,z) not in ptsSet:
+                ptsSet.add((x,yl,z))
+                ptsList.append((x,yl,z))
+            if (x,yh,z) not in ptsSet:
+                ptsSet.add((x,yh,z))
+                ptsList.append((x,yh,z))
+            if (x,y,zl) not in ptsSet:
+                ptsSet.add((x,y,zl))
+                ptsList.append((x,y,zl))
+            if (x,y,zh) not in ptsSet:
+                ptsSet.add((x,y,zh))
+                ptsList.append((x,y,zh))
 
     ptsResArray = np.array(ptsResList)
     return ptsResArray
+
+
 
 
 def renderAndSave(func, filename, res=1):

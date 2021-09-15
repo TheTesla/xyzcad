@@ -171,7 +171,6 @@ def getSurface(func, startPnt=None, res=1.3):
 
 
 
-
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
     ptsResArray = getSurface(func, None, res)

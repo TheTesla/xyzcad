@@ -79,17 +79,16 @@ def getSurface(func, startPnt=None, res=1.3):
         x,y,z = ptsList.pop()
 
         xl = np.floor(1000*(x-r)+0.5)/1000
-        xh = np.floor(1000*(x+r)+0.5)/1000
-        yl = np.floor(1000*(y-r)+0.5)/1000
-        yh = np.floor(1000*(y+r)+0.5)/1000
-        zl = np.floor(1000*(z-r)+0.5)/1000
-        zh = np.floor(1000*(z+r)+0.5)/1000
-
         xu = func(xl,y,z)
+        xh = np.floor(1000*(x+r)+0.5)/1000
         xo = func(xh,y,z)
+        yl = np.floor(1000*(y-r)+0.5)/1000
         yu = func(x,yl,z)
+        yh = np.floor(1000*(y+r)+0.5)/1000
         yo = func(x,yh,z)
+        zl = np.floor(1000*(z-r)+0.5)/1000
         zu = func(x,y,zl)
+        zh = np.floor(1000*(z+r)+0.5)/1000
         zo = func(x,y,zh)
 
         s = xu + xo + yu + yo + zu + zo
@@ -168,8 +167,7 @@ def getSurface(func, startPnt=None, res=1.3):
                 ptsSet.add((x,y,zh))
                 ptsList.append((x,y,zh))
 
-    ptsResArray = np.array(ptsResList)
-    return ptsResArray
+    return np.array(ptsResList)
 
 
 

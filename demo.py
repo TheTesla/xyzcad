@@ -61,6 +61,6 @@ def f(x,y,z):
 
 t0 = time.time()
 
-render3.renderAndSave(f, 'demo.stl', 0.1)
+render3.renderAndSave(f, 'demo.stl', 0.4)
 
 print(time.time() - t0)

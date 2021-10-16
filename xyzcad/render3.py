@@ -179,7 +179,7 @@ def getSurface(func, startPnt=None, res=1.3):
     return ptsResDict
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def pts2Edges(ptsResDict, res):
     r = res
     edgeDict = dict()
@@ -205,7 +205,7 @@ def pts2Edges(ptsResDict, res):
             pass
     return edgeDict
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def edgePrec(func, edgeDict, res):
     r = res
     edgeDictPrec = dict()
@@ -213,7 +213,9 @@ def edgePrec(func, edgeDict, res):
         p0 = e[:3]
         p1 = e[3:]
         pp = getSurfacePnt(func, p0, p1)
-        edgeDictPrec[e] = pp
+        #pp = (np.array(p0) + np.array(p1))/2
+        #print('{} - {} - {}'.format(p0,pp,p1))
+        edgeDictPrec[e] = pp #(pp[0], pp[1], pp[2])
     return edgeDictPrec
 
 @jit(inline='always')
@@ -224,7 +226,7 @@ def pts2dir(x1,y1,z1,x2,y2,z2,v):
         return (x1-x2,y1-y2,z1-z2)
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def edge2cube(ptsDict, edgeDictPrec, res):
     r = res
     cntList = []
@@ -237,25 +239,43 @@ def edge2cube(ptsDict, edgeDictPrec, res):
         i = 0
         try:
             vx = ptsDict[(xh,y,z)]
+        except:
+            pass
+        try:
             vy = ptsDict[(x,yh,z)]
+        except:
+            pass
+        try:
             vz = ptsDict[(x,y,zh)]
+        except:
+            pass
+        try:
             vxy = ptsDict[(xh,yh,z)]
+        except:
+            pass
+        try:
             vxz = ptsDict[(xh,y,zh)]
+        except:
+            pass
+        try:
             vyz = ptsDict[(x,yh,zh)]
+        except:
+            pass
+        try:
             vxyz = ptsDict[(xh,yh,zh)]
         except:
-            continue
+            pass
         cube = []
         try:
             px = edgeDictPrec[(x,y,z,xh,y,z)]
             #cube.append((px,y,z))
-            cube.append((px, pts2dir(x,y,z,xh,y,z,v)))
+            cube.append((px, pts2dir(x,y,z,xh,y,z,v), (0,-1,-1)))
             i += 1
         except:
             pass
         try:
             pxy = edgeDictPrec[(xh,y,z,xh,yh,z)]
-            cube.append((pxy, pts2dir(xh,y,z,xh,yh,z,vx)))
+            cube.append((pxy, pts2dir(xh,y,z,xh,yh,z,vx), (+1,0,-1)))
 
             #cube.append((xh,pxy,z))
             i += 1
@@ -263,63 +283,63 @@ def edge2cube(ptsDict, edgeDictPrec, res):
             pass
         try:
             py = edgeDictPrec[(x,y,z,x,yh,z)]
-            cube.append((py, pts2dir(x,y,z,x,yh,z,v)))
+            cube.append((py, pts2dir(x,y,z,x,yh,z,v), (-1,0,-1)))
             #cube.append((x,py,z))
             i += 1
         except:
             pass
         try:
             pyx = edgeDictPrec[(x,yh,z,xh,yh,z)]
-            cube.append((pyx, pts2dir(x,yh,z,xh,yh,z,vy)))
+            cube.append((pyx, pts2dir(x,yh,z,xh,yh,z,vy), (0,+1,-1)))
             #cube.append((px,yh,z))
             i += 1
         except:
             pass
         try:
             pz = edgeDictPrec[(x,y,z,x,y,zh)]
-            cube.append((pz, pts2dir(x,y,z,x,y,zh,v)))
+            cube.append((pz, pts2dir(x,y,z,x,y,zh,v), (-1,-1,0)))
             i += 1
         except:
             pass
         try:
             pzx = edgeDictPrec[(x,y,zh,xh,y,zh)]
-            cube.append((pzx, pts2dir(x,y,zh,xh,y,zh,vz)))
+            cube.append((pzx, pts2dir(x,y,zh,xh,y,zh,vz), (0,-1,+1)))
             i += 1
         except:
             pass
         try:
             pzxy = edgeDictPrec[(xh,y,zh,xh,yh,zh)]
-            cube.append((pzxy, pts2dir(xh,y,zh,xh,yh,zh,vxy)))
+            cube.append((pzxy, pts2dir(xh,y,zh,xh,yh,zh,vxy), (+1,0,+1)))
             i += 1
         except:
             pass
         try:
             pzy = edgeDictPrec[(x,y,zh,x,yh,zh)]
-            cube.append((pzy, pts2dir(x,y,zh,x,yh,zh,vz)))
+            cube.append((pzy, pts2dir(x,y,zh,x,yh,zh,vz), (-1,0,+1)))
             i += 1
         except:
             pass
         try:
             pzyx = edgeDictPrec[(x,yh,zh,xh,yh,zh)]
-            cube.append((pzyx, pts2dir(x,yh,zh,xh,yh,zh,vyz)))
+            cube.append((pzyx, pts2dir(x,yh,zh,xh,yh,zh,vyz), (0,+1,+1)))
             i += 1
         except:
             pass
         try:
             pxz = edgeDictPrec[(xh,y,z,xh,y,zh)]
-            cube.append((pxz, pts2dir(xh,y,z,xh,y,zh,vx)))
+            cube.append((pxz, pts2dir(xh,y,z,xh,y,zh,vx), (+1,-1,0)))
             i += 1
         except:
             pass
         try:
             pyz = edgeDictPrec[(x,yh,z,x,yh,zh)]
-            cube.append((pyz, pts2dir(x,yh,z,x,yh,zh,vy)))
+            cube.append((pyz, pts2dir(x,yh,z,x,yh,zh,vy), (-1,+1,0)))
             i += 1
         except:
             pass
         try:
             pxyz = edgeDictPrec[(xh,yh,z,xh,yh,zh)]
-            cube.append((pxyz, pts2dir(xh,yh,z,xh,yh,zh,vxy)))
+            cube.append((pxyz, pts2dir(xh,yh,z,xh,yh,zh,vxy), (+1,+1,0)))
             i += 1
         except:
             pass
@@ -350,31 +370,64 @@ def isConvex(cornerA, cornerB, cornerC):
     return np.dot(nd, nt) > 0
 
 
+def isInnerEdge(pt1, pt2):
+    d = np.array(pt2[2]) - np.array(pt1[2])
+    #print('{} - {} - {} - {} - {}'.format(pt1,pt2,d,np.sum(np.abs(d)),np.sum(np.abs(d)) != 2))
+    return np.sum(np.abs(d)) != 2
+
+def findInnerEdges(pts):
+    return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
+            enumerate(pts[(i+1):]) if isInnerEdge(p1, p2)]
+
+def findOuterEdges(pts):
+    #return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
+    #        enumerate(pts[(i+1):])]
+    return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
+            enumerate(pts[(i+1):]) if not isInnerEdge(p1, p2)]
+
+
+
+def findOuterCirc(pts):
+    oe = findOuterEdges(pts)
+    x = oe
+    #print(x)
+    c = []
+    a,e = x.pop()
+    c.append(e)
+    while e!=a:
+        y = [f for k in x for f in k]
+        p = y.index(e)
+        e = x.pop(int(p/2))[int((p+1)%2)]
+        c.append(e)
+    return c
+
+
+
 #@jit(nopython=True,cache=True)
 def cubes2vertices(cubes):
     vertices = []
     for cubev in cubes:
         cube = [e[0] for e in cubev]
         v = [e[1] for e in cubev]
-        if isConvex(cubev[0], cubev[1], cubev[2]):
-            vertices.append(cube)
-        else:
-            vertices.append([cube[0], cube[2], cube[1]])
-        if len(cube) > 3:
-            if isConvex(cubev[1], cubev[3], cubev[2]):
-                vertices.append([cube[1], cube[3], cube[2]])
-            else:
-                vertices.append([cube[1], cube[2], cube[3]])
-        if len(cube) > 4:
-            if isConvex(cubev[2], cubev[3], cubev[4]):
-                vertices.append([cube[2], cube[3], cube[4]])
-            else:
-                vertices.append([cube[2], cube[4], cube[3]])
-        if len(cube) > 5:
-            if isConvex(cubev[3], cubev[5], cubev[4]):
-                vertices.append([cube[3], cube[5], cube[4]])
-            else:
-                vertices.append([cube[3], cube[4], cube[5]])
+        #print(cubev)
+        oc = findOuterCirc(cubev)
+        bc = np.bincount(oc)
+        if len(np.where(bc>1)[0])>0:
+            print(oc)
+        #if len(v) > 6:
+        print(len(v))
+        print(oc)
+        #if len(v) < 6:
+        #    continue
+        #print(oc)
+        for i in range(len(oc)-2):
+            #vertices.append([cube[oc[i]], cube[oc[i+1]], cube[oc[i+2]]])
+            vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
+            vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
+            #if isConvex(cubev[oc[0]], cubev[oc[i+1]], cubev[oc[i+2]]):
+            #    vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
+            #else:
+            #    vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
     return vertices
 
 
@@ -389,6 +442,7 @@ def renderAndSave(func, filename, res=1):
     print(len(edgeResDict))
     t0 = time.time()
     edgeResDictPrec = edgePrec(func, edgeResDict, res)
+    #edgeResDictPrec = edgeResDict
     print('edgePrec time: {}'.format(time.time()-t0))
     print(len(edgeResDictPrec))
     t0 = time.time()

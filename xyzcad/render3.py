@@ -16,6 +16,11 @@ import time
 from numba import jit
 from stl import mesh
 
+
+@jit(nopython=True,cache=True)
+def round(x):
+    return np.floor(10000*x+0.5)/10000
+
 @jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     s0 = func(0,0,0)
@@ -77,9 +82,9 @@ def getSurface(func, startPnt=None, res=1.3):
         x,y,z = findSurfacePnt(func)
     else:
         x,y,z = startPnt
-    ptsList = [(np.floor(1000*x+0.5)/1000,
-                np.floor(1000*y+0.5)/1000,
-                np.floor(1000*z+0.5)/1000) ]
+    ptsList = [(round(x), #np.floor(1000*x+0.5)/1000,
+                round(y), #np.floor(1000*y+0.5)/1000,
+                round(z)) ] #np.floor(1000*z+0.5)/1000) ]
     x,y,z = ptsList[0]
     ptsResDict = dict()
     ptsResDict[(x,y,z)] = func(x,y,z)
@@ -88,17 +93,17 @@ def getSurface(func, startPnt=None, res=1.3):
     while ptsList:
         x,y,z = ptsList.pop()
 
-        xl = np.floor(1000*(x-r)+0.5)/1000
+        xl = round(x-r) #np.floor(1000*(x-r)+0.5)/1000
         xu = func(xl,y,z)
-        xh = np.floor(1000*(x+r)+0.5)/1000
+        xh = round(x+r) #np.floor(1000*(x+r)+0.5)/1000
         xo = func(xh,y,z)
-        yl = np.floor(1000*(y-r)+0.5)/1000
+        yl = round(y-r) #np.floor(1000*(y-r)+0.5)/1000
         yu = func(x,yl,z)
-        yh = np.floor(1000*(y+r)+0.5)/1000
+        yh = round(y+r) #np.floor(1000*(y+r)+0.5)/1000
         yo = func(x,yh,z)
-        zl = np.floor(1000*(z-r)+0.5)/1000
+        zl = round(z-r) #np.floor(1000*(z-r)+0.5)/1000
         zu = func(x,y,zl)
-        zh = np.floor(1000*(z+r)+0.5)/1000
+        zh = round(z+r) #np.floor(1000*(z+r)+0.5)/1000
         zo = func(x,y,zh)
 
         s = xu + xo + yu + yo + zu + zo
@@ -106,75 +111,75 @@ def getSurface(func, startPnt=None, res=1.3):
             continue
 
 
-        if s == 5:
-            if (xl,y,z) not in ptsResDict:
-                if xo:
-                    ptsResDict[(xl,y,z)] = xu
-                    ptsList.append((xl,y,z))
-            if (xh,y,z) not in ptsResDict:
-                if xu:
-                    ptsResDict[(xh,y,z)] = xo
-                    ptsList.append((xh,y,z))
-            if (x,yl,z) not in ptsResDict:
-                if yo:
-                    ptsResDict[(x,yl,z)] = yu
-                    ptsList.append((x,yl,z))
-            if (x,yh,z) not in ptsResDict:
-                if yu:
-                    ptsResDict[(x,yh,z)] = yo
-                    ptsList.append((x,yh,z))
-            if (x,y,zl) not in ptsResDict:
-                if zo:
-                    ptsResDict[(x,y,zl)] = zu
-                    ptsList.append((x,y,zl))
-            if (x,y,zh) not in ptsResDict:
-                if zu:
-                    ptsResDict[(x,y,zh)] = zo
-                    ptsList.append((x,y,zh))
-        elif s == 2:
-            if (xl,y,z) not in ptsResDict:
-                if not xo:
-                    ptsResDict[(xl,y,z)] = xu
-                    ptsList.append((xl,y,z))
-            if (xh,y,z) not in ptsResDict:
-                if not xu:
-                    ptsResDict[(xh,y,z)] = xo
-                    ptsList.append((xh,y,z))
-            if (x,yl,z) not in ptsResDict:
-                if not yo:
-                    ptsResDict[(x,yl,z)] = yu
-                    ptsList.append((x,yl,z))
-            if (x,yh,z) not in ptsResDict:
-                if not yu:
-                    ptsResDict[(x,yh,z)] = yo
-                    ptsList.append((x,yh,z))
-            if (x,y,zl) not in ptsResDict:
-                if not zo:
-                    ptsResDict[(x,y,zl)] = zu
-                    ptsList.append((x,y,zl))
-            if (x,y,zh) not in ptsResDict:
-                if not zu:
-                    ptsResDict[(x,y,zh)] = zo
-                    ptsList.append((x,y,zh))
-        else:
-            if (xl,y,z) not in ptsResDict:
-                ptsResDict[(xl,y,z)] = xu
-                ptsList.append((xl,y,z))
-            if (xh,y,z) not in ptsResDict:
-                ptsResDict[(xh,y,z)] = xo
-                ptsList.append((xh,y,z))
-            if (x,yl,z) not in ptsResDict:
-                ptsResDict[(x,yl,z)] = yu
-                ptsList.append((x,yl,z))
-            if (x,yh,z) not in ptsResDict:
-                ptsResDict[(x,yh,z)] = yo
-                ptsList.append((x,yh,z))
-            if (x,y,zl) not in ptsResDict:
-                ptsResDict[(x,y,zl)] = zu
-                ptsList.append((x,y,zl))
-            if (x,y,zh) not in ptsResDict:
-                ptsResDict[(x,y,zh)] = zo
-                ptsList.append((x,y,zh))
+        #if s == 5:
+        #    if (xl,y,z) not in ptsResDict:
+        #        if xo:
+        #            ptsResDict[(xl,y,z)] = xu
+        #            ptsList.append((xl,y,z))
+        #    if (xh,y,z) not in ptsResDict:
+        #        if xu:
+        #            ptsResDict[(xh,y,z)] = xo
+        #            ptsList.append((xh,y,z))
+        #    if (x,yl,z) not in ptsResDict:
+        #        if yo:
+        #            ptsResDict[(x,yl,z)] = yu
+        #            ptsList.append((x,yl,z))
+        #    if (x,yh,z) not in ptsResDict:
+        #        if yu:
+        #            ptsResDict[(x,yh,z)] = yo
+        #            ptsList.append((x,yh,z))
+        #    if (x,y,zl) not in ptsResDict:
+        #        if zo:
+        #            ptsResDict[(x,y,zl)] = zu
+        #            ptsList.append((x,y,zl))
+        #    if (x,y,zh) not in ptsResDict:
+        #        if zu:
+        #            ptsResDict[(x,y,zh)] = zo
+        #            ptsList.append((x,y,zh))
+        #elif s == 2:
+        #    if (xl,y,z) not in ptsResDict:
+        #        if not xo:
+        #            ptsResDict[(xl,y,z)] = xu
+        #            ptsList.append((xl,y,z))
+        #    if (xh,y,z) not in ptsResDict:
+        #        if not xu:
+        #            ptsResDict[(xh,y,z)] = xo
+        #            ptsList.append((xh,y,z))
+        #    if (x,yl,z) not in ptsResDict:
+        #        if not yo:
+        #            ptsResDict[(x,yl,z)] = yu
+        #            ptsList.append((x,yl,z))
+        #    if (x,yh,z) not in ptsResDict:
+        #        if not yu:
+        #            ptsResDict[(x,yh,z)] = yo
+        #            ptsList.append((x,yh,z))
+        #    if (x,y,zl) not in ptsResDict:
+        #        if not zo:
+        #            ptsResDict[(x,y,zl)] = zu
+        #            ptsList.append((x,y,zl))
+        #    if (x,y,zh) not in ptsResDict:
+        #        if not zu:
+        #            ptsResDict[(x,y,zh)] = zo
+        #            ptsList.append((x,y,zh))
+        #else:
+        if (xl,y,z) not in ptsResDict:
+            ptsResDict[(xl,y,z)] = xu
+            ptsList.append((xl,y,z))
+        if (xh,y,z) not in ptsResDict:
+            ptsResDict[(xh,y,z)] = xo
+            ptsList.append((xh,y,z))
+        if (x,yl,z) not in ptsResDict:
+            ptsResDict[(x,yl,z)] = yu
+            ptsList.append((x,yl,z))
+        if (x,yh,z) not in ptsResDict:
+            ptsResDict[(x,yh,z)] = yo
+            ptsList.append((x,yh,z))
+        if (x,y,zl) not in ptsResDict:
+            ptsResDict[(x,y,zl)] = zu
+            ptsList.append((x,y,zl))
+        if (x,y,zh) not in ptsResDict:
+            ptsResDict[(x,y,zh)] = zo
+            ptsList.append((x,y,zh))
 
     return ptsResDict
 
@@ -185,19 +190,19 @@ def pts2Edges(ptsResDict, res):
     edgeDict = dict()
     for p, v in ptsResDict.items():
         x, y, z = p
-        xh = np.floor(1000*(x+r)+0.5)/1000
+        xh = round(x+r) #np.floor(1000*(x+r)+0.5)/1000
         try:
             if ptsResDict[(xh,y,z)] != v:
                 edgeDict[(x,y,z,xh,y,z)] = v
         except:
             pass
-        yh = np.floor(1000*(y+r)+0.5)/1000
+        yh = round(y+r) #np.floor(1000*(y+r)+0.5)/1000
         try:
             if ptsResDict[(x,yh,z)] != v:
                 edgeDict[(x,y,z,x,yh,z)] = v
         except:
             pass
-        zh = np.floor(1000*(z+r)+0.5)/1000
+        zh = round(z+r) #np.floor(1000*(z+r)+0.5)/1000
         try:
             if ptsResDict[(x,y,zh)] != v:
                 edgeDict[(x,y,z,x,y,zh)] = v
@@ -231,11 +236,12 @@ def edge2cube(ptsDict, edgeDictPrec, res):
     r = res
     cntList = []
     cubeList = []
+    histo = 8* [0]
     for p, v in ptsDict.items():
         x,y,z = p
-        xh = np.floor(1000*(x+r)+0.5)/1000
-        yh = np.floor(1000*(y+r)+0.5)/1000
-        zh = np.floor(1000*(z+r)+0.5)/1000
+        xh = round(x+r) #np.floor(1000*(x+r)+0.5)/1000
+        yh = round(y+r) #np.floor(1000*(y+r)+0.5)/1000
+        zh = round(z+r) #np.floor(1000*(z+r)+0.5)/1000
         i = 0
         try:
             vx = ptsDict[(xh,y,z)]
@@ -343,9 +349,11 @@ def edge2cube(ptsDict, edgeDictPrec, res):
             i += 1
         except:
             pass
+        histo[i] += 1
         if i > 2:
             cntList.append(i)
             cubeList.append(cube)
+    print(histo)
     return cubeList
 
 
@@ -386,9 +394,19 @@ def findOuterEdges(pts):
             enumerate(pts[(i+1):]) if not isInnerEdge(p1, p2)]
 
 
+def repairOuterCirc(oe):
+    x = oe
+    y = [f for k in x for f in k]
+    bc = np.bincount(y)
+    idx = np.where(bc==1)[0]
+    if len(idx) == 2:
+        oe.append((idx[0], idx[1]))
+    return oe
 
 def findOuterCirc(pts):
     oe = findOuterEdges(pts)
+    oe = repairOuterCirc(oe)
+    #print(oe)
     x = oe
     #print(x)
     c = []
@@ -409,25 +427,18 @@ def cubes2vertices(cubes):
     for cubev in cubes:
         cube = [e[0] for e in cubev]
         v = [e[1] for e in cubev]
-        #print(cubev)
-        oc = findOuterCirc(cubev)
-        bc = np.bincount(oc)
-        if len(np.where(bc>1)[0])>0:
-            print(oc)
-        #if len(v) > 6:
-        print(len(v))
-        print(oc)
-        #if len(v) < 6:
-        #    continue
-        #print(oc)
+        try:
+            oc = findOuterCirc(cubev)
+        except:
+            print("outerCirc not closed!")
+            continue
         for i in range(len(oc)-2):
-            #vertices.append([cube[oc[i]], cube[oc[i+1]], cube[oc[i+2]]])
-            vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
-            vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
-            #if isConvex(cubev[oc[0]], cubev[oc[i+1]], cubev[oc[i+2]]):
-            #    vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
-            #else:
-            #    vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
+            #vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
+            #vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
+            if isConvex(cubev[oc[0]], cubev[oc[i+1]], cubev[oc[i+2]]):
+                vertices.append([cube[oc[0]], cube[oc[i+1]], cube[oc[i+2]]])
+            else:
+                vertices.append([cube[oc[0]], cube[oc[i+2]], cube[oc[i+1]]])
     return vertices
 
 

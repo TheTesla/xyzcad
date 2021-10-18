@@ -61,7 +61,15 @@ def f(x,y,z):
 
 @jit(nopython=True,cache=True)
 def g(x,y,z):
-    return 50.1 > x**2 + y**2 + z**2
+    if 50.1 > x**2 + y**2 + z**2:
+        return True
+    if 50.1 > (x-7)**2 + y**2 + z**2:
+        return True
+    if 50.1 > x**2 + (y-7)**2 + z**2:
+        return True
+    if 50.1 > x**2 + y**2 + (z-7)**2:
+        return True
+    return False
 
 t0 = time.time()
 

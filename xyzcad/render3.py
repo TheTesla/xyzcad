@@ -130,9 +130,9 @@ def getSurface(func, startPnt=None, res=1.3):
             if (x,y,zh) not in ptsResDict:
                 ptsResDict[(x,y,zh)] = zo
                 ptsList.append((x,y,zh))
-        for xr in np.arange(-3*r,+4*r,r):
-            for yr in np.arange(-3*r,+4*r,r):
-                for zr in np.arange(-3*r,+4*r,r):
+        for xr in np.arange(-1*r,+1*r,r):
+            for yr in np.arange(-1*r,+1*r,r):
+                for zr in np.arange(-1*r,+1*r,r):
                     xd = round(x+xr)
                     yd = round(y+yr)
                     zd = round(z+zr)

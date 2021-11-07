@@ -249,52 +249,10 @@ def calcTriangles(cube2outerTrEdgesList):
     return trList
 
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
-    print(trList)
+    #print(trList)
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    print(cutCedgeIdxRevDict)
+    #print(cutCedgeIdxRevDict)
     return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
-
-#@jit(nopython=True,cache=True)
-def pts2Edges(cubesSet, ptsDict, res):
-    r = res
-    edgeDict = dict()
-    for p in cubesSet:
-        v = ptsDict[p]
-        x, y, z = p
-        xh = round(x+r)
-        if ptsDict[(xh,y,z)] != v:
-            edgeDict[(x,y,z,xh,y,z)] = v
-        yh = round(y+r)
-        if ptsDict[(x,yh,z)] != v:
-            edgeDict[(x,y,z,x,yh,z)] = v
-        zh = round(z+r)
-        if ptsDict[(x,y,zh)] != v:
-            edgeDict[(x,y,z,x,y,zh)] = v
-    return edgeDict
-
-#@jit(nopython=True,cache=True)
-def edgePrec(func, edgeDict, res):
-    r = res
-    edgeDictPrec = dict()
-    for e, v in edgeDict.items():
-        p0 = e[:3]
-        p1 = e[3:]
-        pp = getSurfacePnt(func, p0, p1)
-        #pp = (np.array(p0) + np.array(p1))/2
-        #print('{} - {} - {}'.format(p0,pp,p1))
-        edgeDictPrec[e] = pp #(pp[0], pp[1], pp[2])
-    return edgeDictPrec
-
-@jit(inline='always')
-def pts2dir(x1,y1,z1,x2,y2,z2,v):
-    if v:
-        return (x2-x1,y2-y1,z2-z1)
-    else:
-        return (x1-x2,y1-y2,z1-z2)
-
-
-
-
 
 
 
@@ -307,7 +265,6 @@ def repairOuterCirc(oe):
         print('repair!')
         print(oe)
         oe.append((idx[0], idx[1]))
-
     return oe
 
 

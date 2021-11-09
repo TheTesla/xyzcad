@@ -280,6 +280,92 @@ def calcTriangles(cube2outerTrEdgesList):
         #print(circ)
     return trList
 
+
+def circIdx2trEdge(cube2outerTrEdgesList):
+    circList = []
+    for cube in cube2outerTrEdgesList:
+        oe = [(e[0][1], e[1][1]) for e in cube]
+        circs = findOuterCircs(oe)
+        circList.extend(circs)
+    return circList
+
+def trEdge2circ(circList):
+    r = {}
+    for i, c in enumerate(circList):
+        for k in range(len(c)):
+            if (c[k], c[(k+1)%len(c)]) not in r:
+                r[(c[k], c[(k+1)%len(c)])] = []
+            if (c[(k+1)%len(c)], c[k]) not in r:
+                r[(c[(k+1)%len(c)], c[k])] = []
+            r[(c[k], c[(k+1)%len(c)])].append((i, c))
+            r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
+    return r
+
+def correctCircs(trEdge2circDict):
+    x = trEdge2circDict
+    circUsedSet = set()
+    edgeOpList = [list(x.keys())[0]]
+    edgeResList = []
+    while 0 < len(edgeOpList):
+        k = edgeOpList.pop()
+        for v0 in x[k]:
+            if v0[0] not in circUsedSet:
+                circUsedSet.add(v0[0])
+                edgeResList.append(v0[1])
+                y = v0[1][::-1]
+                for i in range(len(y)):
+                    edgeOpList.append((y[i], y[(i+1)%len(y)]))
+        for v1 in x[k[::-1]]:
+            if v1[0] not in circUsedSet:
+                circUsedSet.add(v1[0])
+                edgeResList.append(v1[1])
+                y = v1[1]
+                for i in range(len(y)):
+                    edgeOpList.append((y[i], y[(i+1)%len(y)]))
+    return edgeResList
+
+
+def calcTrianglesCor(cube2outerTrEdgesList):
+    circList = circIdx2trEdge(cube2outerTrEdgesList)
+    trEdge2circDict = trEdge2circ(circList)
+    corCircList = correctCircs(trEdge2circDict)
+    trList = []
+    for circ in corCircList:
+        n = len(circ)
+        trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
+        trList.extend(trInCubeList)
+    return trList
+
+
+#def correctTrConvexity(trEdge2circIdxDict, circList):
+#    corCircList = []
+#    for k, v in trEdge2circIdxDict.items():
+#        if v >= 0:
+#            c = circList[v]
+#        else:
+#            c = circList[-v-1][::-1]
+#        corCircList.append(c)
+#    return corCircList
+#
+#def calcTrianglesCor(cube2outerTrEdgesList):
+#    circList = circIdx2trEdge(cube2outerTrEdgesList)
+#    trEdge2circIdxDict = trEdge2circIdx(circList)
+#    corCircList = correctTrConvexity(trEdge2circIdxDict, circList)
+#    trList = []
+#    for circ in corCircList:
+#        n = len(circ)
+#        trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
+#        trList.extend(trInCubeList)
+#    return trList
+
+
+
+#def trEdge2cubeIdxDict(cube2outerTrEdgesList):
+#    x = cube2outerTrEdgesList
+#    return {(e[k%2][1], e[(k+1)%2][1]): i for i, c in enumerate(x) for e in c
+#            for k in range(2)}
+
+
 @jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #print(trList)
@@ -329,7 +415,7 @@ def renderAndSave(func, filename, res=1):
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
     t0 = time.time()
-    triangleList = calcTriangles(cube2outerTrEdgesList)
+    triangleList = calcTrianglesCor(cube2outerTrEdgesList)
     print('calcTriangles time: {}'.format(time.time()-t0))
     print(len(triangleList))
     t0 = time.time()

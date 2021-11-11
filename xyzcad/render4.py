@@ -11,7 +11,7 @@
 
 
 import numpy as np
-import open3d as o3d
+#import open3d as o3d
 import time
 from numba import jit
 from numba.typed import List
@@ -304,24 +304,20 @@ def trEdge2circ(circList):
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
     circUsedSet = set()
-    edgeOpList = [list(x.keys())[0]]
+    edgeOpList = [list(x.values())[0][0]]
     edgeResList = []
     while 0 < len(edgeOpList):
-        k = edgeOpList.pop()
-        for v0 in x[k]:
-            if v0[0] not in circUsedSet:
-                circUsedSet.add(v0[0])
-                edgeResList.append(v0[1])
-                y = v0[1][::-1]
-                for i in range(len(y)):
-                    edgeOpList.append((y[i], y[(i+1)%len(y)]))
-        for v1 in x[k[::-1]]:
-            if v1[0] not in circUsedSet:
-                circUsedSet.add(v1[0])
-                edgeResList.append(v1[1])
-                y = v1[1]
-                for i in range(len(y)):
-                    edgeOpList.append((y[i], y[(i+1)%len(y)]))
+        ci, c = edgeOpList.pop()
+        if ci in circUsedSet:
+            continue
+        circUsedSet.add(ci)
+
+        for i in range(len(c)):
+            e = (c[(i+1)%len(c)], c[i])
+            edgeOpList.extend(x[e])
+            edgeResList.append(e)
+        
+
     return edgeResList
 
 

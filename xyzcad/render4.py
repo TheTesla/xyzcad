@@ -135,7 +135,7 @@ def getSurface(func, startPnt=None, res=1.3):
     return cubeExistsSet, ptsResDict
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def coords2relations(cubeCoordSet, ptCoordDict, res):
     r = res
     cube2ptIdxList = []
@@ -189,7 +189,7 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
     return (cube2ptIdxList, cube2edgeIdxList, edge2ptIdxList, ptCoordList,
             ptValueList)
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return [i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]]
@@ -199,29 +199,29 @@ def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
     return [getSurfacePnt(func, ptCoordList[edge2ptIdxList[e][0]],
         ptCoordList[edge2ptIdxList[e][1]]) for e in cutCedgeIdxList]
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def isInnerEdge2(pt1, pt2):
     d = np.array(pt2) - np.array(pt1)
     return np.sum(np.abs(d)) != 2
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def findInnerEdges2(pts):
     return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
             enumerate(pts[(i+1):]) if isInnerEdge(p1, p2)]
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def findOuterEdges2(pts):
     return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
             enumerate(pts[(i+1):]) if not isInnerEdge2(p1, p2)]
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def cube2outerTrEdgeList(cube, cutCedgeIdxList):
     cutEdges = [(i, e) for i, e in enumerate(cube) if e in cutCedgeIdxList]
     cutEdgeCoordList = [edgeRelCoordMapConst[i[0]] for i in cutEdges]
     outerEdgeIdxList = findOuterEdges2(cutEdgeCoordList)
     return [(cutEdges[i[0]], cutEdges[i[1]]) for i in outerEdgeIdxList]
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
     r=[cube2outerTrEdgeList(cube, cutCedgeIdxList) for cube in cube2edgeIdxList]
     return r
@@ -303,21 +303,32 @@ def trEdge2circ(circList):
 
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
+    for k, v in x.items():
+        if len(v) != 2:
+            print(len(v))
     circUsedSet = set()
     edgeOpList = [list(x.values())[0][0]]
+    #print(edgeOpList)
     edgeResList = []
     while 0 < len(edgeOpList):
         ci, c = edgeOpList.pop()
         if ci in circUsedSet:
             continue
+        edgeResList.append(c[::-1])
+        #print(ci)
+        #print(c)
         circUsedSet.add(ci)
 
-        for i in range(len(c)):
-            e = (c[(i+1)%len(c)], c[i])
-            edgeOpList.extend(x[e])
-            edgeResList.append(e)
-        
 
+        for i in range(len(c)):
+            e = (c[i], c[(i+1)%len(c)])
+            #print(x[e])
+            edgeOpList.extend([s for s in x[e[::-1]] if s[0] != ci])
+            #for k, v in x[e]:
+                #edgeResList.append(v)
+                #circUsedSet.add(k)
+
+    #print(edgeResList)
     return edgeResList
 
 
@@ -362,7 +373,7 @@ def calcTrianglesCor(cube2outerTrEdgesList):
 #            for k in range(2)}
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #print(trList)
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}

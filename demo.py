@@ -12,7 +12,7 @@
 
 from numba import jit
 import math
-from xyzcad import render4
+from xyzcad import render
 import time
 
 
@@ -73,6 +73,6 @@ def g(x,y,z):
 
 t0 = time.time()
 
-render4.renderAndSave(g, 'demo.stl', 1)
+render.renderAndSave(f, 'demo.stl', 1)
 
 print(time.time() - t0)

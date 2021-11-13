@@ -81,7 +81,6 @@ def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
 
 
 
-
 @jit(nopython=True,cache=True)
 def getSurface(func, startPnt=None, res=1.3):
     if startPnt is None:

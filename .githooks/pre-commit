@@ -1,5 +1,6 @@
 #!/bin/bash
 
+pwd
 
 python3 ../xyzĉad/__init__.py
 

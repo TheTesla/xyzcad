@@ -28,8 +28,8 @@ setuptools.setup(
     #include_package_data=True,
     install_requires=[
         "numpy",
-        "numba",
-        "open3d"
+        "numpy-stl",
+        "numba"
     ],
     license = 'https://www.fsf.org/licensing/licenses/agpl-3.0.html',
     classifiers=[

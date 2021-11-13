@@ -14,7 +14,7 @@ import numpy as np
 #import open3d as o3d
 import time
 from numba import jit, prange
-from numba.typed import List
+from numba.typed import List, Dict
 
 from stl import mesh
 
@@ -191,15 +191,22 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
             ptValueList)
 
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return [i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]]
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True,parallel=True)
 def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
-    return [getSurfacePnt(func, ptCoordList[edge2ptIdxList[e][0]],
-        ptCoordList[edge2ptIdxList[e][1]]) for e in cutCedgeIdxList]
+    l = len(cutCedgeIdxList)
+    e = cutCedgeIdxList[0]
+    p = edge2ptIdxList[e]
+    r = List([getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])]*l)
+    for i in prange(l):
+        e = cutCedgeIdxList[i]
+        p = edge2ptIdxList[e]
+        r[i] = getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])
+    return r
 
 @jit(nopython=True,cache=True)
 def isOuterEdge(pt1, pt2):
@@ -218,10 +225,6 @@ def cube2outerTrEdgeList(cube, cutCedgeIdxList):
     outerEdgeIdxList = findOuterEdges(List(cutEdgeCoordList))
     return List([(cutEdges[i[0]], cutEdges[i[1]]) for i in outerEdgeIdxList])
 
-#@jit(nopython=True,cache=True,parallel=True)
-#def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
-#    r=[cube2outerTrEdgeList(cube, cutCedgeIdxList) for cube in cube2edgeIdxList]
-#    return r
 
 @jit(nopython=True,cache=True,parallel=True)
 def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
@@ -232,6 +235,7 @@ def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
     return r
 
 
+@jit(nopython=True,cache=True)
 def isComplexCube(outerTrEdgesList):
     h = {}
     for f in outerTrEdgesList:
@@ -244,34 +248,10 @@ def isComplexCube(outerTrEdgesList):
     return False
 
 
-def findOuterCircs(outerTrEdgesList):
+@jit(nopython=True,cache=True)
+def findOuterCirc(outerTrEdgesList):
     oe = outerTrEdgesList
-    if isComplexCube(oe):
-        return []
-
     x = oe
-    r = []
-    while len(x) > 0:
-        c = []
-        a,e = x.pop()
-        c.append(e)
-        while e!=a:
-            y = [f for k in x for f in k]
-            p = y.index(e)
-            e = x.pop(int(p/2))[int((p+1)%2)]
-            c.append(e)
-        r.append(c)
-    return r
-
-
-
-#@jit(nopython=True,cache=True)
-def findOuterCirc2(outerTrEdgesList):
-    oe = outerTrEdgesList
-    #oe = repairOuterCirc(oe)
-    #print(oe)
-    x = oe
-    #print(x)
     c = []
     a,e = x.pop()
     c.append(e)
@@ -280,64 +260,84 @@ def findOuterCirc2(outerTrEdgesList):
         p = y.index(e)
         e = x.pop(int(p/2))[int((p+1)%2)]
         c.append(e)
-    print(x)
     return c
 
 
+
+
+@jit(nopython=True,cache=True)
 def circIdx2trEdge(cube2outerTrEdgesList):
     circList = []
     for cube in cube2outerTrEdgesList:
         oe = [(e[0][1], e[1][1]) for e in cube]
-        circs = findOuterCircs(oe)
-        circList.extend(circs)
+        if isComplexCube(oe):
+            continue
+        circ = findOuterCirc(oe)
+        circList.append(circ)
     return circList
 
-def trEdge2circ(circList):
+#@jit(nopython=True,cache=True,parallel=True)
+def trEdge2circ(circList, offset=0):
     r = {}
     for i, c in enumerate(circList):
+        i += offset
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
-                r[(c[k], c[(k+1)%len(c)])] = []
+                r[(c[k], c[(k+1)%len(c)])] = [(i, c)]
+            else:
+                r[(c[k], c[(k+1)%len(c)])].append((i, c))
             if (c[(k+1)%len(c)], c[k]) not in r:
-                r[(c[(k+1)%len(c)], c[k])] = []
-            r[(c[k], c[(k+1)%len(c)])].append((i, c))
-            r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
+                r[(c[(k+1)%len(c)], c[k])] = [(i, c[::-1])]
+            else:
+                r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
     return r
 
+def repairComplexCircs(trEdge2circDict):
+    singleEdgeSet = set()
+    for k, v in trEdge2circDict.items():
+        if len(v) != 2:
+            singleEdgeSet.add(k)
+    singleEdgeSet = {e if e[1] > e[0] else e[::-1] for e in singleEdgeSet}
+    repairCircs = []
+    singleEdgeList = List(singleEdgeSet)
+    while len(singleEdgeList) > 0:
+        repairCircs.append(findOuterCirc(singleEdgeList))
+    return repairCircs
+
+
+#@jit(nopython=True,cache=True,parallel=True)
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
-    for k, v in x.items():
-        if len(v) != 2:
-            print(len(v))
     circUsedSet = set()
     edgeOpList = [list(x.values())[0][0]]
-    #print(edgeOpList)
     edgeResList = []
     while 0 < len(edgeOpList):
         ci, c = edgeOpList.pop()
         if ci in circUsedSet:
             continue
         edgeResList.append(c[::-1])
-        #print(ci)
-        #print(c)
         circUsedSet.add(ci)
-
-
         for i in range(len(c)):
             e = (c[i], c[(i+1)%len(c)])
-            #print(x[e])
             edgeOpList.extend([s for s in x[e[::-1]] if s[0] != ci])
-            #for k, v in x[e]:
-                #edgeResList.append(v)
-                #circUsedSet.add(k)
 
-    #print(edgeResList)
+
+
     return edgeResList
 
 
+def extendTrEdge2circDict(x, y):
+    for k, v in y.items():
+        x[k].extend(v)
+    return x
+
+#@jit(nopython=True,cache=True,parallel=True)
 def calcTrianglesCor(cube2outerTrEdgesList):
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     trEdge2circDict = trEdge2circ(circList)
+    repairCircs = repairComplexCircs(trEdge2circDict)
+    repairTrEdge2circDict = trEdge2circ(repairCircs, len(cube2outerTrEdgesList))
+    extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
     corCircList = correctCircs(trEdge2circDict)
     trList = []
     for circ in corCircList:
@@ -346,34 +346,6 @@ def calcTrianglesCor(cube2outerTrEdgesList):
         trList.extend(trInCubeList)
     return trList
 
-
-#def correctTrConvexity(trEdge2circIdxDict, circList):
-#    corCircList = []
-#    for k, v in trEdge2circIdxDict.items():
-#        if v >= 0:
-#            c = circList[v]
-#        else:
-#            c = circList[-v-1][::-1]
-#        corCircList.append(c)
-#    return corCircList
-#
-#def calcTrianglesCor(cube2outerTrEdgesList):
-#    circList = circIdx2trEdge(cube2outerTrEdgesList)
-#    trEdge2circIdxDict = trEdge2circIdx(circList)
-#    corCircList = correctTrConvexity(trEdge2circIdxDict, circList)
-#    trList = []
-#    for circ in corCircList:
-#        n = len(circ)
-#        trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
-#        trList.extend(trInCubeList)
-#    return trList
-
-
-
-#def trEdge2cubeIdxDict(cube2outerTrEdgesList):
-#    x = cube2outerTrEdgesList
-#    return {(e[k%2][1], e[(k+1)%2][1]): i for i, c in enumerate(x) for e in c
-#            for k in range(2)}
 
 
 #@jit(nopython=True,cache=True)
@@ -385,16 +357,6 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 
 
-def repairOuterCirc(oe):
-    x = oe
-    y = [f for k in x for f in k]
-    bc = np.bincount(y)
-    idx = np.where(bc==1)[0]
-    if len(idx) == 2:
-        print('repair!')
-        print(oe)
-        oe.append((idx[0], idx[1]))
-    return oe
 
 
 
@@ -416,7 +378,7 @@ def renderAndSave(func, filename, res=1):
     print('cutCedgeIdx time: {}'.format(time.time()-t0))
     print(len(cCeI))
     t0 = time.time()
-    precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
+    precTrPtsList = precTrPnts(func, List(cCeI), List(e2p), List(pc))
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
@@ -425,7 +387,7 @@ def renderAndSave(func, filename, res=1):
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
     t0 = time.time()
-    triangleList = calcTrianglesCor(cube2outerTrEdgesList)
+    triangleList = calcTrianglesCor(List(cube2outerTrEdgesList))
     print('calcTriangles time: {}'.format(time.time()-t0))
     print(len(triangleList))
     t0 = time.time()

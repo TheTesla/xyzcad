@@ -2,7 +2,7 @@
 
 pwd
 
-python3 ../xyzĉad/__init__.py
+python3 ./xyzĉad/__init__.py
 
 
 # add before commit

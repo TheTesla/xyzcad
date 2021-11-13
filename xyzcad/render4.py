@@ -13,7 +13,7 @@
 import numpy as np
 #import open3d as o3d
 import time
-from numba import jit
+from numba import jit, prange
 from numba.typed import List
 
 from stl import mesh
@@ -88,7 +88,7 @@ def getSurface(func, startPnt=None, res=1.3):
         x,y,z = findSurfacePnt(func)
     else:
         x,y,z = startPnt
-    ptsList = [(round(x), round(y), round(z))]
+    ptsList = List([(round(x), round(y), round(z))])
     cubeExistsSet = set()
     ptsResDict = dict()
     r = res
@@ -134,26 +134,26 @@ def getSurface(func, startPnt=None, res=1.3):
         ptsResDict[(xh,yh,zh)] = v111
     return cubeExistsSet, ptsResDict
 
-
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def coords2relations(cubeCoordSet, ptCoordDict, res):
     r = res
-    cube2ptIdxList = []
-    ptCoordList = list(ptCoordDict.keys())
-    ptValueList = list(ptCoordDict.values())
+    cube2ptIdxList = List()
+    ptCoordList = List(list(ptCoordDict.keys()))
+    ptCoordDictRev = {e: i for i, e in enumerate(ptCoordList)}
+    ptValueList = List(list(ptCoordDict.values()))
     for p in cubeCoordSet:
         x, y, z = p
         xh = round(x+r)
         yh = round(y+r)
         zh = round(z+r)
-        cube2ptIdxList.append( (  ptCoordList.index((x,y,z)),
-                                  ptCoordList.index((xh,y,z)),
-                                  ptCoordList.index((x,yh,z)),
-                                  ptCoordList.index((xh,yh,z)),
-                                  ptCoordList.index((x,y,zh)),
-                                  ptCoordList.index((xh,y,zh)),
-                                  ptCoordList.index((x,yh,zh)),
-                                  ptCoordList.index((xh,yh,zh))   ) )
+        cube2ptIdxList.append( ( ptCoordDictRev[(x,y,z)],
+                                 ptCoordDictRev[(xh,y,z)],
+                                 ptCoordDictRev[(x,yh,z)],
+                                 ptCoordDictRev[(xh,yh,z)],
+                                 ptCoordDictRev[(x,y,zh)],
+                                 ptCoordDictRev[(xh,y,zh)],
+                                 ptCoordDictRev[(x,yh,zh)],
+                                 ptCoordDictRev[(xh,yh,zh)]   ) )
 
     cEdgesSet = set()
     for cube in cube2ptIdxList:
@@ -169,25 +169,27 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
         cEdgesSet.add((cube[2], cube[6]))
         cEdgesSet.add((cube[4], cube[6]))
         cEdgesSet.add((cube[4], cube[5]))
-    edge2ptIdxList = list(cEdgesSet)
+    edge2ptIdxList = List(list(cEdgesSet))
+    edge2ptIdxDict = {e: i for i, e in enumerate(edge2ptIdxList)}
 
-    cube2edgeIdxList = []
+    cube2edgeIdxList = List()
     for cube in cube2ptIdxList:
-        cube2edgeIdxList.append((   edge2ptIdxList.index((cube[0], cube[1])),
-                                    edge2ptIdxList.index((cube[0], cube[2])),
-                                    edge2ptIdxList.index((cube[0], cube[4])),
-                                    edge2ptIdxList.index((cube[6], cube[7])),
-                                    edge2ptIdxList.index((cube[5], cube[7])),
-                                    edge2ptIdxList.index((cube[3], cube[7])),
-                                    edge2ptIdxList.index((cube[1], cube[5])),
-                                    edge2ptIdxList.index((cube[1], cube[3])),
-                                    edge2ptIdxList.index((cube[2], cube[3])),
-                                    edge2ptIdxList.index((cube[2], cube[6])),
-                                    edge2ptIdxList.index((cube[4], cube[6])),
-                                    edge2ptIdxList.index((cube[4], cube[5])) ))
+        cube2edgeIdxList.append((   edge2ptIdxDict[(cube[0], cube[1])],
+                                    edge2ptIdxDict[(cube[0], cube[2])],
+                                    edge2ptIdxDict[(cube[0], cube[4])],
+                                    edge2ptIdxDict[(cube[6], cube[7])],
+                                    edge2ptIdxDict[(cube[5], cube[7])],
+                                    edge2ptIdxDict[(cube[3], cube[7])],
+                                    edge2ptIdxDict[(cube[1], cube[5])],
+                                    edge2ptIdxDict[(cube[1], cube[3])],
+                                    edge2ptIdxDict[(cube[2], cube[3])],
+                                    edge2ptIdxDict[(cube[2], cube[6])],
+                                    edge2ptIdxDict[(cube[4], cube[6])],
+                                    edge2ptIdxDict[(cube[4], cube[5])] ))
 
     return (cube2ptIdxList, cube2edgeIdxList, edge2ptIdxList, ptCoordList,
             ptValueList)
+
 
 #@jit(nopython=True,cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
@@ -199,36 +201,54 @@ def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
     return [getSurfacePnt(func, ptCoordList[edge2ptIdxList[e][0]],
         ptCoordList[edge2ptIdxList[e][1]]) for e in cutCedgeIdxList]
 
-#@jit(nopython=True,cache=True)
-def isInnerEdge2(pt1, pt2):
+@jit(nopython=True,cache=True)
+def isOuterEdge(pt1, pt2):
     d = np.array(pt2) - np.array(pt1)
-    return np.sum(np.abs(d)) != 2
+    return np.sum(np.abs(d)) == 2
 
-#@jit(nopython=True,cache=True)
-def findInnerEdges2(pts):
+@jit(nopython=True,cache=True)
+def findOuterEdges(pts):
     return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
-            enumerate(pts[(i+1):]) if isInnerEdge(p1, p2)]
+            enumerate(pts[(i+1):]) if isOuterEdge(p1, p2)]
 
-#@jit(nopython=True,cache=True)
-def findOuterEdges2(pts):
-    return [(i,k+i+1) for i, p1 in enumerate(pts) for k, p2 in
-            enumerate(pts[(i+1):]) if not isInnerEdge2(p1, p2)]
-
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def cube2outerTrEdgeList(cube, cutCedgeIdxList):
     cutEdges = [(i, e) for i, e in enumerate(cube) if e in cutCedgeIdxList]
     cutEdgeCoordList = [edgeRelCoordMapConst[i[0]] for i in cutEdges]
-    outerEdgeIdxList = findOuterEdges2(cutEdgeCoordList)
-    return [(cutEdges[i[0]], cutEdges[i[1]]) for i in outerEdgeIdxList]
+    outerEdgeIdxList = findOuterEdges(List(cutEdgeCoordList))
+    return List([(cutEdges[i[0]], cutEdges[i[1]]) for i in outerEdgeIdxList])
 
-#@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True,parallel=True)
+#def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
+#    r=[cube2outerTrEdgeList(cube, cutCedgeIdxList) for cube in cube2edgeIdxList]
+#    return r
+
+@jit(nopython=True,cache=True,parallel=True)
 def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
-    r=[cube2outerTrEdgeList(cube, cutCedgeIdxList) for cube in cube2edgeIdxList]
+    r = List([cube2outerTrEdgeList(cube2edgeIdxList[0],
+        cutCedgeIdxList)]*len(cube2edgeIdxList))
+    for i in prange(len(cube2edgeIdxList)):
+        r[i] = cube2outerTrEdgeList(cube2edgeIdxList[i], cutCedgeIdxList)
     return r
+
+
+def isComplexCube(outerTrEdgesList):
+    h = {}
+    for f in outerTrEdgesList:
+        for e in f:
+            if e not in h:
+                h[e] = 0
+            h[e] += 1
+            if h[e] > 2:
+                return True
+    return False
 
 
 def findOuterCircs(outerTrEdgesList):
     oe = outerTrEdgesList
+    if isComplexCube(oe):
+        return []
+
     x = oe
     r = []
     while len(x) > 0:
@@ -262,23 +282,6 @@ def findOuterCirc2(outerTrEdgesList):
         c.append(e)
     print(x)
     return c
-
-#@jit(nopython=True,cache=True)
-def calcTriangles(cube2outerTrEdgesList):
-    trList = []
-    for cube in cube2outerTrEdgesList:
-        oe = [(e[0][1], e[1][1]) for e in cube]
-        #circ = findOuterCirc2(oe)
-        circs = findOuterCircs(oe)
-        for circ in circs:
-            n = len(circ)
-            trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
-            trInCubeListR = [(circ[0], circ[i+2], circ[i+1]) for i in range(n-2)]
-            trList.extend(trInCubeList)
-            trList.extend(trInCubeListR)
-        #print(cube)
-        #print(circ)
-    return trList
 
 
 def circIdx2trEdge(cube2outerTrEdgesList):
@@ -418,7 +421,7 @@ def renderAndSave(func, filename, res=1):
     print(len(precTrPtsList))
 
     t0 = time.time()
-    cube2outerTrEdgesList = findOuterTrEdges(c2e, cCeI)
+    cube2outerTrEdgesList = findOuterTrEdges(List(c2e), List(cCeI))
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
     t0 = time.time()

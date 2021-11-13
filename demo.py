@@ -73,6 +73,6 @@ def g(x,y,z):
 
 t0 = time.time()
 
-render4.renderAndSave(g, 'demo.stl', 1)
+render4.renderAndSave(g, 'demo.stl', 0.1)
 
 print(time.time() - t0)

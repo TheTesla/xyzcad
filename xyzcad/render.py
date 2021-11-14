@@ -321,18 +321,43 @@ def extendTrEdge2circDict(x, y):
         x[k].extend(v)
     return x
 
-#@jit(nopython=True,cache=True,parallel=True)
-def calcTrianglesCor(cube2outerTrEdgesList):
+def calcCorCircList(cube2outerTrEdgesList):
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     trEdge2circDict = trEdge2circ(circList)
     repairCircs = repairComplexCircs(trEdge2circDict)
     repairTrEdge2circDict = trEdge2circ(repairCircs, len(cube2outerTrEdgesList))
     extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
     corCircList = correctCircs(trEdge2circDict)
-    trList = []
+    return corCircList
+
+
+def findConvexness(func, corCircList):
+    s = 0
+    for i, circ in enumerate(corCircList):
+        circ = np.array(circ)
+        a = circ[1] - circ[0]
+        b = circ[2] - circ[0]
+        cr = np.cross(a, b)
+        crn = cr / np.linalg.norm(cr)**0.5
+        v = func(crn[0], crn[1], crn[2])
+        s += v
+        if i > 20:
+            break
+    return s/20 > 0.5
+
+
+
+#@jit(nopython=True,cache=True,parallel=True)
+def calcTrianglesCor(corCircList, invertConvexness=False):
+    circ = corCircList[0]
+    trList = [(circ[0], circ[1], circ[2])]
+    trList.pop()
     for circ in corCircList:
         n = len(circ)
-        trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
+        if invertConvexness:
+            trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
+        else:
+            trInCubeList = [(circ[0], circ[i+2], circ[i+1]) for i in range(n-2)]
         trList.extend(trInCubeList)
     return trList
 
@@ -376,14 +401,31 @@ def renderAndSave(func, filename, res=1):
     cube2outerTrEdgesList = findOuterTrEdges(List(c2e), List(cCeI))
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
+
+
+
     t0 = time.time()
-    triangleList = calcTrianglesCor(List(cube2outerTrEdgesList))
-    print('calcTriangles time: {}'.format(time.time()-t0))
-    print(len(triangleList))
+    corCircList = calcCorCircList(List(cube2outerTrEdgesList))
+    print('calcCorCirc time: {}'.format(time.time()-t0))
+    print(len(corCircList))
+
     t0 = time.time()
-    trPtsCoordList = TrIdx2TrCoord(triangleList, cCeI, precTrPtsList)
+    circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
     print('TrIdx2TrCoord time: {}'.format(time.time()-t0))
+    print(len(circPtsCoordList))
+
+    t0 = time.time()
+    conv = findConvexness(func, circPtsCoordList)
+    print('findConvexness time: {}'.format(time.time()-t0))
+    print(conv)
+
+    t0 = time.time()
+    trPtsCoordList = calcTrianglesCor(circPtsCoordList, conv)
+    print('calcTriangles time: {}'.format(time.time()-t0))
     print(len(trPtsCoordList))
+
+
+
 
 
 

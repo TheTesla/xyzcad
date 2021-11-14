@@ -30,9 +30,6 @@ def round(x):
 @jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     s0 = func(0,0,0)
-    xOld = 0
-    yOld = 0
-    zOld = 0
     for d in np.arange(resSteps):
         iterVals = np.arange(1/(2**(d+1)),1,1/(2**d))
         iterVals = iterVals*(maxVal-minVal)+minVal
@@ -41,10 +38,7 @@ def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
                 for z in iterVals:
                     s = func(x,y,z)
                     if s != s0:
-                        return x,y,z,xOld,yOld,zOld
-                    xOld = x
-                    yOld = y
-                    zOld = z
+                        return x,y,z,0,0,0
     return 0,0,0,0,0,0
 
 @jit(nopython=True,cache=True)
@@ -87,7 +81,7 @@ def getSurface(func, startPnt=None, res=1.3):
         x,y,z = findSurfacePnt(func)
     else:
         x,y,z = startPnt
-    ptsList = List([(round(x), round(y), round(z))])
+    ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2))])
     cubeExistsSet = set()
     ptsResDict = dict()
     r = res

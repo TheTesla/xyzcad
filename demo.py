@@ -71,8 +71,13 @@ def g(x,y,z):
         return True
     return False
 
+@jit(nopython=True,cache=True)
+def h(x,y,z):
+    if 12**2 > x**2 + y**2 + z**2:
+        return True
+    return False
 t0 = time.time()
 
-render.renderAndSave(f, 'demo.stl', 1)
+render.renderAndSave(h, 'demo.stl', 1)
 
 print(time.time() - t0)

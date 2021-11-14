@@ -27,15 +27,17 @@ edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
 def round(x):
     return np.floor(10000*x+0.5)/10000
 
-@jit(nopython=True,cache=True)
+# don't use np.arange, it is very slow (1 s startup time)
+#@jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     s0 = func(0,0,0)
-    for d in np.arange(resSteps):
-        iterVals = np.arange(1/(2**(d+1)),1,1/(2**d))
-        iterVals = iterVals*(maxVal-minVal)+minVal
-        for x in iterVals:
-            for y in iterVals:
-                for z in iterVals:
+    for d in range(resSteps):
+        for xi in range(2**d):
+            x = (xi+0.5)/(2**d)*(maxVal-minVal)+minVal
+            for yi in range(2**d):
+                y = (yi+0.5)/(2**d)*(maxVal-minVal)+minVal
+                for zi in range(2**d):
+                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
                     s = func(x,y,z)
                     if s != s0:
                         return x,y,z,0,0,0
@@ -67,20 +69,24 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
-    ps = np.array(getInitPnt(func, minVal, maxVal, resSteps))
-    return getSurfacePnt(func, (ps[0],ps[1],ps[2]), (ps[3],ps[4],ps[5]), resSteps)
+    t0 = time.time()
+    ps = getInitPnt(func, minVal, maxVal, resSteps)
+    print('  getInitPnt time: {}'.format(time.time()-t0))
+    print('  {}'.format(ps))
+    t0 = time.time()
+    p =  getSurfacePnt(func, (ps[0],ps[1],ps[2]), (ps[3],ps[4],ps[5]), resSteps)
+    print('  getSurfacePnt time: {}'.format(time.time()-t0))
+    print('  {}'.format(p))
+    return p
 
 
 
 
 @jit(nopython=True,cache=True)
-def getSurface(func, startPnt=None, res=1.3):
-    if startPnt is None:
-        x,y,z = findSurfacePnt(func)
-    else:
-        x,y,z = startPnt
+def getSurface(func, startPnt, res=1.3):
+    x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2))])
     cubeExistsSet = set()
     ptsResDict = dict()
@@ -189,16 +195,25 @@ def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return [i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]]
 
-@jit(nopython=True,cache=True,parallel=True)
+@jit(nopython=True,cache=True)
 def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
-    l = len(cutCedgeIdxList)
-    e = cutCedgeIdxList[0]
-    p = edge2ptIdxList[e]
-    r = List([getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])]*l)
-    for i in prange(l):
-        e = cutCedgeIdxList[i]
-        p = edge2ptIdxList[e]
-        r[i] = getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])
+    pL = [edge2ptIdxList[e] for e in cutCedgeIdxList]
+    pcL = [(ptCoordList[p[0]], ptCoordList[p[1]]) for p in pL]
+    r = [getSurfacePnt(func, p[0], p[1]) for p in pcL]
+    #p = pL[0]
+    #p = edge2ptIdxList[cutCedgeIdxList[0]]
+    #r = [getSurfacePnt(func, ptCoordList[p[0]],
+    #    ptCoordList[p[1]])]*len(cutCedgeIdxList)
+    #for i in prange(len(cutCedgeIdxList)):
+    #    #p = edge2ptIdxList[cutCedgeIdxList[i]]
+    #    #p = pL[i]
+    #    p = pcL[i]
+    #    #r[i] = getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])
+    #    r[i] = getSurfacePnt(func, p[0], p[1])
+    #r = [getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]]) for p in pL]
+    #r = map(lambda p: getSurfacePnt(func, ptCoordList[p[0]],
+    #    ptCoordList[p[1]]), pL)
+
     return r
 
 @jit(nopython=True,cache=True)
@@ -350,7 +365,6 @@ def findConvexness(func, corCircList):
 
 
 
-#@jit(nopython=True,cache=True,parallel=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
     circ = corCircList[0]
     trList = [(circ[0], circ[1], circ[2])]
@@ -366,11 +380,8 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 
 
 
-#@jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
-    #print(trList)
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    #print(cutCedgeIdxRevDict)
     return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
 
 
@@ -383,7 +394,11 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
-    cubesSet, ptsDict = getSurface(func, None, res)
+    p = findSurfacePnt(func)
+    print('findSurfacePnt time: {}'.format(time.time()-t0))
+    #print(p)
+    t0 = time.time()
+    cubesSet, ptsDict = getSurface(func, p, res)
     print('getSurface time: {}'.format(time.time()-t0))
     print(len(ptsDict))
     t0 = time.time()
@@ -427,33 +442,13 @@ def renderAndSave(func, filename, res=1):
     print('calcTriangles time: {}'.format(time.time()-t0))
     print(len(trPtsCoordList))
 
-
-
-
-
-
     vertices = trPtsCoordList
     solid = mesh.Mesh(np.zeros(len(vertices), dtype=mesh.Mesh.dtype))
-    #solid = mesh.Mesh(np.zeros(10, dtype=mesh.Mesh.dtype))
     for i, v in enumerate(vertices):
-        #print('{} {} {}'.format(vertices[i][0], vertices[i][1], vertices[i][2]))
-        #if i == 10:
-        #    break
         for j in range(3):
             solid.vectors[i][j] = vertices[i][j]
     solid.save(filename)
 
-#    pcd = o3d.geometry.PointCloud()
-#    pcd.points = o3d.utility.Vector3dVector(ptsResArray[:,:3])
-#    n = len(ptsResArray)
-#    pcd.colors = o3d.utility.Vector3dVector(np.array(n*[np.array([0,0,1])]))
-#    pcd.normals = o3d.utility.Vector3dVector(ptsResArray[:,3:])
-#    mesh = o3d.geometry.TriangleMesh.create_from_point_cloud_poisson(
-#            pcd, depth=8, width=0, scale=1.2, linear_fit=False)[0]
-#    mesh = o3d.geometry.TriangleMesh.compute_triangle_normals(mesh)
-#    bbox = pcd.get_axis_aligned_bounding_box()
-#    meshcrp = mesh.crop(bbox)
-#    o3d.io.write_triangle_mesh(filename, meshcrp)
 
 
 

@@ -339,11 +339,14 @@ def findConvexness(func, corCircList):
         b = circ[2] - circ[0]
         cr = np.cross(a, b)
         crn = cr / np.linalg.norm(cr)**0.5
-        v = func(crn[0], crn[1], crn[2])
+        p = crn + circ[0]
+        v = func(p[0], p[1], p[2])
         s += v
         if i > 20:
             break
-    return s/20 > 0.5
+    print(s)
+    print(i+1)
+    return s/(i+1) < 0.5
 
 
 

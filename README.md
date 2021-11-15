@@ -25,7 +25,7 @@ Let us create a sphere:
 
 ```python
 
-#/usr/bin/env python3
+#!/usr/bin/env python3
 
 from numba import jit
 from xyzcad import render

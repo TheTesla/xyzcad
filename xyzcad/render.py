@@ -200,20 +200,6 @@ def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
     pL = [edge2ptIdxList[e] for e in cutCedgeIdxList]
     pcL = [(ptCoordList[p[0]], ptCoordList[p[1]]) for p in pL]
     r = [getSurfacePnt(func, p[0], p[1]) for p in pcL]
-    #p = pL[0]
-    #p = edge2ptIdxList[cutCedgeIdxList[0]]
-    #r = [getSurfacePnt(func, ptCoordList[p[0]],
-    #    ptCoordList[p[1]])]*len(cutCedgeIdxList)
-    #for i in prange(len(cutCedgeIdxList)):
-    #    #p = edge2ptIdxList[cutCedgeIdxList[i]]
-    #    #p = pL[i]
-    #    p = pcL[i]
-    #    #r[i] = getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]])
-    #    r[i] = getSurfacePnt(func, p[0], p[1])
-    #r = [getSurfacePnt(func, ptCoordList[p[0]], ptCoordList[p[1]]) for p in pL]
-    #r = map(lambda p: getSurfacePnt(func, ptCoordList[p[0]],
-    #    ptCoordList[p[1]]), pL)
-
     return r
 
 @jit(nopython=True,cache=True)
@@ -383,13 +369,6 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
-
-
-
-
-
-
-
 
 
 def renderAndSave(func, filename, res=1):

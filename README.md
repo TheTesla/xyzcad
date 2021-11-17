@@ -40,4 +40,13 @@ render.renderAndSave(f, 'sphere.stl', 0.3)
 
 numba just in time compiler makes it a bit faster. render is the xyzcad renderer/compiler. We want a resolution of ``0.3`` mm. The output file should be ``sphere.stl``. Our sphere will have a radius of ``r = 10`` mm. 
 
+## Want to Support the project?
+
+Buy your 3d printer filament or parts using my affiliate link:
+
+[Amazon](https://amzn.to/3cj8bTB)
+
+[eBay](https://ebay.us/JyX6h0)
+
+
 

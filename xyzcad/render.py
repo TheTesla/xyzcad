@@ -213,8 +213,8 @@ def findOuterEdges(pts):
             enumerate(pts[(i+1):]) if isOuterEdge(p1, p2)]
 
 @jit(nopython=True,cache=True)
-def cube2outerTrEdgeList(cube, cutCedgeIdxList):
-    cutEdges = [(i, e) for i, e in enumerate(cube) if e in cutCedgeIdxList]
+def cube2outerTrEdgeList(cube, cutCedgeIdxSet):
+    cutEdges = [(i, e) for i, e in enumerate(cube) if e in cutCedgeIdxSet]
     cutEdgeCoordList = [edgeRelCoordMapConst[i[0]] for i in cutEdges]
     outerEdgeIdxList = findOuterEdges(List(cutEdgeCoordList))
     return List([(cutEdges[i[0]], cutEdges[i[1]]) for i in outerEdgeIdxList])
@@ -224,8 +224,9 @@ def cube2outerTrEdgeList(cube, cutCedgeIdxList):
 def findOuterTrEdges(cube2edgeIdxList, cutCedgeIdxList):
     r = List([cube2outerTrEdgeList(cube2edgeIdxList[0],
         cutCedgeIdxList)]*len(cube2edgeIdxList))
+    cutCedgeIdxSet = set(cutCedgeIdxList)
     for i in prange(len(cube2edgeIdxList)):
-        r[i] = cube2outerTrEdgeList(cube2edgeIdxList[i], cutCedgeIdxList)
+        r[i] = cube2outerTrEdgeList(cube2edgeIdxList[i], cutCedgeIdxSet)
     return r
 
 

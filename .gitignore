@@ -112,3 +112,7 @@ test_inwxcreds.conf
 cdm-docker-demo/configuration
 travis.log
 *.swp
+
+
+
+*.stl

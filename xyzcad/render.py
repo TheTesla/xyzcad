@@ -216,8 +216,8 @@ def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
 #    #    edge2ptIdxArray[i] = e
     r = np.zeros((lcceil,3))
     for i in prange(lcceil):
-        p = edge2ptIdxArray[cutCedgeIdxArray[i]]
-        r[i] = getSurfacePnt(func, ptCoordArray[p[0]], ptCoordArray[p[1]])
+        p0, p1 = edge2ptIdxArray[cutCedgeIdxArray[i]]
+        r[i] = getSurfacePnt(func, ptCoordArray[p0], ptCoordArray[p1])
     return r
 
 @jit(nopython=True,cache=True)
@@ -390,6 +390,12 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
 
 
+
+@jit(nopython=True,cache=True,parallel=True)
+def convert2Array(y, x):
+    for i in prange(len(x)):
+        y[i] = x[i]
+
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
     p = findSurfacePnt(func)
@@ -410,23 +416,30 @@ def renderAndSave(func, filename, res=1):
     print(len(cCeI))
     t0 = time.time()
 
-
+    #ptCoordArray = convert2Array(pc, (len(pc),3))
     ptCoordArray = np.zeros((len(pc),3))
-    ptCoordArray[:,:] = pc
+    convert2Array(ptCoordArray, pc)
+    #ptCoordArray[:,:] = pc
     #for i, e in enumerate(ptCoordList):
     #    ptCoordArray[i] = e
     lcceil = len(cCeI)
+
+    #cutCedgeIdxArray = convert2Array(cCeI,(lcceil), 'int')
     cutCedgeIdxArray = np.zeros((lcceil),dtype=np.dtype('int'))
-    cutCedgeIdxArray[:] = cCeI
+    convert2Array(cutCedgeIdxArray, cCeI)
+    #    cutCedgeIdxArray[:] = cCeI
     #for i, e in enumerate(cutCedgeIdxList):
     #    cutCedgeIdxArray[i] = e
+    #edge2ptIdxArray = convert2Array(e2p, (len(e2p),2), 'int')
     edge2ptIdxArray = np.zeros((len(e2p),2),dtype=np.dtype('int'))
-    edge2ptIdxArray[:,:] = e2p
+    convert2Array(edge2ptIdxArray, e2p)
+    #    edge2ptIdxArray[:,:] = e2p
     #for i, e in enumerate(edge2ptIdxList):
     #    edge2ptIdxArray[i] = e
+    print('convert datatype for precTrPnts time: {}'.format(time.time()-t0))
 
 
-
+    t0 = time.time()
     #precTrPtsList = precTrPnts(func, List(cCeI), List(e2p), List(pc))
     precTrPtsList = precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray,
             ptCoordArray)

@@ -4,6 +4,7 @@ from xyzcad import render
 from numba import jit, prange
 import math
 import numpy as np
+import time
 
 @jit
 def screwprofile(x):
@@ -92,7 +93,9 @@ def filtered(x,y,z):
     return False
 
 
+t0 = time.time()
 
 
 render.renderAndSave(f, 'clamp.stl', res)
 
+print(time.time() - t0)

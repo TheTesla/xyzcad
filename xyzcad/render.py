@@ -27,7 +27,19 @@ edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
 def round(x):
     return np.floor(10000*x+0.5)/10000
 
+
+@jit(nopython=True,cache=True,parallel=True)
+def initPntZ(func, s0, x, y, d, minVal, maxVal):
+    si = np.zeros((2**d),dtype=np.dtype('bool'))
+    for zi in prange(2**d):
+        z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
+        s = func(x,y,z)
+        si[zi] = s != s0
+    return si
+
+
 # don't use np.arange, it is very slow (1 s startup time)
+@jit(nopython=True,cache=True)
 #@jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
     s0 = func(0,0,0)
@@ -36,12 +48,23 @@ def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
             x = (xi+0.5)/(2**d)*(maxVal-minVal)+minVal
             for yi in range(2**d):
                 y = (yi+0.5)/(2**d)*(maxVal-minVal)+minVal
-                for zi in range(2**d):
+                si = initPntZ(func, s0, x, y, d, minVal, maxVal)
+#                si = np.zeros((2**d),dtype=np.dtype('bool'))
+#                for zi in prange(2**d):
+#                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
+#                    s = func(x,y,z)
+#                    si[zi] = s != s0
+                zia = np.where(si)[0]
+                if len(zia) > 0:
+                    zi = zia[0]
                     z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-                    s = func(x,y,z)
-                    if s != s0:
-                        return x,y,z,0,0,0
-    return 0,0,0,0,0,0
+                    return x,y,z,0.,0.,0.
+
+
+                    #if s != s0:
+                    #    return x,y,z,0,0,0
+    return 0.,0.,0.,0.,0.,0.
+
 
 @jit(nopython=True,cache=True)
 def getSurfacePnt(func, p0, p1, resSteps=24):

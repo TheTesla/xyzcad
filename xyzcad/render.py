@@ -331,6 +331,7 @@ def trEdge2circ(circList, offset=0):
                 r[(c[(k+1)%len(c)], c[k])].append((i, np.array(c[::-1])))
     return r
 
+#@jit(nopython=False,cache=True)
 def repairComplexCircs(trEdge2circDict):
     singleEdgeSet = set()
     for k, v in trEdge2circDict.items():
@@ -344,7 +345,7 @@ def repairComplexCircs(trEdge2circDict):
     return repairCircs
 
 
-#@jit(nopython=True,cache=True,parallel=True)
+@jit(nopython=True,cache=True,parallel=True)
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
     circUsedSet = set()
@@ -362,6 +363,7 @@ def correctCircs(trEdge2circDict):
     return edgeResList
 
 
+@jit(nopython=True,cache=True)
 def extendTrEdge2circDict(x, y):
     for k, v in y.items():
         x[k].extend(v)

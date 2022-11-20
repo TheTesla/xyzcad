@@ -13,8 +13,8 @@
 import numpy as np
 #import open3d as o3d
 import time
-from numba import jit, prange
-from numba.typed import List
+from numba import jit, prange, types
+from numba.typed import List, Dict
 
 from stl import mesh
 
@@ -312,20 +312,23 @@ def circIdx2trEdge(cube2outerTrEdgesList):
         circList.append(circ)
     return circList
 
-#@jit(nopython=True,cache=True,parallel=True)
+@jit(nopython=True,cache=True)
 def trEdge2circ(circList, offset=0):
+    circList = List(circList)
     r = {}
-    for i, c in enumerate(circList):
+    for i in range(len(circList)):
+        c = circList[i]
         i += offset
+        i = types.int64(i)
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
-                r[(c[k], c[(k+1)%len(c)])] = [(i, c)]
+                r[(c[k], c[(k+1)%len(c)])] = List([(i, np.array(c))])
             else:
-                r[(c[k], c[(k+1)%len(c)])].append((i, c))
+                r[(c[k], c[(k+1)%len(c)])].append((i, np.array(c)))
             if (c[(k+1)%len(c)], c[k]) not in r:
-                r[(c[(k+1)%len(c)], c[k])] = [(i, c[::-1])]
+                r[(c[(k+1)%len(c)], c[k])] = List([(i, np.array(c[::-1]))])
             else:
-                r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
+                r[(c[(k+1)%len(c)], c[k])].append((i, np.array(c[::-1])))
     return r
 
 def repairComplexCircs(trEdge2circDict):
@@ -365,12 +368,27 @@ def extendTrEdge2circDict(x, y):
     return x
 
 def calcCorCircList(cube2outerTrEdgesList):
+    t0 = time.time()
     circList = circIdx2trEdge(cube2outerTrEdgesList)
+    print('  circIdx2trEdge time: {}'.format(time.time()-t0))
+    t0 = time.time()
+    print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
+    circList = List(circList)
+    t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
+    print('  trEdge2circ time: {}'.format(time.time()-t0))
+    t0 = time.time()
     repairCircs = repairComplexCircs(trEdge2circDict)
-    repairTrEdge2circDict = trEdge2circ(repairCircs, len(cube2outerTrEdgesList))
+    print('  repairComplexCircs time: {}'.format(time.time()-t0))
+    t0 = time.time()
+    repairTrEdge2circDict = trEdge2circ(List(repairCircs), len(cube2outerTrEdgesList))
+    print('  trEdge2circ time: {}'.format(time.time()-t0))
+    t0 = time.time()
     extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
+    print('  extendTrEdge2circDict time: {}'.format(time.time()-t0))
+    t0 = time.time()
     corCircList = correctCircs(trEdge2circDict)
+    print('  correctCircs time: {}'.format(time.time()-t0))
     return corCircList
 
 
@@ -477,7 +495,10 @@ def renderAndSave(func, filename, res=1):
 
 
     t0 = time.time()
-    corCircList = calcCorCircList(List(cube2outerTrEdgesList))
+    tmp = List(cube2outerTrEdgesList)
+    print('prepare calcCorCirc time: {}'.format(time.time()-t0))
+    t0 = time.time()
+    corCircList = calcCorCircList(tmp)
     print('calcCorCirc time: {}'.format(time.time()-t0))
     print(len(corCircList))
 

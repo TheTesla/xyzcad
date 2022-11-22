@@ -25,45 +25,62 @@ edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
 
 @jit(nopython=True,cache=True)
 def round(x):
-    return np.floor(10000*x+0.5)/10000
+    return np.floor(10000.*x+0.5)/10000.
 
 
-@jit(nopython=True,cache=True,parallel=True)
-def initPntZ(func, s0, x, y, d, minVal, maxVal):
-    si = np.zeros((2**d),dtype=np.dtype('bool'))
-    for zi in prange(2**d):
-        z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-        s = func(x,y,z)
-        si[zi] = s != s0
-    return si
-
-
-# don't use np.arange, it is very slow (1 s startup time)
 @jit(nopython=True,cache=True)
-#@jit(nopython=True,cache=True)
-def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
-    s0 = func(0,0,0)
+def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
+    s0 = func(0.,0.,0.)
     for d in range(resSteps):
         for xi in range(2**d):
             x = (xi+0.5)/(2**d)*(maxVal-minVal)+minVal
             for yi in range(2**d):
                 y = (yi+0.5)/(2**d)*(maxVal-minVal)+minVal
-                si = initPntZ(func, s0, x, y, d, minVal, maxVal)
-#                si = np.zeros((2**d),dtype=np.dtype('bool'))
-#                for zi in prange(2**d):
-#                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-#                    s = func(x,y,z)
-#                    si[zi] = s != s0
-                zia = np.where(si)[0]
-                if len(zia) > 0:
-                    zi = zia[0]
+                for zi in range(2**d):
                     z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-                    return x,y,z,0.,0.,0.
-
-
-                    #if s != s0:
-                    #    return x,y,z,0,0,0
+                    s = func(x,y,z)
+                    if s != s0:
+                        return x,y,z,0.,0.,0.
     return 0.,0.,0.,0.,0.,0.
+
+
+
+#@jit(nopython=True,cache=True,parallel=True)
+#def initPntZ(func, s0, x, y, d, minVal, maxVal):
+#    si = np.zeros((2**d),dtype=np.dtype('bool'))
+#    for zi in prange(2**d):
+#        z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
+#        s = func(x,y,z)
+#        si[zi] = s != s0
+#    return si
+#
+#
+## don't use np.arange, it is very slow (1 s startup time)
+#@jit(nopython=True,cache=True)
+##@jit(nopython=True,cache=True)
+#def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
+#    s0 = func(0,0,0)
+#    for d in range(resSteps):
+#        for xi in range(2**d):
+#            x = (xi+0.5)/(2**d)*(maxVal-minVal)+minVal
+#            for yi in range(2**d):
+#                y = (yi+0.5)/(2**d)*(maxVal-minVal)+minVal
+#                si = initPntZ(func, s0, x, y, d, minVal, maxVal)
+##                si = np.zeros((2**d),dtype=np.dtype('bool'))
+##                for zi in prange(2**d):
+##                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
+##                    s = func(x,y,z)
+##                    si[zi] = s != s0
+#                zia = np.where(si)[0]
+#                if len(zia) > 0:
+#                    zi = zia[0]
+#                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
+#                    return x,y,z,0.,0.,0.
+#
+#
+#                    #if s != s0:
+#                    #    return x,y,z,0,0,0
+#    return 0.,0.,0.,0.,0.,0.
 
 
 @jit(nopython=True,cache=True)
@@ -93,7 +110,7 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 #@jit(nopython=True,cache=True)
-def findSurfacePnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
+def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
     t0 = time.time()
     ps = getInitPnt(func, minVal, maxVal, resSteps)
     print('  getInitPnt time: {}'.format(time.time()-t0))
@@ -288,7 +305,7 @@ def isComplexCube(outerTrEdgesList):
 def findOuterCirc(outerTrEdgesList):
     oe = outerTrEdgesList
     x = oe
-    c = []
+    c = List()
     a,e = x.pop()
     c.append(e)
     while e!=a:
@@ -303,7 +320,7 @@ def findOuterCirc(outerTrEdgesList):
 
 @jit(nopython=True,cache=True)
 def circIdx2trEdge(cube2outerTrEdgesList):
-    circList = []
+    circList = List()
     for cube in cube2outerTrEdgesList:
         oe = [(e[0][1], e[1][1]) for e in cube]
         if isComplexCube(oe):
@@ -312,14 +329,14 @@ def circIdx2trEdge(cube2outerTrEdgesList):
         circList.append(circ)
     return circList
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def trEdge2circ(circList, offset=0):
     circList = List(circList)
     r = {}
     for i in range(len(circList)):
         c = circList[i]
         i += offset
-        i = types.int64(i)
+        #i = types.int64(i)
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
                 r[(c[k], c[(k+1)%len(c)])] = List([(i, np.array(c))])
@@ -345,7 +362,7 @@ def repairComplexCircs(trEdge2circDict):
     return repairCircs
 
 
-@jit(nopython=True,cache=True,parallel=True)
+#@jit(nopython=True,cache=True,parallel=True)
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
     circUsedSet = set()
@@ -363,7 +380,7 @@ def correctCircs(trEdge2circDict):
     return edgeResList
 
 
-@jit(nopython=True,cache=True)
+#@jit(nopython=True,cache=True)
 def extendTrEdge2circDict(x, y):
     for k, v in y.items():
         x[k].extend(v)
@@ -461,7 +478,7 @@ def renderAndSave(func, filename, res=1):
 
     #ptCoordArray = convert2Array(pc, (len(pc),3))
     ptCoordArray = np.zeros((len(pc),3))
-    convert2Array(ptCoordArray, pc)
+    convert2Array(ptCoordArray, List(pc))
     #ptCoordArray[:,:] = pc
     #for i, e in enumerate(ptCoordList):
     #    ptCoordArray[i] = e
@@ -469,13 +486,13 @@ def renderAndSave(func, filename, res=1):
 
     #cutCedgeIdxArray = convert2Array(cCeI,(lcceil), 'int')
     cutCedgeIdxArray = np.zeros((lcceil),dtype=np.dtype('int'))
-    convert2Array(cutCedgeIdxArray, cCeI)
+    convert2Array(cutCedgeIdxArray, List(cCeI))
     #    cutCedgeIdxArray[:] = cCeI
     #for i, e in enumerate(cutCedgeIdxList):
     #    cutCedgeIdxArray[i] = e
     #edge2ptIdxArray = convert2Array(e2p, (len(e2p),2), 'int')
     edge2ptIdxArray = np.zeros((len(e2p),2),dtype=np.dtype('int'))
-    convert2Array(edge2ptIdxArray, e2p)
+    convert2Array(edge2ptIdxArray, List(e2p))
     #    edge2ptIdxArray[:,:] = e2p
     #for i, e in enumerate(edge2ptIdxList):
     #    edge2ptIdxArray[i] = e

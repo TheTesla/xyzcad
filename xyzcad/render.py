@@ -109,16 +109,16 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
-    t0 = time.time()
+    #t0 = time.time()
     ps = getInitPnt(func, minVal, maxVal, resSteps)
-    print('  getInitPnt time: {}'.format(time.time()-t0))
-    print('  {}'.format(ps))
-    t0 = time.time()
+    #print('  getInitPnt time: {}'.format(time.time()-t0))
+    #print('  {}'.format(ps))
+    #t0 = time.time()
     p =  getSurfacePnt(func, (ps[0],ps[1],ps[2]), (ps[3],ps[4],ps[5]), resSteps)
-    print('  getSurfacePnt time: {}'.format(time.time()-t0))
-    print('  {}'.format(p))
+    #print('  getSurfacePnt time: {}'.format(time.time()-t0))
+    #print('  {}'.format(p))
     return p
 
 
@@ -329,9 +329,9 @@ def circIdx2trEdge(cube2outerTrEdgesList):
         circList.append(circ)
     return circList
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def trEdge2circ(circList, offset=0):
-    circList = List(circList)
+    #circList = List(circList)
     r = {}
     for i in range(len(circList)):
         c = circList[i]
@@ -339,13 +339,13 @@ def trEdge2circ(circList, offset=0):
         #i = types.int64(i)
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
-                r[(c[k], c[(k+1)%len(c)])] = List([(i, np.array(c))])
+                r[(c[k], c[(k+1)%len(c)])] = List([(i, c)])
             else:
-                r[(c[k], c[(k+1)%len(c)])].append((i, np.array(c)))
+                r[(c[k], c[(k+1)%len(c)])].append((i, c))
             if (c[(k+1)%len(c)], c[k]) not in r:
-                r[(c[(k+1)%len(c)], c[k])] = List([(i, np.array(c[::-1]))])
+                r[(c[(k+1)%len(c)], c[k])] = List([(i, c[::-1])])
             else:
-                r[(c[(k+1)%len(c)], c[k])].append((i, np.array(c[::-1])))
+                r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
     return r
 
 #@jit(nopython=False,cache=True)
@@ -392,19 +392,20 @@ def calcCorCircList(cube2outerTrEdgesList):
     print('  circIdx2trEdge time: {}'.format(time.time()-t0))
     t0 = time.time()
     print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
-    circList = List(circList)
+    circList = List([List(e) for e in circList])
     t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
     print('  trEdge2circ time: {}'.format(time.time()-t0))
     t0 = time.time()
     repairCircs = repairComplexCircs(trEdge2circDict)
     print('  repairComplexCircs time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    repairTrEdge2circDict = trEdge2circ(List(repairCircs), len(cube2outerTrEdgesList))
-    print('  trEdge2circ time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
-    print('  extendTrEdge2circDict time: {}'.format(time.time()-t0))
+    print(len(repairCircs))
+    #t0 = time.time()
+    #repairTrEdge2circDict = trEdge2circ(List(repairCircs), len(cube2outerTrEdgesList))
+    #print('  trEdge2circ time: {}'.format(time.time()-t0))
+    #t0 = time.time()
+    #extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
+    #print('  extendTrEdge2circDict time: {}'.format(time.time()-t0))
     t0 = time.time()
     corCircList = correctCircs(trEdge2circDict)
     print('  correctCircs time: {}'.format(time.time()-t0))
@@ -474,29 +475,35 @@ def renderAndSave(func, filename, res=1):
     cCeI = cutCedgeIdx(e2p, pv)
     print('cutCedgeIdx time: {}'.format(time.time()-t0))
     print(len(cCeI))
-    t0 = time.time()
+    t1 = time.time()
 
+    t0 = time.time()
     #ptCoordArray = convert2Array(pc, (len(pc),3))
     ptCoordArray = np.zeros((len(pc),3))
-    convert2Array(ptCoordArray, List(pc))
+    convert2Array(ptCoordArray, pc)
+    print(' convert pc time: {}'.format(time.time()-t0))
     #ptCoordArray[:,:] = pc
     #for i, e in enumerate(ptCoordList):
     #    ptCoordArray[i] = e
+    t0 = time.time()
     lcceil = len(cCeI)
 
     #cutCedgeIdxArray = convert2Array(cCeI,(lcceil), 'int')
     cutCedgeIdxArray = np.zeros((lcceil),dtype=np.dtype('int'))
-    convert2Array(cutCedgeIdxArray, List(cCeI))
+    convert2Array(cutCedgeIdxArray, cCeI)
+    print(' convert cCeI time: {}'.format(time.time()-t0))
     #    cutCedgeIdxArray[:] = cCeI
     #for i, e in enumerate(cutCedgeIdxList):
     #    cutCedgeIdxArray[i] = e
     #edge2ptIdxArray = convert2Array(e2p, (len(e2p),2), 'int')
+    t0 = time.time()
     edge2ptIdxArray = np.zeros((len(e2p),2),dtype=np.dtype('int'))
-    convert2Array(edge2ptIdxArray, List(e2p))
+    convert2Array(edge2ptIdxArray, e2p)
+    print(' convert e2p time: {}'.format(time.time()-t0))
     #    edge2ptIdxArray[:,:] = e2p
     #for i, e in enumerate(edge2ptIdxList):
     #    edge2ptIdxArray[i] = e
-    print('convert datatype for precTrPnts time: {}'.format(time.time()-t0))
+    print('convert datatype for precTrPnts time: {}'.format(time.time()-t1))
 
 
     t0 = time.time()

@@ -173,7 +173,7 @@ def getSurface(func, startPnt, res=1.3):
         ptsResDict[(xh,yh,zh)] = v111
     return cubeExistsSet, ptsResDict
 
-@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True,parallel=True)
 def coords2relations(cubeCoordSet, ptCoordDict, res):
     r = res
     cube2ptIdxList = List()
@@ -211,9 +211,11 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
     edge2ptIdxList = List(list(cEdgesSet))
     edge2ptIdxDict = {e: i for i, e in enumerate(edge2ptIdxList)}
 
-    cube2edgeIdxList = List()
-    for cube in cube2ptIdxList:
-        cube2edgeIdxList.append((   edge2ptIdxDict[(cube[0], cube[1])],
+    cube2edgeIdxArray = np.zeros((len(cube2ptIdxList),12),dtype='int')
+
+    for i in prange(len(cube2ptIdxList)):
+        cube = cube2ptIdxList[i]
+        cube2edgeIdxArray[i] = [  edge2ptIdxDict[(cube[0], cube[1])],
                                     edge2ptIdxDict[(cube[0], cube[2])],
                                     edge2ptIdxDict[(cube[0], cube[4])],
                                     edge2ptIdxDict[(cube[6], cube[7])],
@@ -224,9 +226,10 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
                                     edge2ptIdxDict[(cube[2], cube[3])],
                                     edge2ptIdxDict[(cube[2], cube[6])],
                                     edge2ptIdxDict[(cube[4], cube[6])],
-                                    edge2ptIdxDict[(cube[4], cube[5])] ))
+                                    edge2ptIdxDict[(cube[4], cube[5])]]
+                                    
 
-    return (cube2ptIdxList, cube2edgeIdxList, edge2ptIdxList, ptCoordList,
+    return (cube2ptIdxList, cube2edgeIdxArray, edge2ptIdxList, ptCoordList,
             ptValueList)
 
 

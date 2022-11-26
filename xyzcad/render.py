@@ -204,43 +204,45 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
                                 ptCoordDictRev[(x, yh,zh)],
                                 ptCoordDictRev[(xh,yh,zh)]]
 
-    cEdgeArray = np.zeros((cube2ptIdxArray.shape[0],12),dtype='int')
+    cEdgeArray = np.zeros((cube2ptIdxArray.shape[0]*12,2),dtype='int')
     for i in prange(cube2ptIdxArray.shape[0]):
         cube = cube2ptIdxArray[i]
-        cEdgeArray[i] = [   tuple2int64(cube[0], cube[1]),
-                            tuple2int64(cube[0], cube[2]),
-                            tuple2int64(cube[0], cube[4]),
-                            tuple2int64(cube[6], cube[7]),
-                            tuple2int64(cube[5], cube[7]),
-                            tuple2int64(cube[3], cube[7]),
-                            tuple2int64(cube[1], cube[5]),
-                            tuple2int64(cube[1], cube[3]),
-                            tuple2int64(cube[2], cube[3]),
-                            tuple2int64(cube[2], cube[6]),
-                            tuple2int64(cube[4], cube[6]),
-                            tuple2int64(cube[4], cube[5]) ]
-    cEdgesSet = set(cEdgeArray.flatten())
+        cEdgeArray[12*i+ 0] = (cube[0], cube[1])
+        cEdgeArray[12*i+ 1] = (cube[0], cube[2])
+        cEdgeArray[12*i+ 2] = (cube[0], cube[4])
+        cEdgeArray[12*i+ 3] = (cube[6], cube[7])
+        cEdgeArray[12*i+ 4] = (cube[5], cube[7])
+        cEdgeArray[12*i+ 5] = (cube[3], cube[7])
+        cEdgeArray[12*i+ 6] = (cube[1], cube[5])
+        cEdgeArray[12*i+ 7] = (cube[1], cube[3])
+        cEdgeArray[12*i+ 8] = (cube[2], cube[3])
+        cEdgeArray[12*i+ 9] = (cube[2], cube[6])
+        cEdgeArray[12*i+10] = (cube[4], cube[6])
+        cEdgeArray[12*i+11] = (cube[4], cube[5])
+    print(cEdgeArray.shape)
+    cEdgesSet = set([(e[0], e[1]) for e in cEdgeArray])
 
+    print(len(cEdgesSet))
     edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
-    edge2ptIdxDict = {e: i for i, e in enumerate(edge2ptIdxArray)}
+    edge2ptIdxDict = {(e[0], e[1]): i for i, e in enumerate(edge2ptIdxArray)}
 
     cube2edgeIdxArray = np.zeros((cube2ptIdxArray.shape[0],12),dtype='int')
 
     for i in prange(len(cube2ptIdxArray)):
         cube = cube2ptIdxArray[i]
-        cube2edgeIdxArray[i] = [edge2ptIdxDict[tuple2int64(cube[0], cube[1])],
-                                edge2ptIdxDict[tuple2int64(cube[0], cube[2])],
-                                edge2ptIdxDict[tuple2int64(cube[0], cube[4])],
-                                edge2ptIdxDict[tuple2int64(cube[6], cube[7])],
-                                edge2ptIdxDict[tuple2int64(cube[5], cube[7])],
-                                edge2ptIdxDict[tuple2int64(cube[3], cube[7])],
-                                edge2ptIdxDict[tuple2int64(cube[1], cube[5])],
-                                edge2ptIdxDict[tuple2int64(cube[1], cube[3])],
-                                edge2ptIdxDict[tuple2int64(cube[2], cube[3])],
-                                edge2ptIdxDict[tuple2int64(cube[2], cube[6])],
-                                edge2ptIdxDict[tuple2int64(cube[4], cube[6])],
-                                edge2ptIdxDict[tuple2int64(cube[4], cube[5])]]
+        cube2edgeIdxArray[i] = [edge2ptIdxDict[(cube[0], cube[1])],
+                                edge2ptIdxDict[(cube[0], cube[2])],
+                                edge2ptIdxDict[(cube[0], cube[4])],
+                                edge2ptIdxDict[(cube[6], cube[7])],
+                                edge2ptIdxDict[(cube[5], cube[7])],
+                                edge2ptIdxDict[(cube[3], cube[7])],
+                                edge2ptIdxDict[(cube[1], cube[5])],
+                                edge2ptIdxDict[(cube[1], cube[3])],
+                                edge2ptIdxDict[(cube[2], cube[3])],
+                                edge2ptIdxDict[(cube[2], cube[6])],
+                                edge2ptIdxDict[(cube[4], cube[6])],
+                                edge2ptIdxDict[(cube[4], cube[5])]]
 
     return (cube2ptIdxArray, cube2edgeIdxArray, edge2ptIdxArray, ptCoordArray,
             ptValueArray)
@@ -248,8 +250,8 @@ def coords2relations(cubeCoordSet, ptCoordDict, res):
 
 @jit(nopython=True,cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
-    return [i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
-            != ptValueList[e[1]]]
+    return np.asarray([i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
+            != ptValueList[e[1]]])
 
 @jit(nopython=True,cache=True,parallel=True)
 def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
@@ -407,8 +409,8 @@ def calcCorCircList(cube2outerTrEdgesList):
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     print('  circIdx2trEdge time: {}'.format(time.time()-t0))
     t0 = time.time()
-    print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
     circList = List([List(e) for e in circList])
+    print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
     t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
     print('  trEdge2circ time: {}'.format(time.time()-t0))
@@ -494,43 +496,17 @@ def renderAndSave(func, filename, res=1):
     t1 = time.time()
 
     t0 = time.time()
-    #ptCoordArray = convert2Array(pc, (len(pc),3))
-    ptCoordArray = np.zeros((len(pc),3))
-    convert2Array(ptCoordArray, pc)
-    print(' convert pc time: {}'.format(time.time()-t0))
-    #ptCoordArray[:,:] = pc
-    #for i, e in enumerate(ptCoordList):
-    #    ptCoordArray[i] = e
-    t0 = time.time()
     lcceil = len(cCeI)
 
-    #cutCedgeIdxArray = convert2Array(cCeI,(lcceil), 'int')
-    cutCedgeIdxArray = np.zeros((lcceil),dtype=np.dtype('int'))
-    convert2Array(cutCedgeIdxArray, cCeI)
-    print(' convert cCeI time: {}'.format(time.time()-t0))
-    #    cutCedgeIdxArray[:] = cCeI
-    #for i, e in enumerate(cutCedgeIdxList):
-    #    cutCedgeIdxArray[i] = e
-    #edge2ptIdxArray = convert2Array(e2p, (len(e2p),2), 'int')
-    t0 = time.time()
-    edge2ptIdxArray = np.zeros((len(e2p),2),dtype=np.dtype('int'))
-    convert2Array(edge2ptIdxArray, e2p)
-    print(' convert e2p time: {}'.format(time.time()-t0))
-    #    edge2ptIdxArray[:,:] = e2p
-    #for i, e in enumerate(edge2ptIdxList):
-    #    edge2ptIdxArray[i] = e
-    print('convert datatype for precTrPnts time: {}'.format(time.time()-t1))
 
 
-    t0 = time.time()
-    #precTrPtsList = precTrPnts(func, List(cCeI), List(e2p), List(pc))
-    precTrPtsList = precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray,
-            ptCoordArray)
+    precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
     t0 = time.time()
-    cube2outerTrEdgesList = findOuterTrEdges(List(c2e), List(cCeI))
+    #cube2outerTrEdgesList = findOuterTrEdges(List(c2e), List(cCeI))
+    cube2outerTrEdgesList = findOuterTrEdges(c2e, cCeI)
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
 

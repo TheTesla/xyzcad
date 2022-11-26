@@ -395,7 +395,7 @@ def correctCircs(trEdge2circDict):
         for i in range(len(c)):
             e = (c[i], c[(i+1)%len(c)])
             edgeOpList.extend([s for s in x[e[::-1]] if s[0] != ci])
-    return edgeResList
+    return List(edgeResList)
 
 
 #@jit(nopython=True,cache=True)
@@ -409,21 +409,12 @@ def calcCorCircList(cube2outerTrEdgesList):
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     print('  circIdx2trEdge time: {}'.format(time.time()-t0))
     t0 = time.time()
-    #circList = List([List(e) for e in circList])
-    print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
-    t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
     print('  trEdge2circ time: {}'.format(time.time()-t0))
     t0 = time.time()
     repairCircs = repairComplexCircs(trEdge2circDict)
     print('  repairComplexCircs time: {}'.format(time.time()-t0))
     print(len(repairCircs))
-    #t0 = time.time()
-    #repairTrEdge2circDict = trEdge2circ(List(repairCircs), len(cube2outerTrEdgesList))
-    #print('  trEdge2circ time: {}'.format(time.time()-t0))
-    #t0 = time.time()
-    #extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
-    #print('  extendTrEdge2circDict time: {}'.format(time.time()-t0))
     t0 = time.time()
     corCircList = correctCircs(trEdge2circDict)
     print('  correctCircs time: {}'.format(time.time()-t0))
@@ -449,6 +440,7 @@ def findConvexness(func, corCircList):
 
 
 
+#@jit(nopython=True,cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
     circ = corCircList[0]
     trList = [(circ[0], circ[1], circ[2])]
@@ -464,6 +456,7 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 
 
 
+@jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
@@ -505,7 +498,6 @@ def renderAndSave(func, filename, res=1):
     print(len(precTrPtsList))
 
     t0 = time.time()
-    #cube2outerTrEdgesList = findOuterTrEdges(List(c2e), List(cCeI))
     cube2outerTrEdgesList = findOuterTrEdges(c2e, cCeI)
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
@@ -513,11 +505,7 @@ def renderAndSave(func, filename, res=1):
 
 
     t0 = time.time()
-    #tmp = List(cube2outerTrEdgesList)
-    tmp = cube2outerTrEdgesList
-    print('prepare calcCorCirc time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    corCircList = calcCorCircList(tmp)
+    corCircList = calcCorCircList(cube2outerTrEdgesList)
     print('calcCorCirc time: {}'.format(time.time()-t0))
     print(len(corCircList))
 

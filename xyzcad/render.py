@@ -377,7 +377,7 @@ def repairComplexCircs(trEdge2circDict):
     singleEdgeList = List(singleEdgeSet)
     while len(singleEdgeList) > 0:
         repairCircs.append(findOuterCirc(singleEdgeList))
-    return repairCircs
+    return List(repairCircs)
 
 
 @jit(nopython=True,cache=True)
@@ -398,7 +398,7 @@ def correctCircs(trEdge2circDict):
     return List(edgeResList)
 
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def extendTrEdge2circDict(x, y):
     for k, v in y.items():
         x[k].extend(v)
@@ -415,6 +415,12 @@ def calcCorCircList(cube2outerTrEdgesList):
     repairCircs = repairComplexCircs(trEdge2circDict)
     print('  repairComplexCircs time: {}'.format(time.time()-t0))
     print(len(repairCircs))
+    t0 = time.time()
+    repairTrEdge2circDict = trEdge2circ(repairCircs, len(cube2outerTrEdgesList))
+    print('  trEdge2circ time: {}'.format(time.time()-t0))
+    t0 = time.time()
+    extendTrEdge2circDict(trEdge2circDict, repairTrEdge2circDict)
+    print('  extendTrEdge2circDict time: {}'.format(time.time()-t0))
     t0 = time.time()
     corCircList = correctCircs(trEdge2circDict)
     print('  correctCircs time: {}'.format(time.time()-t0))
@@ -440,7 +446,7 @@ def findConvexness(func, corCircList):
 
 
 
-#@jit(nopython=True,cache=True)
+@jit(nopython=True,cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
     circ = corCircList[0]
     trList = [(circ[0], circ[1], circ[2])]
@@ -459,7 +465,8 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 @jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    return [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList]
+    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in
+        trList])
 
 
 

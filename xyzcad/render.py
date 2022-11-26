@@ -173,64 +173,77 @@ def getSurface(func, startPnt, res=1.3):
         ptsResDict[(xh,yh,zh)] = v111
     return cubeExistsSet, ptsResDict
 
+
+@jit(nopython=True,cache=True)
+def tuple2int64(x0, x1):
+    return x1*2**32 + x0
+
 @jit(nopython=True,cache=True,parallel=True)
 def coords2relations(cubeCoordSet, ptCoordDict, res):
     r = res
-    cube2ptIdxList = List()
-    ptCoordList = List(list(ptCoordDict.keys()))
-    ptCoordDictRev = {e: i for i, e in enumerate(ptCoordList)}
-    ptValueList = List(list(ptCoordDict.values()))
-    for p in cubeCoordSet:
+
+    ptCoordArray = np.asarray(list(ptCoordDict.keys()))
+    ptValueArray = np.asarray(list(ptCoordDict.values()))
+
+    ptCoordDictRev = {e: i for i, e in enumerate(list(ptCoordDict.keys()))}
+
+    cubeCoordArray = np.asarray(list(cubeCoordSet))
+    cube2ptIdxArray = np.zeros((cubeCoordArray.shape[0],8),dtype='int')
+    for i in prange(cubeCoordArray.shape[0]):
+        p = cubeCoordArray[i]
         x, y, z = p
         xh = round(x+r)
         yh = round(y+r)
         zh = round(z+r)
-        cube2ptIdxList.append( ( ptCoordDictRev[(x,y,z)],
-                                 ptCoordDictRev[(xh,y,z)],
-                                 ptCoordDictRev[(x,yh,z)],
-                                 ptCoordDictRev[(xh,yh,z)],
-                                 ptCoordDictRev[(x,y,zh)],
-                                 ptCoordDictRev[(xh,y,zh)],
-                                 ptCoordDictRev[(x,yh,zh)],
-                                 ptCoordDictRev[(xh,yh,zh)]   ) )
+        cube2ptIdxArray[i] = [  ptCoordDictRev[(x, y, z )],
+                                ptCoordDictRev[(xh,y, z )],
+                                ptCoordDictRev[(x, yh,z )],
+                                ptCoordDictRev[(xh,yh,z )],
+                                ptCoordDictRev[(x, y, zh)],
+                                ptCoordDictRev[(xh,y, zh)],
+                                ptCoordDictRev[(x, yh,zh)],
+                                ptCoordDictRev[(xh,yh,zh)]]
 
-    cEdgesSet = set()
-    for cube in cube2ptIdxList:
-        cEdgesSet.add((cube[0], cube[1]))
-        cEdgesSet.add((cube[0], cube[2]))
-        cEdgesSet.add((cube[0], cube[4]))
-        cEdgesSet.add((cube[6], cube[7]))
-        cEdgesSet.add((cube[5], cube[7]))
-        cEdgesSet.add((cube[3], cube[7]))
-        cEdgesSet.add((cube[1], cube[5]))
-        cEdgesSet.add((cube[1], cube[3]))
-        cEdgesSet.add((cube[2], cube[3]))
-        cEdgesSet.add((cube[2], cube[6]))
-        cEdgesSet.add((cube[4], cube[6]))
-        cEdgesSet.add((cube[4], cube[5]))
-    edge2ptIdxList = List(list(cEdgesSet))
-    edge2ptIdxDict = {e: i for i, e in enumerate(edge2ptIdxList)}
+    cEdgeArray = np.zeros((cube2ptIdxArray.shape[0],12),dtype='int')
+    for i in prange(cube2ptIdxArray.shape[0]):
+        cube = cube2ptIdxArray[i]
+        cEdgeArray[i] = [   tuple2int64(cube[0], cube[1]),
+                            tuple2int64(cube[0], cube[2]),
+                            tuple2int64(cube[0], cube[4]),
+                            tuple2int64(cube[6], cube[7]),
+                            tuple2int64(cube[5], cube[7]),
+                            tuple2int64(cube[3], cube[7]),
+                            tuple2int64(cube[1], cube[5]),
+                            tuple2int64(cube[1], cube[3]),
+                            tuple2int64(cube[2], cube[3]),
+                            tuple2int64(cube[2], cube[6]),
+                            tuple2int64(cube[4], cube[6]),
+                            tuple2int64(cube[4], cube[5]) ]
+    cEdgesSet = set(cEdgeArray.flatten())
 
-    cube2edgeIdxArray = np.zeros((len(cube2ptIdxList),12),dtype='int')
+    edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
-    for i in prange(len(cube2ptIdxList)):
-        cube = cube2ptIdxList[i]
-        cube2edgeIdxArray[i] = [  edge2ptIdxDict[(cube[0], cube[1])],
-                                    edge2ptIdxDict[(cube[0], cube[2])],
-                                    edge2ptIdxDict[(cube[0], cube[4])],
-                                    edge2ptIdxDict[(cube[6], cube[7])],
-                                    edge2ptIdxDict[(cube[5], cube[7])],
-                                    edge2ptIdxDict[(cube[3], cube[7])],
-                                    edge2ptIdxDict[(cube[1], cube[5])],
-                                    edge2ptIdxDict[(cube[1], cube[3])],
-                                    edge2ptIdxDict[(cube[2], cube[3])],
-                                    edge2ptIdxDict[(cube[2], cube[6])],
-                                    edge2ptIdxDict[(cube[4], cube[6])],
-                                    edge2ptIdxDict[(cube[4], cube[5])]]
-                                    
+    edge2ptIdxDict = {e: i for i, e in enumerate(edge2ptIdxArray)}
 
-    return (cube2ptIdxList, cube2edgeIdxArray, edge2ptIdxList, ptCoordList,
-            ptValueList)
+    cube2edgeIdxArray = np.zeros((cube2ptIdxArray.shape[0],12),dtype='int')
+
+    for i in prange(len(cube2ptIdxArray)):
+        cube = cube2ptIdxArray[i]
+        cube2edgeIdxArray[i] = [edge2ptIdxDict[tuple2int64(cube[0], cube[1])],
+                                edge2ptIdxDict[tuple2int64(cube[0], cube[2])],
+                                edge2ptIdxDict[tuple2int64(cube[0], cube[4])],
+                                edge2ptIdxDict[tuple2int64(cube[6], cube[7])],
+                                edge2ptIdxDict[tuple2int64(cube[5], cube[7])],
+                                edge2ptIdxDict[tuple2int64(cube[3], cube[7])],
+                                edge2ptIdxDict[tuple2int64(cube[1], cube[5])],
+                                edge2ptIdxDict[tuple2int64(cube[1], cube[3])],
+                                edge2ptIdxDict[tuple2int64(cube[2], cube[3])],
+                                edge2ptIdxDict[tuple2int64(cube[2], cube[6])],
+                                edge2ptIdxDict[tuple2int64(cube[4], cube[6])],
+                                edge2ptIdxDict[tuple2int64(cube[4], cube[5])]]
+
+    return (cube2ptIdxArray, cube2edgeIdxArray, edge2ptIdxArray, ptCoordArray,
+            ptValueArray)
 
 
 @jit(nopython=True,cache=True)

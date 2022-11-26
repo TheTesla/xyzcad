@@ -366,13 +366,13 @@ def trEdge2circ(circList, offset=0):
                 r[(c[(k+1)%len(c)], c[k])].append((i, c[::-1]))
     return r
 
-#@jit(nopython=False,cache=True)
+@jit(nopython=True,cache=True)
 def repairComplexCircs(trEdge2circDict):
     singleEdgeSet = set()
     for k, v in trEdge2circDict.items():
         if len(v) != 2:
             singleEdgeSet.add(k)
-    singleEdgeSet = {e if e[1] > e[0] else e[::-1] for e in singleEdgeSet}
+    singleEdgeSet = set([e if e[1] > e[0] else e[::-1] for e in singleEdgeSet])
     repairCircs = []
     singleEdgeList = List(singleEdgeSet)
     while len(singleEdgeList) > 0:
@@ -380,7 +380,7 @@ def repairComplexCircs(trEdge2circDict):
     return repairCircs
 
 
-#@jit(nopython=True,cache=True,parallel=True)
+@jit(nopython=True,cache=True)
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
     circUsedSet = set()
@@ -409,7 +409,7 @@ def calcCorCircList(cube2outerTrEdgesList):
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     print('  circIdx2trEdge time: {}'.format(time.time()-t0))
     t0 = time.time()
-    circList = List([List(e) for e in circList])
+    #circList = List([List(e) for e in circList])
     print('  prepare trEdge2circ time: {}'.format(time.time()-t0))
     t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
@@ -513,7 +513,8 @@ def renderAndSave(func, filename, res=1):
 
 
     t0 = time.time()
-    tmp = List(cube2outerTrEdgesList)
+    #tmp = List(cube2outerTrEdgesList)
+    tmp = cube2outerTrEdgesList
     print('prepare calcCorCirc time: {}'.format(time.time()-t0))
     t0 = time.time()
     corCircList = calcCorCircList(tmp)

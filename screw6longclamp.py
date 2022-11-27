@@ -4,6 +4,7 @@ from xyzcad import render
 from numba import jit
 import math
 import numpy as np
+import time
 
 @jit
 def screwprofile(x):
@@ -50,5 +51,6 @@ def f(x,y,z):
 
     return False
 
+t0 = time.time()
 render.renderAndSave(f, 'screw6longclamp.stl', 0.1)
-
+print(f"total time: {time.time()-t0}")

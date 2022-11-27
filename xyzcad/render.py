@@ -129,7 +129,7 @@ def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2))])
     cubeExistsSet = set()
-    ptsResDict = dict()
+    ptsResDict = Dict()
     r = res
     while ptsList:
         x,y,z = ptsList.pop()
@@ -171,7 +171,10 @@ def getSurface(func, startPnt, res=1.3):
         ptsResDict[(xh,y,zh)] = v101
         ptsResDict[(x,yh,zh)] = v011
         ptsResDict[(xh,yh,zh)] = v111
-    return cubeExistsSet, ptsResDict
+    cubesArray = np.asarray(list(cubeExistsSet))
+    ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
+    ptCoordDictVals = np.asarray(list(ptsResDict.values()))
+    return cubesArray, ptCoordDictKeys, ptCoordDictVals #ptsResDict
 
 
 @jit(nopython=True,cache=True)
@@ -179,15 +182,11 @@ def tuple2int64(x0, x1):
     return x1*2**32 + x0
 
 @jit(nopython=True,cache=True,parallel=True)
-def coords2relations(cubeCoordSet, ptCoordDict, res):
+def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
     r = res
 
-    ptCoordArray = np.asarray(list(ptCoordDict.keys()))
-    ptValueArray = np.asarray(list(ptCoordDict.values()))
+    ptCoordDictRev = {(e[0], e[1], e[2]): i for i, e in enumerate(ptCoordArray)}
 
-    ptCoordDictRev = {e: i for i, e in enumerate(list(ptCoordDict.keys()))}
-
-    cubeCoordArray = np.asarray(list(cubeCoordSet))
     cube2ptIdxArray = np.zeros((cubeCoordArray.shape[0],8),dtype='int')
     for i in prange(cubeCoordArray.shape[0]):
         p = cubeCoordArray[i]
@@ -333,12 +332,10 @@ def circIdx2trEdge(cube2outerTrEdgesList):
 
 @jit(nopython=True,cache=True)
 def trEdge2circ(circList, offset=0):
-    #circList = List(circList)
-    r = {}
+    r = Dict()
     for i in range(len(circList)):
         c = circList[i]
         i += offset
-        #i = types.int64(i)
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
                 r[(c[k], c[(k+1)%len(c)])] = List([(i, c)])
@@ -388,6 +385,7 @@ def extendTrEdge2circDict(x, y):
         x[k].extend(v)
     return x
 
+#@jit(nopython=True,cache=True)
 def calcCorCircList(cube2outerTrEdgesList):
     t0 = time.time()
     circList = circIdx2trEdge(cube2outerTrEdgesList)
@@ -432,17 +430,18 @@ def findConvexness(func, corCircList):
 
 @jit(nopython=True,cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
-    circ = corCircList[0]
-    trList = [(circ[0], circ[1], circ[2])]
-    trList.pop()
-    for circ in corCircList:
-        n = len(circ)
-        if invertConvexness:
+    trList = List()
+    if invertConvexness:
+        for circ in corCircList:
+            n = len(circ)
             trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
-        else:
+            trList.extend(trInCubeList)
+    else:
+        for circ in corCircList:
+            n = len(circ)
             trInCubeList = [(circ[0], circ[i+2], circ[i+1]) for i in range(n-2)]
-        trList.extend(trInCubeList)
-    return trList
+            trList.extend(trInCubeList)
+    return np.asarray([[[p[0],p[1],p[2]] for p in c] for c in trList])
 
 
 
@@ -454,22 +453,17 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 
 
-@jit(nopython=True,cache=True,parallel=True)
-def convert2Array(y, x):
-    for i in prange(len(x)):
-        y[i] = x[i]
-
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
     p = findSurfacePnt(func)
     print('findSurfacePnt time: {}'.format(time.time()-t0))
     #print(p)
     t0 = time.time()
-    cubesSet, ptsDict = getSurface(func, p, res)
+    cubesArray, ptsKeys, ptsVals = getSurface(func, p, res)
     print('getSurface time: {}'.format(time.time()-t0))
-    print(len(ptsDict))
+    print(len(ptsKeys))
     t0 = time.time()
-    c2p, c2e, e2p, pc, pv = coords2relations(List(cubesSet), ptsDict, res)
+    c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
     print('coords2relations time: {}'.format(time.time()-t0))
     print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
         len(pc), len(pv)))
@@ -511,16 +505,18 @@ def renderAndSave(func, filename, res=1):
     print(conv)
 
     t0 = time.time()
-    trPtsCoordList = calcTrianglesCor(circPtsCoordList, conv)
+    verticesArray = calcTrianglesCor(circPtsCoordList, conv)
     print('calcTriangles time: {}'.format(time.time()-t0))
-    print(len(trPtsCoordList))
+    print(verticesArray.shape[0])
 
-    vertices = trPtsCoordList
-    solid = mesh.Mesh(np.zeros(len(vertices), dtype=mesh.Mesh.dtype))
-    for i, v in enumerate(vertices):
-        for j in range(3):
-            solid.vectors[i][j] = vertices[i][j]
+    t0 = time.time()
+    solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
+    solid.vectors[:] = verticesArray
+    print('to mesh time: {}'.format(time.time()-t0))
+    t0 = time.time()
     solid.save(filename)
+    print('save time: {}'.format(time.time()-t0))
+
 
 
 

@@ -1,9 +1,15 @@
+## Update - 27th November 2022
+
+A new, much faster version is available. It uses more numba jit compiled python code and more parallelization.
+
+The first run may be slower due to compilation time. 
+
 
 ![example image](demo.png)
 
 # xyzCad - functional cad software
 
-xyzCad is an eays to use cad software generating 3d printable stl files from a function f(x, y, z) = {True : False}.
+xyzCad is an ease to use marching cubes based cad software generating 3d printable stl files from a function f(x, y, z) = {True : False}.
 
 x, y and z are the coordinates in 3d space in mm. The function f(x, y, z) returns True or False depending on the arguments x, y and z. True means, there should be solid. False means, there is nothing.
 

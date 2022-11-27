@@ -333,8 +333,7 @@ def circIdx2trEdge(cube2outerTrEdgesList):
 @jit(nopython=True,cache=True)
 def trEdge2circ(circList, offset=0):
     r = Dict()
-    for i in range(len(circList)):
-        c = circList[i]
+    for i, c in enumerate(circList):
         i += offset
         for k in range(len(c)):
             if (c[k], c[(k+1)%len(c)]) not in r:
@@ -365,8 +364,8 @@ def repairComplexCircs(trEdge2circDict):
 def correctCircs(trEdge2circDict):
     x = trEdge2circDict
     circUsedSet = set()
-    edgeOpList = [list(x.values())[0][0]]
-    edgeResList = []
+    edgeOpList = List([list(x.values())[0][0]])
+    edgeResList = List()
     while 0 < len(edgeOpList):
         ci, c = edgeOpList.pop()
         if ci in circUsedSet:

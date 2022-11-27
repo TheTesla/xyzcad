@@ -254,24 +254,8 @@ def cutCedgeIdx(edge2ptIdxList, ptValueList):
             != ptValueList[e[1]]])
 
 @jit(nopython=True,cache=True,parallel=True)
-def precTrPnts(func, cutCedgeIdxList, edge2ptIdxList, ptCoordList):
-    ptCoordArray = ptCoordList
-    cutCedgeIdxArray = cutCedgeIdxList
-    edge2ptIdxArray = edge2ptIdxList
+def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     lcceil = len(cutCedgeIdxArray)
-#    ptCoordArray = np.zeros((len(ptCoordList),3))
-#    ptCoordArray[:,:] = ptCoordList
-#    #for i, e in enumerate(ptCoordList):
-#    #    ptCoordArray[i] = e
-#    lcceil = len(cutCedgeIdxList)
-#    cutCedgeIdxArray = np.zeros((lcceil),dtype=np.dtype('int'))
-#    cutCedgeIdxArray[:] = cutCedgeIdxList
-#    #for i, e in enumerate(cutCedgeIdxList):
-#    #    cutCedgeIdxArray[i] = e
-#    edge2ptIdxArray = np.zeros((len(edge2ptIdxList),2),dtype=np.dtype('int'))
-#    edge2ptIdxArray[:,:] = edge2ptIdxList
-#    #for i, e in enumerate(edge2ptIdxList):
-#    #    edge2ptIdxArray[i] = e
     r = np.zeros((lcceil,3))
     for i in prange(lcceil):
         p0, p1 = edge2ptIdxArray[cutCedgeIdxArray[i]]

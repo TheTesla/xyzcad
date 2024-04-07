@@ -10,7 +10,7 @@
 #######################################################################
 
 
-from numba import jit
+from numba import jit, njit
 import math
 from xyzcad import render
 import time
@@ -89,6 +89,22 @@ def k(x,y,z):
     hole = (12**2 < rd**2 + z**2) and (prd**2 > r**2)
     return base and not hole
 
-render.renderAndSave(f, 'demo.stl', 1)
+@njit
+def cube(x,y,z):
+    if z < 0:
+        return False
+    if z > 2:
+        return False
+    if y < 0:
+        return False
+    if y > 2:
+        return False
+    if x < 0:
+        return False
+    if x > 2:
+        return False
+    return True
+
+render.renderAndSave(cube, 'demo.stl', 1)
 
 print(time.time() - t0)

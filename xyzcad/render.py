@@ -18,7 +18,53 @@ from numba.typed import List, Dict
 
 from stl import mesh
 
+tlt = [[]] * 256
+tlt[0] = []
+tlt[1] = [0, 1, 2]
+tlt[2] = [2, 10, 11]
+tlt[3] = [0, 1, 10, 11]
+tlt[4] = [1, 8, 9]
+tlt[5] = [0, 8, 9, 2]
+tlt[6] = []
+tlt[7] = []
+tlt[8] = [3, 10, 9]
+tlt[9] = []
+tlt[10] = []
+tlt[11] = []
+tlt[12] = []
+tlt[13] = []
+tlt[14] = []
+tlt[15] = []
+tlt[16] = [0, 6, 7]
+tlt[17] = []
+tlt[18] = []
+tlt[19] = []
+tlt[20] = []
+tlt[21] = []
+tlt[22] = []
+tlt[23] = []
+tlt[24] = []
+tlt[25] = []
+tlt[26] = []
+tlt[27] = []
+tlt[28] = []
+tlt[29] = []
+tlt[30] = []
+tlt[31] = []
+tlt[32] = [6, 11, 4]
+tlt[33] = []
+tlt[34] = []
+tlt[35] = []
+tlt[36] = []
+tlt[37] = []
+tlt[38] = []
 
+tlt[64] = [5, 8, 7]
+
+tlt[128] = [3, 5, 4]
+#tlt[128] = [6, 0, 7]
+#tlt[192] = [10, 4, 5, 9]
+#tlt[64] = [4, 7, 1, 10]
 edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
             (+1,+1,0), (+1,-1,0), (+1,0,-1), (0,+1,-1), (-1,+1,0), (-1,0,+1),
             (0,-1,+1))
@@ -130,6 +176,7 @@ def getSurface(func, startPnt, res=1.3):
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2))])
     cubeExistsSet = set()
     ptsResDict = Dict()
+    cubeCornerValsDict = Dict()
     r = res
     while ptsList:
         x,y,z = ptsList.pop()
@@ -163,6 +210,8 @@ def getSurface(func, startPnt, res=1.3):
         if (x,y,zl) not in cubeExistsSet:
             ptsList.append((x,y,zl))
         cubeExistsSet.add((x,y,z))
+        cVal = 128*v111+64*v110+32*v101+16*v100+8*v011+4*v010+2*v001+1*v000
+        cubeCornerValsDict[(x,y,z)] = np.uint8(cVal)
         ptsResDict[(x,y,z)] = v000
         ptsResDict[(xh,y,z)] = v100
         ptsResDict[(x,yh,z)] = v010
@@ -174,7 +223,10 @@ def getSurface(func, startPnt, res=1.3):
     cubesArray = np.asarray(list(cubeExistsSet))
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
-    return cubesArray, ptCoordDictKeys, ptCoordDictVals #ptsResDict
+    cubeCornerValsDictKeys = np.asarray(list(cubeCornerValsDict.keys()))
+    cubeCornerValsDictVals = np.asarray(list(cubeCornerValsDict.values()))
+    cvList = [cubeCornerValsDict[c] for c in cubeExistsSet]
+    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList #cubeCornerValsDictKeys, cubeCornerValsDictVals
 
 
 @jit(nopython=True,cache=True)
@@ -218,10 +270,10 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
         cEdgeArray[12*i+ 9] = (cube[2], cube[6])
         cEdgeArray[12*i+10] = (cube[4], cube[6])
         cEdgeArray[12*i+11] = (cube[4], cube[5])
-    print(cEdgeArray.shape)
+    #print(cEdgeArray.shape)
     cEdgesSet = set([(e[0], e[1]) for e in cEdgeArray])
 
-    print(len(cEdgesSet))
+    #print(len(cEdgesSet))
     edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
     edge2ptIdxDict = {(e[0], e[1]): i for i, e in enumerate(edge2ptIdxArray)}
@@ -305,6 +357,7 @@ def isComplexCube(outerTrEdgesList):
 @jit(nopython=True,cache=True)
 def findOuterCirc(outerTrEdgesList):
     oe = outerTrEdgesList
+    #print(oe)
     x = oe
     c = List()
     a,e = x.pop()
@@ -389,6 +442,7 @@ def calcCorCircList(cube2outerTrEdgesList):
     t0 = time.time()
     circList = circIdx2trEdge(cube2outerTrEdgesList)
     print('  circIdx2trEdge time: {}'.format(time.time()-t0))
+    print(circList)
     t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
     print('  trEdge2circ time: {}'.format(time.time()-t0))
@@ -458,14 +512,19 @@ def renderAndSave(func, filename, res=1):
     print('findSurfacePnt time: {}'.format(time.time()-t0))
     #print(p)
     t0 = time.time()
-    cubesArray, ptsKeys, ptsVals = getSurface(func, p, res)
+    cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
     print('getSurface time: {}'.format(time.time()-t0))
-    print(len(ptsKeys))
+    print('{} - {} - {} - {}'.format(len(cubesArray), len(ptsKeys),
+                                          len(ptsVals), len(cvList)))
+    #print(len(ptsKeys))
+    print(cvList)
     t0 = time.time()
     c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
     print('coords2relations time: {}'.format(time.time()-t0))
     print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
         len(pc), len(pv)))
+    print("c2e=")
+    print(c2e)
     t0 = time.time()
     cCeI = cutCedgeIdx(e2p, pv)
     print('cutCedgeIdx time: {}'.format(time.time()-t0))
@@ -485,6 +544,8 @@ def renderAndSave(func, filename, res=1):
     cube2outerTrEdgesList = findOuterTrEdges(c2e, cCeI)
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
+    print(cube2outerTrEdgesList)
+    print([[(f[0][0], f[1][0]) for f in e] for e in cube2outerTrEdgesList])
 
 
 
@@ -492,6 +553,9 @@ def renderAndSave(func, filename, res=1):
     corCircList = calcCorCircList(cube2outerTrEdgesList)
     print('calcCorCirc time: {}'.format(time.time()-t0))
     print(len(corCircList))
+    print(corCircList)
+    print([tlt[c] for i, c in enumerate(cvList)])
+    print([c2e[i][tlt[c]] for i, c in enumerate(cvList)])
 
     t0 = time.time()
     circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)

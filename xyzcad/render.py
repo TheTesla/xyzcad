@@ -31,28 +31,36 @@ tlt[251] = [1, 9, 8]
 tlt[5] = [0, 8, 9, 2]
 tlt[250] = [0, 2, 9, 8]
 tlt[6] = []
-tlt[7] = []
+tlt[7] = [0, 8, 9, 10, 11]
+tlt[248] = [0, 11, 10, 9, 8]
 tlt[8] = [3, 10, 9]
 tlt[247] = [3, 9, 10]
 tlt[9] = []
 tlt[10] = [2, 9, 3, 11]
 tlt[245] = [2, 11, 3, 9]
-tlt[11] = []
+tlt[11] = [0, 1, 9, 3, 11]
+tlt[244] = [0, 11, 3, 9, 1]
 tlt[12] = [1, 8, 3, 10]
 tlt[243] = [1, 10, 3, 8]
-tlt[13] = []
-tlt[14] = []
+tlt[13] = [0, 8, 3, 10, 2]
+tlt[242] = [0, 2, 10, 3, 8]
+tlt[14] = [1, 8, 3, 11, 2]
+tlt[241] = [1, 2, 11, 3, 8]
 tlt[15] = [0, 8, 3, 11]
+tlt[240] = [0, 11, 3, 8]
 tlt[16] = [0, 6, 7]
 tlt[239] = [0, 7, 6]
 tlt[17] = [1, 2, 6, 7]
 tlt[238] = [1, 7, 6, 2]
 tlt[18] = []
-tlt[19] = []
+tlt[19] = [1, 10, 11, 6, 7]
+tlt[236] = [1, 7, 6, 11, 10]
 tlt[20] = []
-tlt[21] = []
+tlt[21] = [2, 6, 7, 8, 9]
+tlt[234] = [2, 9, 8, 7, 6]
 tlt[22] = []
-tlt[23] = []
+tlt[23] = [6, 7, 8, 9, 10, 11]
+tlt[232] = [11, 10, 9, 8, 7, 6]
 tlt[24] = []
 tlt[25] = []
 tlt[26] = []
@@ -66,40 +74,91 @@ tlt[223] = [6, 4, 11]
 tlt[33] = []
 tlt[34] = [2, 10, 4, 6]
 tlt[221] = [2, 6, 4, 10]
-tlt[35] = []
+tlt[35] = [0, 1, 10, 4, 6]
+tlt[220] = [0, 6, 4, 10, 1]
 tlt[36] = []
 tlt[37] = []
 tlt[38] = []
 
+tlt[42] = [2, 9, 3, 4, 6]
+tlt[213] = [2, 6, 4, 3, 9]
+
+tlt[43] = [0, 1, 9, 3, 4, 6]
+tlt[212] = [6, 4, 3, 9, 1, 0]
+
 tlt[48] = [0, 11, 4, 7]
 tlt[207] = [0, 7, 4, 11]
 
+tlt[49] = [1, 2, 11, 4, 7]
+tlt[206] = [1, 7, 4, 11, 2]
+
+tlt[50] = [0, 2, 10, 4, 7]
+tlt[205] = [0, 7, 4, 10, 2]
+
 tlt[51] = [1, 10, 4, 7]
+tlt[204] = [1, 7, 4, 10]
 
 tlt[64] = [5, 8, 7]
 tlt[191] = [5, 7, 8]
 
 tlt[68] = [1, 7, 5, 9]
+tlt[187] = [1, 9, 5, 7]
+
+tlt[69] = [0, 2, 9, 5, 7]
+tlt[186] = [0, 7, 5, 9, 2]
+
+tlt[76] = [1, 7, 5, 3, 10]
+tlt[179] = [1, 10, 3, 5, 7]
 
 tlt[80] = [0, 6, 5, 8]
+tlt[175] = [0, 8, 5, 6]
+
+tlt[81] = [1, 8, 5, 6, 2]
+tlt[174] = [1, 2, 6, 5, 8]
+
+tlt[84] = [0, 6, 5, 9, 1]
+tlt[171] = [0, 1, 9, 5, 6]
 
 tlt[85] = [2, 6, 5, 9]
+tlt[170] = [2, 9, 5, 6]
 
 tlt[127] = [3, 4, 5]
 tlt[128] = [3, 5, 4]
 
+tlt[112] = [0, 11, 4, 5, 8]
+tlt[143] = [0, 8, 5, 4, 11]
+
+tlt[115] = [1, 10, 4, 5, 8]
+tlt[140] = [1, 8, 5, 4, 10]
+
+tlt[119] = [4, 5, 9, 10]
 tlt[136] = [4, 10, 9, 5]
 
+tlt[95] = [3, 11, 6, 5]
 tlt[160] = [3, 5, 6, 11]
 
-tlt[170] = [2, 9, 5, 6]
+tlt[79] = [0, 7, 5, 3, 11]
+tlt[176] = [0, 11, 3, 5, 7]
 
 
+tlt[77] = [7, 5, 3, 10, 2, 0]
+tlt[178] = [0, 2, 10, 3, 5, 7]
+
+
+tlt[63] = [3, 4, 7, 8]
 tlt[192] = [3, 8, 7, 4]
 
-tlt[204] = [1, 7, 4, 10]
+tlt[59] = [1, 9, 3, 4, 7]
+tlt[196] = [1, 7, 4, 3, 9]
 
-tlt[240] = [0, 11, 3, 8]
+tlt[55] = [4, 10, 9, 8, 7]
+tlt[200] = [4, 7, 8, 9, 10]
+
+tlt[47] = [0, 8, 3, 4, 6]
+tlt[208] = [0, 6, 4, 3, 8]
+
+tlt[31] = [3, 11, 6, 7, 8]
+tlt[224] = [3, 8, 7, 6, 11]
 #tlt[128] = [6, 0, 7]
 #tlt[192] = [10, 4, 5, 9]
 #tlt[64] = [4, 7, 1, 10]
@@ -514,7 +573,7 @@ def findConvexness(func, corCircList):
         s += v
         if i > 20:
             break
-    print(s)
+    #print(s)
     print(i+1)
     return s/(i+1) < 0.5
 
@@ -556,7 +615,7 @@ def renderAndSave(func, filename, res=1):
     print('{} - {} - {} - {}'.format(len(cubesArray), len(ptsKeys),
                                           len(ptsVals), len(cvList)))
     #print(len(ptsKeys))
-    print(cvList)
+    #print(cvList)
     t0 = time.time()
     c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
     print('coords2relations time: {}'.format(time.time()-t0))
@@ -592,13 +651,20 @@ def renderAndSave(func, filename, res=1):
     #cube2outerTrEdgesList = [list(c2e[i][tlt[c]]) for i, c in enumerate(cvList)]
     #print(cube2outerTrEdgesList)
     circList = [List(c2e[i][tlt[c]]) for i, c in enumerate(cvList)]
-    print(circList)
+    hist = [0]*256
+    tmp = [list(c2e[i][tlt[c]]) for i, c in enumerate(cvList)]
+    ne = [c for c in cvList if len(tlt[c]) == 0]
+    print(ne)
+    for e in ne:
+        hist[e] += 1
+    print([(i, e) for i, e in enumerate(hist) if e != 0])
     t0 = time.time()
     #corCircList = calcCorCircList(cube2outerTrEdgesList)
-    corCircList = calcCorCircList(cube2outerTrEdgesList, circList)
+    #corCircList = calcCorCircList(cube2outerTrEdgesList, circList)
+    corCircList = circList
     print('calcCorCirc time: {}'.format(time.time()-t0))
     print(len(corCircList))
-    print(corCircList)
+    #print(corCircList)
     #print([tlt[c] for i, c in enumerate(cvList)])
     #print([list(c2e[i][tlt[c]]) for i, c in enumerate(cvList)])
     #corCircList = corCircList2

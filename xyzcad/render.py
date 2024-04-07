@@ -21,22 +21,32 @@ from stl import mesh
 tlt = [[]] * 256
 tlt[0] = []
 tlt[1] = [0, 1, 2]
+tlt[254] = [0, 2, 1]
 tlt[2] = [2, 10, 11]
+tlt[253] = [2, 11, 10]
 tlt[3] = [0, 1, 10, 11]
+tlt[252] = [0, 11, 10, 1]
 tlt[4] = [1, 8, 9]
+tlt[251] = [1, 9, 8]
 tlt[5] = [0, 8, 9, 2]
+tlt[250] = [0, 2, 9, 8]
 tlt[6] = []
 tlt[7] = []
 tlt[8] = [3, 10, 9]
+tlt[247] = [3, 9, 10]
 tlt[9] = []
-tlt[10] = []
+tlt[10] = [2, 9, 3, 11]
+tlt[245] = [2, 11, 3, 9]
 tlt[11] = []
-tlt[12] = []
+tlt[12] = [1, 8, 3, 10]
+tlt[243] = [1, 10, 3, 8]
 tlt[13] = []
 tlt[14] = []
-tlt[15] = []
+tlt[15] = [0, 8, 3, 11]
 tlt[16] = [0, 6, 7]
-tlt[17] = []
+tlt[239] = [0, 7, 6]
+tlt[17] = [1, 2, 6, 7]
+tlt[238] = [1, 7, 6, 2]
 tlt[18] = []
 tlt[19] = []
 tlt[20] = []
@@ -52,16 +62,44 @@ tlt[29] = []
 tlt[30] = []
 tlt[31] = []
 tlt[32] = [6, 11, 4]
+tlt[223] = [6, 4, 11]
 tlt[33] = []
-tlt[34] = []
+tlt[34] = [2, 10, 4, 6]
+tlt[221] = [2, 6, 4, 10]
 tlt[35] = []
 tlt[36] = []
 tlt[37] = []
 tlt[38] = []
 
-tlt[64] = [5, 8, 7]
+tlt[48] = [0, 11, 4, 7]
+tlt[207] = [0, 7, 4, 11]
 
+tlt[51] = [1, 10, 4, 7]
+
+tlt[64] = [5, 8, 7]
+tlt[191] = [5, 7, 8]
+
+tlt[68] = [1, 7, 5, 9]
+
+tlt[80] = [0, 6, 5, 8]
+
+tlt[85] = [2, 6, 5, 9]
+
+tlt[127] = [3, 4, 5]
 tlt[128] = [3, 5, 4]
+
+tlt[136] = [4, 10, 9, 5]
+
+tlt[160] = [3, 5, 6, 11]
+
+tlt[170] = [2, 9, 5, 6]
+
+
+tlt[192] = [3, 8, 7, 4]
+
+tlt[204] = [1, 7, 4, 10]
+
+tlt[240] = [0, 11, 3, 8]
 #tlt[128] = [6, 0, 7]
 #tlt[192] = [10, 4, 5, 9]
 #tlt[64] = [4, 7, 1, 10]
@@ -438,11 +476,12 @@ def extendTrEdge2circDict(x, y):
     return x
 
 #@jit(nopython=True,cache=True)
-def calcCorCircList(cube2outerTrEdgesList):
+#def calcCorCircList(cube2outerTrEdgesList):
+def calcCorCircList(cube2outerTrEdgesList, circList):
     t0 = time.time()
-    circList = circIdx2trEdge(cube2outerTrEdgesList)
-    print('  circIdx2trEdge time: {}'.format(time.time()-t0))
-    print(circList)
+    #circList = circIdx2trEdge(cube2outerTrEdgesList)
+    #print('  circIdx2trEdge time: {}'.format(time.time()-t0))
+    #print(circList)
     t0 = time.time()
     trEdge2circDict = trEdge2circ(circList)
     print('  trEdge2circ time: {}'.format(time.time()-t0))
@@ -523,8 +562,8 @@ def renderAndSave(func, filename, res=1):
     print('coords2relations time: {}'.format(time.time()-t0))
     print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
         len(pc), len(pv)))
-    print("c2e=")
-    print(c2e)
+    #print("c2e=")
+    #print(c2e)
     t0 = time.time()
     cCeI = cutCedgeIdx(e2p, pv)
     print('cutCedgeIdx time: {}'.format(time.time()-t0))
@@ -544,18 +583,25 @@ def renderAndSave(func, filename, res=1):
     cube2outerTrEdgesList = findOuterTrEdges(c2e, cCeI)
     print('findOuterTrEdges time: {}'.format(time.time()-t0))
     print(len(cube2outerTrEdgesList))
-    print(cube2outerTrEdgesList)
-    print([[(f[0][0], f[1][0]) for f in e] for e in cube2outerTrEdgesList])
+    #print(cube2outerTrEdgesList)
+    #print([[(f[0][0], f[1][0]) for f in e] for e in cube2outerTrEdgesList])
 
 
 
+    #print(cube2outerTrEdgesList)
+    #cube2outerTrEdgesList = [list(c2e[i][tlt[c]]) for i, c in enumerate(cvList)]
+    #print(cube2outerTrEdgesList)
+    circList = [List(c2e[i][tlt[c]]) for i, c in enumerate(cvList)]
+    print(circList)
     t0 = time.time()
-    corCircList = calcCorCircList(cube2outerTrEdgesList)
+    #corCircList = calcCorCircList(cube2outerTrEdgesList)
+    corCircList = calcCorCircList(cube2outerTrEdgesList, circList)
     print('calcCorCirc time: {}'.format(time.time()-t0))
     print(len(corCircList))
     print(corCircList)
-    print([tlt[c] for i, c in enumerate(cvList)])
-    print([c2e[i][tlt[c]] for i, c in enumerate(cvList)])
+    #print([tlt[c] for i, c in enumerate(cvList)])
+    #print([list(c2e[i][tlt[c]]) for i, c in enumerate(cvList)])
+    #corCircList = corCircList2
 
     t0 = time.time()
     circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
@@ -565,12 +611,12 @@ def renderAndSave(func, filename, res=1):
     t0 = time.time()
     conv = findConvexness(func, circPtsCoordList)
     print('findConvexness time: {}'.format(time.time()-t0))
-    print(conv)
+    #print(conv)
 
     t0 = time.time()
     verticesArray = calcTrianglesCor(circPtsCoordList, conv)
     print('calcTriangles time: {}'.format(time.time()-t0))
-    print(verticesArray.shape[0])
+    #print(verticesArray.shape[0])
 
     t0 = time.time()
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))

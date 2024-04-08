@@ -18,8 +18,8 @@ from numba.typed import List, Dict
 
 from stl import mesh
 
-tlt = [[]] * 256
-tlt[0] = []
+tlt = [[0]] * 256
+#tlt[0] = []
 tlt[1] = [0, 1, 2]
 tlt[254] = [0, 2, 1]
 tlt[2] = [2, 10, 11]
@@ -30,12 +30,12 @@ tlt[4] = [1, 8, 9]
 tlt[251] = [1, 9, 8]
 tlt[5] = [0, 8, 9, 2]
 tlt[250] = [0, 2, 9, 8]
-tlt[6] = []
+#tlt[6] = []
 tlt[7] = [0, 8, 9, 10, 11]
 tlt[248] = [0, 11, 10, 9, 8]
 tlt[8] = [3, 10, 9]
 tlt[247] = [3, 9, 10]
-tlt[9] = []
+#tlt[9] = []
 tlt[10] = [2, 9, 3, 11]
 tlt[245] = [2, 11, 3, 9]
 tlt[11] = [0, 1, 9, 3, 11]
@@ -52,33 +52,35 @@ tlt[16] = [0, 6, 7]
 tlt[239] = [0, 7, 6]
 tlt[17] = [1, 2, 6, 7]
 tlt[238] = [1, 7, 6, 2]
-tlt[18] = []
+#tlt[18] = []
 tlt[19] = [1, 10, 11, 6, 7]
 tlt[236] = [1, 7, 6, 11, 10]
-tlt[20] = []
+#tlt[20] = []
 tlt[21] = [2, 6, 7, 8, 9]
 tlt[234] = [2, 9, 8, 7, 6]
-tlt[22] = []
+#tlt[22] = []
 tlt[23] = [6, 7, 8, 9, 10, 11]
 tlt[232] = [11, 10, 9, 8, 7, 6]
-tlt[24] = []
-tlt[25] = []
-tlt[26] = []
-tlt[27] = []
-tlt[28] = []
-tlt[29] = []
-tlt[30] = []
-tlt[31] = []
+#tlt[24] = []
+#tlt[25] = []
+#tlt[26] = []
+tlt[27] = [1, 9, 3, 11, 6, 7]
+tlt[228] = [7, 6, 11, 3, 9, 1]
+#tlt[28] = []
+#tlt[29] = []
+#tlt[30] = []
+#tlt[31] = []
 tlt[32] = [6, 11, 4]
 tlt[223] = [6, 4, 11]
-tlt[33] = []
+#tlt[33] = [[0, 1, 2], [4, 6, 11]]
+#tlt[222] = [[2, 1, 0], [11, 6, 4]]
 tlt[34] = [2, 10, 4, 6]
 tlt[221] = [2, 6, 4, 10]
 tlt[35] = [0, 1, 10, 4, 6]
 tlt[220] = [0, 6, 4, 10, 1]
-tlt[36] = []
-tlt[37] = []
-tlt[38] = []
+#tlt[36] = []
+#tlt[37] = []
+#tlt[38] = []
 
 tlt[42] = [2, 9, 3, 4, 6]
 tlt[213] = [2, 6, 4, 3, 9]
@@ -131,11 +133,17 @@ tlt[128] = [3, 5, 4]
 tlt[112] = [0, 11, 4, 5, 8]
 tlt[143] = [0, 8, 5, 4, 11]
 
+tlt[113] = [1, 2, 11, 4, 5, 8]
+tlt[142] = [8, 5, 4, 11, 2, 1]
+
 tlt[115] = [1, 10, 4, 5, 8]
 tlt[140] = [1, 8, 5, 4, 10]
 
 tlt[119] = [4, 5, 9, 10]
 tlt[136] = [4, 10, 9, 5]
+
+tlt[117] = [2, 11, 4, 5, 9]
+tlt[138] = [2, 9, 5, 4, 11]
 
 tlt[95] = [3, 11, 6, 5]
 tlt[160] = [3, 5, 6, 11]
@@ -605,7 +613,7 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 @jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in
+    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
         trList])
 
 

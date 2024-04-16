@@ -557,12 +557,28 @@ def renderAndSave(func, filename, res=1):
     print(len(precTrPtsList))
 
     circList = [List(c2e[i][t]) for i, c in enumerate(cvList) for t in tlt[c]]
-    hist = [0]*256
-    tmp = [c for i, c in enumerate(cvList) if len(tlt[c][0]) == 1]
+    tredgeList = [(e[i], e[(i+1)%len(e)]) for e in circList for i, f in enumerate(e)]
+    hist = [0]*2560000
+    tmp = [f for e in circList for f in e]
+    #tmp = [c for i, c in enumerate(cvList) if len(tlt[c][0]) == 1]
+
     print(tmp)
     for e in tmp:
         hist[e] += 1
-    print([(i, e) for i, e in enumerate(hist) if e != 0])
+    print([(i, e) for i, e in enumerate(hist) if e != 0 and e != 4])
+
+    hist2 = {}
+    for e in tredgeList:
+        if e not in hist2:
+            hist2[e] = 0
+            hist2[(e[1],e[0])] = 0
+        hist2[e] += 1
+        hist2[(e[1],e[0])] += 1
+
+    print(hist2)
+
+    print({k: v for k, v in hist2.items() if v != 2})
+
     corCircList = circList
     print(len(corCircList))
 

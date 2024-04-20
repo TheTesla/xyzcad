@@ -407,12 +407,13 @@ def getSurface(func, startPnt, res=1.3):
         ptsResDict[(xh,y,zh)] = v101
         ptsResDict[(x,yh,zh)] = v011
         ptsResDict[(xh,yh,zh)] = v111
-    cubesArray = np.asarray(list(cubeExistsSet))
+    cubesList = list(cubeExistsSet)
+    cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
     cubeCornerValsDictKeys = np.asarray(list(cubeCornerValsDict.keys()))
     cubeCornerValsDictVals = np.asarray(list(cubeCornerValsDict.values()))
-    cvList = [cubeCornerValsDict[c] for c in cubeExistsSet]
+    cvList = [cubeCornerValsDict[c] for c in cubesList]
     return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList #cubeCornerValsDictKeys, cubeCornerValsDictVals
 
 
@@ -517,8 +518,8 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 @jit(nopython=True,cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
-        trList])
+    #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
+    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
 
 
 
@@ -556,30 +557,63 @@ def renderAndSave(func, filename, res=1):
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
-    circList = [List(c2e[i][t]) for i, c in enumerate(cvList) for t in tlt[c]]
+    #print(c2e)
+    circList = [List([c2e[i][k] for k in t]) for i, c in enumerate(cvList) for t in tlt[c]]
+    dbgtlt = [[(c2e[i][t], i, j, c, t, k) for k in t] for i, c in enumerate(cvList) for j, t in enumerate(tlt[c])]
+    #print(dbgtlt)
     tredgeList = [(e[i], e[(i+1)%len(e)]) for e in circList for i, f in enumerate(e)]
+    tredgeListdbg = [(e[i], e[(i+1)%len(e)], k, dbgtlt[k]) for k, e in enumerate(circList) for i, f in enumerate(e)]
     hist = [0]*2560000
     tmp = [f for e in circList for f in e]
     #tmp = [c for i, c in enumerate(cvList) if len(tlt[c][0]) == 1]
 
-    print(tmp)
+    #print(tmp)
     for e in tmp:
         hist[e] += 1
     print([(i, e) for i, e in enumerate(hist) if e != 0 and e != 4])
 
     hist2 = {}
-    for e in tredgeList:
+    for i, e in enumerate(tredgeList):
         if e not in hist2:
-            hist2[e] = 0
-            hist2[(e[1],e[0])] = 0
-        hist2[e] += 1
-        hist2[(e[1],e[0])] += 1
+            hist2[e] = [i,0]
+            hist2[(e[1],e[0])] = [i,0]
+        hist2[e][1] += 1
+        hist2[(e[1],e[0])][1] += 1
 
-    print(hist2)
+    singleEdgeSet = set({})
+    for e in tredgeList:
+        if e not in singleEdgeSet:
+            if (e[1], e[0]) not in singleEdgeSet:
+                singleEdgeSet.add(e)
+            else:
+                singleEdgeSet.remove((e[1], e[0]))
 
-    print({k: v for k, v in hist2.items() if v != 2})
+    print(singleEdgeSet)
+    singleEdgeDict = {k: v for k, v in singleEdgeSet}
+    print(singleEdgeDict)
+
+    ac = []
+    while len(singleEdgeDict) > 0:
+        f = []
+        e = list(singleEdgeDict.keys())[0]
+        f.append(e)
+        while e in singleEdgeDict:
+            en = singleEdgeDict[e]
+            f.append(e)
+            del singleEdgeDict[e]
+            e = en
+        ac.append(List(f))
+    print(ac)
+
+    #print(hist2)
+
+    #print({k: v for k, v in hist2.items() if v[1] != 2})
+    #print([tredgeListdbg[v[0]] for k, v in hist2.items() if v[1] != 2])
+    #print([tredgeListdbg[v[0]][-1] for k, v in hist2.items() if v[1] != 2])
 
     corCircList = circList
+    corCircList.extend([e[::-1] for e in ac])
+    print(corCircList)
     print(len(corCircList))
 
     t0 = time.time()

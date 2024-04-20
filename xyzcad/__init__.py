@@ -13,7 +13,7 @@
 import os
 
 # VERSION
-__version__ = "0.3.0-17"
+__version__ = "0.3.0-18"
 
 
 if __name__ == '__main__':

@@ -588,21 +588,20 @@ def renderAndSave(func, filename, res=1):
             else:
                 singleEdgeSet.remove((e[1], e[0]))
 
-    print(singleEdgeSet)
+    #print(singleEdgeSet)
     singleEdgeDict = {k: v for k, v in singleEdgeSet}
-    print(singleEdgeDict)
+    #print(singleEdgeDict)
 
     ac = []
     while len(singleEdgeDict) > 0:
         f = []
         e = list(singleEdgeDict.keys())[0]
-        f.append(e)
         while e in singleEdgeDict:
             en = singleEdgeDict[e]
             f.append(e)
             del singleEdgeDict[e]
             e = en
-        ac.append(List(f))
+        ac.append(f)
     print(ac)
 
     #print(hist2)
@@ -612,8 +611,8 @@ def renderAndSave(func, filename, res=1):
     #print([tredgeListdbg[v[0]][-1] for k, v in hist2.items() if v[1] != 2])
 
     corCircList = circList
-    corCircList.extend([e[::-1] for e in ac])
-    print(corCircList)
+    corCircList.extend([List(e[::-1]) for e in ac])
+    #print(corCircList)
     print(len(corCircList))
 
     t0 = time.time()

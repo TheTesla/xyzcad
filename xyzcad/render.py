@@ -13,7 +13,7 @@
 import numpy as np
 #import open3d as o3d
 import time
-from numba import jit, prange, types
+from numba import njit, jit, prange, types
 from numba.typed import List, Dict
 
 from stl import mesh
@@ -521,6 +521,48 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
 
+#@jit(nopython=False)
+@njit
+def filter_single_edge(poly_edge_list):
+    poly_edge_list = [(e[0], e[1]) for e in poly_edge_list]
+    single_edge_set = set()
+    for e in poly_edge_list:
+        if e not in single_edge_set:
+            if (e[1], e[0]) not in single_edge_set:
+                single_edge_set.add(e)
+            else:
+                single_edge_set.remove((e[1], e[0]))
+    return single_edge_set
+
+#@jit(nopython=False)
+@njit
+def build_repair_polygons(single_edge_dict):
+    ac = List()
+    while len(single_edge_dict) > 0:
+        f = List()
+        e = List(single_edge_dict.keys())[0]
+        while e in single_edge_dict:
+            en = single_edge_dict[e]
+            f.append(e)
+            del single_edge_dict[e]
+            e = en
+        ac.append(f)
+    return ac
+
+
+#@jit(nopython=False)
+#@njit
+def repair_surface(poly_list):
+    poly_edge_list = [(e[i], e[(i+1)%len(e)]) for e in poly_list for i, f in enumerate(e)]
+
+    singleEdgeSet = filter_single_edge(poly_edge_list)
+
+    singleEdgeDict = Dict()
+    for e in singleEdgeSet:
+        singleEdgeDict[e[0]] = e[1]
+    #singleEdgeDict = {k: v for k, v in singleEdgeSet}
+    ac = build_repair_polygons(singleEdgeDict)
+    return [e[::-1] for e in ac]
 
 
 def renderAndSave(func, filename, res=1):
@@ -557,62 +599,19 @@ def renderAndSave(func, filename, res=1):
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
-    #print(c2e)
-    circList = [List([c2e[i][k] for k in t]) for i, c in enumerate(cvList) for t in tlt[c]]
-    dbgtlt = [[(c2e[i][t], i, j, c, t, k) for k in t] for i, c in enumerate(cvList) for j, t in enumerate(tlt[c])]
-    #print(dbgtlt)
-    tredgeList = [(e[i], e[(i+1)%len(e)]) for e in circList for i, f in enumerate(e)]
-    tredgeListdbg = [(e[i], e[(i+1)%len(e)], k, dbgtlt[k]) for k, e in enumerate(circList) for i, f in enumerate(e)]
-    hist = [0]*2560000
-    tmp = [f for e in circList for f in e]
-    #tmp = [c for i, c in enumerate(cvList) if len(tlt[c][0]) == 1]
+    circList = List([[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]])
 
-    #print(tmp)
-    for e in tmp:
-        hist[e] += 1
-    print([(i, e) for i, e in enumerate(hist) if e != 0 and e != 4])
+    print(circList[:3])
+    print([1 for e in circList if len(e) == 0])
 
-    hist2 = {}
-    for i, e in enumerate(tredgeList):
-        if e not in hist2:
-            hist2[e] = [i,0]
-            hist2[(e[1],e[0])] = [i,0]
-        hist2[e][1] += 1
-        hist2[(e[1],e[0])][1] += 1
 
-    singleEdgeSet = set({})
-    for e in tredgeList:
-        if e not in singleEdgeSet:
-            if (e[1], e[0]) not in singleEdgeSet:
-                singleEdgeSet.add(e)
-            else:
-                singleEdgeSet.remove((e[1], e[0]))
 
-    #print(singleEdgeSet)
-    singleEdgeDict = {k: v for k, v in singleEdgeSet}
-    #print(singleEdgeDict)
-
-    ac = []
-    while len(singleEdgeDict) > 0:
-        f = []
-        e = list(singleEdgeDict.keys())[0]
-        while e in singleEdgeDict:
-            en = singleEdgeDict[e]
-            f.append(e)
-            del singleEdgeDict[e]
-            e = en
-        ac.append(f)
-    print(ac)
-
-    #print(hist2)
-
-    #print({k: v for k, v in hist2.items() if v[1] != 2})
-    #print([tredgeListdbg[v[0]] for k, v in hist2.items() if v[1] != 2])
-    #print([tredgeListdbg[v[0]][-1] for k, v in hist2.items() if v[1] != 2])
-
+    t0 = time.time()
     corCircList = circList
-    corCircList.extend([List(e[::-1]) for e in ac])
-    #print(corCircList)
+    rep = repair_surface(circList)
+    corCircList.extend(rep)
+    #corCircList = List(corCircList)
+    print('repair_surface time: {}'.format(time.time()-t0))
     print(len(corCircList))
 
     t0 = time.time()

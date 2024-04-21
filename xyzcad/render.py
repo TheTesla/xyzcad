@@ -523,7 +523,6 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 @njit
 def filter_single_edge(poly_edge_list):
-    poly_edge_list = [(e[0], e[1]) for e in poly_edge_list]
     single_edge_set = set()
     for e in poly_edge_list:
         if e not in single_edge_set:
@@ -550,7 +549,7 @@ def build_repair_polygons(single_edge_dict):
 
 #@njit
 def repair_surface(poly_list):
-    poly_edge_list = [(e[i], e[(i+1)%len(e)]) for e in poly_list for i, f in enumerate(e)]
+    poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
 
     singleEdgeSet = filter_single_edge(poly_edge_list)
 
@@ -559,7 +558,7 @@ def repair_surface(poly_list):
         singleEdgeDict[e[0]] = e[1]
     #singleEdgeDict = {k: v for k, v in singleEdgeSet}
     ac = build_repair_polygons(singleEdgeDict)
-    return [e[::-1] for e in ac]
+    return ac
 
 
 def renderAndSave(func, filename, res=1):

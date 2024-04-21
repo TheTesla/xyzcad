@@ -532,12 +532,12 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-#@njit
+@njit
 def build_repair_polygons(single_edge_dict):
-    ac = list()
+    ac = List()
     while len(single_edge_dict) > 0:
         f = list()
-        e = list(single_edge_dict.keys())[0]
+        e = List(single_edge_dict.keys())[0]
         while e in single_edge_dict:
             en = single_edge_dict[e]
             f.append(e)
@@ -547,16 +547,11 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-#@njit
+@njit
 def repair_surface(poly_list):
     poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
-
     singleEdgeSet = filter_single_edge(poly_edge_list)
-
-    singleEdgeDict = Dict()
-    for e in singleEdgeSet:
-        singleEdgeDict[e[0]] = e[1]
-    #singleEdgeDict = {k: v for k, v in singleEdgeSet}
+    singleEdgeDict = {k: v for k, v in singleEdgeSet}
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
@@ -601,12 +596,12 @@ def renderAndSave(func, filename, res=1):
     #print([1 for e in circList if len(e) == 0])
 
 
+    circList = List(circList)
 
     t0 = time.time()
     corCircList = circList
     rep = repair_surface(circList)
-    corCircList.extend(rep)
-    corCircList = List(corCircList)
+    corCircList.extend(List(rep))
     print('repair_surface time: {}'.format(time.time()-t0))
     print(len(corCircList))
 

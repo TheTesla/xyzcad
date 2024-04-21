@@ -555,6 +555,8 @@ def repair_surface(poly_list):
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
+def calc_polygons(c2e, cvList, tlt):
+    return [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
@@ -590,13 +592,15 @@ def renderAndSave(func, filename, res=1):
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
-    circList = [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
+    t0 = time.time()
+    circList = calc_polygons(c2e, cvList, tlt)
+    #circList = [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
+    print('circList: {}'.format(time.time()-t0))
 
-    #print(circList[:3])
-    #print([1 for e in circList if len(e) == 0])
 
-
+    t0 = time.time()
     circList = List(circList)
+    print('List(circList): {}'.format(time.time()-t0))
 
     t0 = time.time()
     corCircList = circList

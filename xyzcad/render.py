@@ -595,18 +595,20 @@ def renderAndSave(func, filename, res=1):
     t0 = time.time()
     circList = calc_polygons(c2e, cvList, tlt)
     #circList = [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
-    print('circList: {}'.format(time.time()-t0))
+    print('circList time: {}'.format(time.time()-t0))
 
 
     t0 = time.time()
     circList = List(circList)
-    print('List(circList): {}'.format(time.time()-t0))
+    print('List(circList) time: {}'.format(time.time()-t0))
 
-    t0 = time.time()
     corCircList = circList
+    t0 = time.time()
     rep = repair_surface(circList)
-    corCircList.extend(List(rep))
     print('repair_surface time: {}'.format(time.time()-t0))
+    t0 = time.time()
+    corCircList.extend(List(rep))
+    print('extend time: {}'.format(time.time()-t0))
     print(len(corCircList))
 
     t0 = time.time()

@@ -521,7 +521,6 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
 
-#@jit(nopython=False)
 @njit
 def filter_single_edge(poly_edge_list):
     poly_edge_list = [(e[0], e[1]) for e in poly_edge_list]
@@ -534,13 +533,12 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-#@jit(nopython=False)
-@njit
+#@njit
 def build_repair_polygons(single_edge_dict):
-    ac = List()
+    ac = list()
     while len(single_edge_dict) > 0:
-        f = List()
-        e = List(single_edge_dict.keys())[0]
+        f = list()
+        e = list(single_edge_dict.keys())[0]
         while e in single_edge_dict:
             en = single_edge_dict[e]
             f.append(e)
@@ -550,7 +548,6 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-#@jit(nopython=False)
 #@njit
 def repair_surface(poly_list):
     poly_edge_list = [(e[i], e[(i+1)%len(e)]) for e in poly_list for i, f in enumerate(e)]
@@ -599,10 +596,10 @@ def renderAndSave(func, filename, res=1):
     print('precTrPnts time: {}'.format(time.time()-t0))
     print(len(precTrPtsList))
 
-    circList = List([[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]])
+    circList = [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
 
-    print(circList[:3])
-    print([1 for e in circList if len(e) == 0])
+    #print(circList[:3])
+    #print([1 for e in circList if len(e) == 0])
 
 
 
@@ -610,7 +607,7 @@ def renderAndSave(func, filename, res=1):
     corCircList = circList
     rep = repair_surface(circList)
     corCircList.extend(rep)
-    #corCircList = List(corCircList)
+    corCircList = List(corCircList)
     print('repair_surface time: {}'.format(time.time()-t0))
     print(len(corCircList))
 

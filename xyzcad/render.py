@@ -547,7 +547,7 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-@njit
+#@njit
 def repair_surface(poly_list):
     poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
     singleEdgeSet = filter_single_edge(poly_edge_list)

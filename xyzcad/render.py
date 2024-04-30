@@ -9,6 +9,8 @@
 #
 #######################################################################
 
+import pickle
+
 
 import numpy as np
 #import open3d as o3d
@@ -598,6 +600,9 @@ def renderAndSave(func, filename, res=1):
     print('circList time: {}'.format(time.time()-t0))
 
 
+    with open('circList.pkl', 'wb') as outp:
+        pickle.dump(circList, outp, pickle.HIGHEST_PROTOCOL)
+
     t0 = time.time()
     circList = List(circList)
     print('List(circList) time: {}'.format(time.time()-t0))
@@ -606,28 +611,6 @@ def renderAndSave(func, filename, res=1):
     t0 = time.time()
     rep = repair_surface(circList)
     print('repair_surface time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    corCircList.extend(List(rep))
-    print('extend time: {}'.format(time.time()-t0))
-    print(len(corCircList))
-
-    t0 = time.time()
-    circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
-    print('TrIdx2TrCoord time: {}'.format(time.time()-t0))
-    print(len(circPtsCoordList))
-
-    t0 = time.time()
-    verticesArray = calcTrianglesCor(circPtsCoordList, True)
-    print('calcTriangles time: {}'.format(time.time()-t0))
-    #print(verticesArray.shape[0])
-
-    t0 = time.time()
-    solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
-    solid.vectors[:] = verticesArray
-    print('to mesh time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    solid.save(filename)
-    print('save time: {}'.format(time.time()-t0))
 
 
 

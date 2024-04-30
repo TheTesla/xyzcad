@@ -13,19 +13,12 @@ import pickle
 
 from numba.typed import List
 
-def repair_surface(poly_list):
-    print("1")
-    poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
-    print("2")
+with open('circList.pkl', 'rb') as inp:
+    circList = pickle.load(inp)
 
-def main():
-    with open('circList.pkl', 'rb') as inp:
-        circList = pickle.load(inp)
+circList = List(circList)
+poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in circList for i, f in enumerate(e)]
 
-    circList = List(circList)
-    repair_surface(circList)
-
-main()
 
 
 

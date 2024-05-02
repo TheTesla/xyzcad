@@ -521,7 +521,7 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
 
-@njit
+#@njit
 def filter_single_edge(poly_edge_list):
     single_edge_set = set()
     for e in poly_edge_list:
@@ -532,12 +532,12 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-@njit
+#@njit
 def build_repair_polygons(single_edge_dict):
-    ac = List()
+    ac = [] #List()
     while len(single_edge_dict) > 0:
-        f = list()
-        e = List(single_edge_dict.keys())[0]
+        f = [] #list()
+        e = list(single_edge_dict.keys())[0]
         while e in single_edge_dict:
             en = single_edge_dict[e]
             f.append(e)
@@ -547,7 +547,7 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-@njit
+#@njit
 def repair_surface(poly_list):
     poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
     singleEdgeSet = filter_single_edge(poly_edge_list)
@@ -555,8 +555,9 @@ def repair_surface(poly_list):
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
-def calc_polygons(c2e, cvList, tlt):
-    return [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
+#@njit
+def calc_polygons(c2e, cvList, tlta):
+    return [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlta[c]]
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
@@ -593,18 +594,18 @@ def renderAndSave(func, filename, res=1):
     print(len(precTrPtsList))
 
     t0 = time.time()
+    #circList = calc_polygons(c2e, cvList, [List(e) for e in tlt])
     circList = calc_polygons(c2e, cvList, tlt)
-    #circList = [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlt[c]]
     print('circList time: {}'.format(time.time()-t0))
 
 
     t0 = time.time()
-    circList = List(circList)
+    circList2 = List(circList)
     print('List(circList) time: {}'.format(time.time()-t0))
 
-    corCircList = circList
+    corCircList = circList2
     t0 = time.time()
-    rep = repair_surface(circList)
+    rep = repair_surface(circList2)
     print('repair_surface time: {}'.format(time.time()-t0))
     t0 = time.time()
     corCircList.extend(List(rep))

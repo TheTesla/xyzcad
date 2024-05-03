@@ -521,7 +521,7 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
 
-#@njit
+@njit
 def filter_single_edge(poly_edge_list):
     single_edge_set = set()
     for e in poly_edge_list:
@@ -532,12 +532,12 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-#@njit
+@njit
 def build_repair_polygons(single_edge_dict):
-    ac = [] #List()
+    ac = List()
     while len(single_edge_dict) > 0:
-        f = [] #list()
-        e = list(single_edge_dict.keys())[0]
+        f = List()
+        e = List(single_edge_dict.keys())[0]
         while e in single_edge_dict:
             en = single_edge_dict[e]
             f.append(e)
@@ -547,80 +547,116 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-#@njit
+@njit
 def repair_surface(poly_list):
-    poly_edge_list = [(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
+    poly_edge_list = List([(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f
+                           in enumerate(e)])
     singleEdgeSet = filter_single_edge(poly_edge_list)
     singleEdgeDict = {k: v for k, v in singleEdgeSet}
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
-#@njit
+@njit
 def calc_polygons(c2e, cvList, tlta):
-    return [[c2e[i][k] for k in t] for i, c in enumerate(cvList) for t in tlta[c]]
+    return List([List([c2e[i][k] for k in t]) for i, c in enumerate(cvList) for t in
+                 tlta[c]])
+
+@njit
+def calc_closed_surface(c2e, cvList, tlta):
+    circList = calc_polygons(c2e, cvList, tlta)
+    #circList2 = List(circList)
+    circList2 = circList
+    corCircList = circList2
+    rep = repair_surface(circList2)
+    #corCircList.extend(List(rep))
+    corCircList.extend(rep)
+    return corCircList
+
+
+@njit
+def all_njit_func(func, res, tlt):
+    p = findSurfacePnt(func)
+    cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
+    c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
+    cCeI = cutCedgeIdx(e2p, pv)
+    precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
+    corCircList = calc_closed_surface(c2e, cvList, [List(e) for e in tlt])
+    circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
+    verticesArray = calcTrianglesCor(circPtsCoordList, True)
+    return verticesArray
+
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
-    p = findSurfacePnt(func)
-    print('findSurfacePnt time: {}'.format(time.time()-t0))
-    #print(p)
-    t0 = time.time()
-    cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
-    print('getSurface time: {}'.format(time.time()-t0))
-    print('{} - {} - {} - {}'.format(len(cubesArray), len(ptsKeys),
-                                          len(ptsVals), len(cvList)))
-    #print(len(ptsKeys))
-    #print(cvList)
-    t0 = time.time()
-    c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
-    print('coords2relations time: {}'.format(time.time()-t0))
-    print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
-        len(pc), len(pv)))
-    #print("c2e=")
-    #print(c2e)
-    t0 = time.time()
-    cCeI = cutCedgeIdx(e2p, pv)
-    print('cutCedgeIdx time: {}'.format(time.time()-t0))
-    print(len(cCeI))
-    t1 = time.time()
+    #p = findSurfacePnt(func)
+    #print('findSurfacePnt time: {}'.format(time.time()-t0))
+    ##print(p)
+    #t0 = time.time()
+    #cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
+    #print('getSurface time: {}'.format(time.time()-t0))
+    #print('{} - {} - {} - {}'.format(len(cubesArray), len(ptsKeys),
+    #                                      len(ptsVals), len(cvList)))
+    ##print(len(ptsKeys))
+    ##print(cvList)
+    #t0 = time.time()
+    #c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
+    #print('coords2relations time: {}'.format(time.time()-t0))
+    #print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
+    #    len(pc), len(pv)))
+    ##print("c2e=")
+    ##print(c2e)
+    #t0 = time.time()
+    #cCeI = cutCedgeIdx(e2p, pv)
+    #print('cutCedgeIdx time: {}'.format(time.time()-t0))
+    #print(len(cCeI))
+    #t1 = time.time()
 
-    t0 = time.time()
-    lcceil = len(cCeI)
-
-
-
-    precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
-    print('precTrPnts time: {}'.format(time.time()-t0))
-    print(len(precTrPtsList))
-
-    t0 = time.time()
-    #circList = calc_polygons(c2e, cvList, [List(e) for e in tlt])
-    circList = calc_polygons(c2e, cvList, tlt)
-    print('circList time: {}'.format(time.time()-t0))
+    #t0 = time.time()
+    #lcceil = len(cCeI)
 
 
-    t0 = time.time()
-    circList2 = List(circList)
-    print('List(circList) time: {}'.format(time.time()-t0))
 
-    corCircList = circList2
-    t0 = time.time()
-    rep = repair_surface(circList2)
-    print('repair_surface time: {}'.format(time.time()-t0))
-    t0 = time.time()
-    corCircList.extend(List(rep))
-    print('extend time: {}'.format(time.time()-t0))
-    print(len(corCircList))
+    #precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
+    #print('precTrPnts time: {}'.format(time.time()-t0))
+    #print(len(precTrPtsList))
 
-    t0 = time.time()
-    circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
-    print('TrIdx2TrCoord time: {}'.format(time.time()-t0))
-    print(len(circPtsCoordList))
+    ##t0 = time.time()
+    ##circList = calc_polygons(c2e, cvList, [List(e) for e in tlt])
+    ###circList = calc_polygons(c2e, cvList, tlt)
+    ##print('circList time: {}'.format(time.time()-t0))
 
-    t0 = time.time()
-    verticesArray = calcTrianglesCor(circPtsCoordList, True)
-    print('calcTriangles time: {}'.format(time.time()-t0))
-    #print(verticesArray.shape[0])
+
+    ##t0 = time.time()
+    ###circList2 = List(circList)
+    ##circList2 = circList
+    ##print('List(circList) time: {}'.format(time.time()-t0))
+
+    ##corCircList = circList2
+    ##t0 = time.time()
+    ##rep = repair_surface(circList2)
+    ##print('repair_surface time: {}'.format(time.time()-t0))
+    ##t0 = time.time()
+    ###corCircList.extend(List(rep))
+    ##corCircList.extend(rep)
+    ##print('extend time: {}'.format(time.time()-t0))
+    ##print(len(corCircList))
+    #t0 = time.time()
+    #corCircList = calc_closed_surface(c2e, cvList, [List(e) for e in tlt])
+    #print('calc_closed_surfcae time: {}'.format(time.time()-t0))
+
+
+
+    #t0 = time.time()
+    #circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
+    #print('TrIdx2TrCoord time: {}'.format(time.time()-t0))
+    #print(len(circPtsCoordList))
+
+    #t0 = time.time()
+    #verticesArray = calcTrianglesCor(circPtsCoordList, True)
+    #print('calcTriangles time: {}'.format(time.time()-t0))
+    ##print(verticesArray.shape[0])
+    verticesArray = all_njit_func(func, res, [List(e) for e in tlt])
+    print('all_njit_func time: {}'.format(time.time()-t0))
 
     t0 = time.time()
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))

@@ -13,7 +13,7 @@
 import numpy as np
 #import open3d as o3d
 import time
-from numba import njit, jit, prange, types
+from numba import njit, objmode, jit, prange, types
 from numba.typed import List, Dict
 
 from stl import mesh
@@ -256,10 +256,21 @@ edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
             (+1,+1,0), (+1,-1,0), (+1,0,-1), (0,+1,-1), (-1,+1,0), (-1,0,+1),
             (0,-1,+1))
 
+
+#def timethis(func):
+#    @njit
+#    def wrapper(*args, **kwargs):
+#        with objmode(time1='f8'):
+#            time1 = time.perf_counter()
+#        func(*args, **kwargs)
+#        with objmode():
+#            print('time: {}'.format(time.perf_counter() - time1))
+#    return wrapper
+
+
 @jit(nopython=True,cache=True)
 def round(x):
     return np.floor(10000.*x+0.5)/10000.
-
 
 @jit(nopython=True,cache=True)
 def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
@@ -519,7 +530,7 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
-    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in trList])
+    return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in trList])
 
 @njit
 def filter_single_edge(poly_edge_list):
@@ -575,14 +586,46 @@ def calc_closed_surface(c2e, cvList, tlta):
 
 @njit
 def all_njit_func(func, res, tlt):
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     p = findSurfacePnt(func)
+    with objmode():
+        print('findSurfacePnt time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
+    with objmode():
+        print('getSurface time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
+    with objmode():
+        print('coords2relations time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     cCeI = cutCedgeIdx(e2p, pv)
+    with objmode():
+        print('cutCedgeIdx time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
-    corCircList = calc_closed_surface(c2e, cvList, [List(e) for e in tlt])
+    with objmode():
+        print('precTrPnts time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
+    corCircList = calc_closed_surface(c2e, cvList, tlt)
+    with objmode():
+        print('calc_closed_surface time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
+    with objmode():
+        print('TrIdx2TrCoord time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
     verticesArray = calcTrianglesCor(circPtsCoordList, True)
+    with objmode():
+        print('calcTrianglesCor time: {}'.format(time.perf_counter() - time1))
     return verticesArray
 
 
@@ -655,7 +698,8 @@ def renderAndSave(func, filename, res=1):
     #verticesArray = calcTrianglesCor(circPtsCoordList, True)
     #print('calcTriangles time: {}'.format(time.time()-t0))
     ##print(verticesArray.shape[0])
-    verticesArray = all_njit_func(func, res, [List(e) for e in tlt])
+    tlt_L = [List(e) for e in tlt]
+    verticesArray = all_njit_func(func, res, tlt_L)
     print('all_njit_func time: {}'.format(time.time()-t0))
 
     t0 = time.time()

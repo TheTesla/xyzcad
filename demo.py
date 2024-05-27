@@ -106,6 +106,6 @@ def cube(x,y,z):
     return True
 
 #render.renderAndSave(cube, 'demo.stl', 1)
-render.renderAndSave(f, 'demo.stl', 1)
+render.renderAndSave(f, 'demo.stl', 0.1)
 
 print(time.time() - t0)

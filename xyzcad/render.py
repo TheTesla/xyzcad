@@ -518,10 +518,10 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
             trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
             trList.extend(trInCubeList)
     else:
-        for circ in corCircList:
+        for circ2 in corCircList:
             n = len(circ)
-            trInCubeList = [(circ[0], circ[i+2], circ[i+1]) for i in range(n-2)]
-            trList.extend(trInCubeList)
+            trInCubeList2 = [(circ2[0], circ2[i2+2], circ2[i2+1]) for i2 in range(n-2)]
+            trList.extend(trInCubeList2)
     return np.asarray([[[p[0],p[1],p[2]] for p in c] for c in trList])
 
 

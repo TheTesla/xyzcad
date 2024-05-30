@@ -19,7 +19,6 @@ from numba.typed import List, Dict
 from stl import mesh
 
 tlt = [[[0]]] * 256
-#tlt[0] = [[]]
 tlt[1] = [[0, 1, 2]]
 tlt[254] = [[0, 2, 1]]
 tlt[2] = [[2, 10, 11]]
@@ -252,27 +251,11 @@ tlt[128] = [[3, 5, 4]]
 
 
 
-edgeRelCoordMapConst = ((0,-1,-1), (-1,0,-1), (-1,-1,0), (0,+1,+1), (+1,0,+1),
-            (+1,+1,0), (+1,-1,0), (+1,0,-1), (0,+1,-1), (-1,+1,0), (-1,0,+1),
-            (0,-1,+1))
-
-
-#def timethis(func):
-#    @njit
-#    def wrapper(*args, **kwargs):
-#        with objmode(time1='f8'):
-#            time1 = time.perf_counter()
-#        func(*args, **kwargs)
-#        with objmode():
-#            print('time: {}'.format(time.perf_counter() - time1))
-#    return wrapper
-
-
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def round(x):
     return np.floor(10000.*x+0.5)/10000.
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
     s0 = func(0.,0.,0.)
     for d in range(resSteps):
@@ -289,45 +272,9 @@ def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 
 
 
-#@jit(nopython=True,cache=True,parallel=True)
-#def initPntZ(func, s0, x, y, d, minVal, maxVal):
-#    si = np.zeros((2**d),dtype=np.dtype('bool'))
-#    for zi in prange(2**d):
-#        z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-#        s = func(x,y,z)
-#        si[zi] = s != s0
-#    return si
-#
-#
-## don't use np.arange, it is very slow (1 s startup time)
-#@jit(nopython=True,cache=True)
-##@jit(nopython=True,cache=True)
-#def getInitPnt(func, minVal=-1000, maxVal=+1000, resSteps=24):
-#    s0 = func(0,0,0)
-#    for d in range(resSteps):
-#        for xi in range(2**d):
-#            x = (xi+0.5)/(2**d)*(maxVal-minVal)+minVal
-#            for yi in range(2**d):
-#                y = (yi+0.5)/(2**d)*(maxVal-minVal)+minVal
-#                si = initPntZ(func, s0, x, y, d, minVal, maxVal)
-##                si = np.zeros((2**d),dtype=np.dtype('bool'))
-##                for zi in prange(2**d):
-##                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-##                    s = func(x,y,z)
-##                    si[zi] = s != s0
-#                zia = np.where(si)[0]
-#                if len(zia) > 0:
-#                    zi = zia[0]
-#                    z = (zi+0.5)/(2**d)*(maxVal-minVal)+minVal
-#                    return x,y,z,0.,0.,0.
-#
-#
-#                    #if s != s0:
-#                    #    return x,y,z,0,0,0
-#    return 0.,0.,0.,0.,0.,0.
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def getSurfacePnt(func, p0, p1, resSteps=24):
     x1 = p1[0]
     y1 = p1[1]
@@ -353,22 +300,16 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
-    #t0 = time.time()
     ps = getInitPnt(func, minVal, maxVal, resSteps)
-    #print('  getInitPnt time: {}'.format(time.time()-t0))
-    #print('  {}'.format(ps))
-    #t0 = time.time()
     p =  getSurfacePnt(func, (ps[0],ps[1],ps[2]), (ps[3],ps[4],ps[5]), resSteps)
-    #print('  getSurfacePnt time: {}'.format(time.time()-t0))
-    #print('  {}'.format(p))
     return p
 
 
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2))])
@@ -465,10 +406,8 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
         cEdgeArray[12*i+ 9] = (cube[2], cube[6])
         cEdgeArray[12*i+10] = (cube[4], cube[6])
         cEdgeArray[12*i+11] = (cube[4], cube[5])
-    #print(cEdgeArray.shape)
     cEdgesSet = set([(e[0], e[1]) for e in cEdgeArray])
 
-    #print(len(cEdgesSet))
     edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
     edge2ptIdxDict = {(e[0], e[1]): i for i, e in enumerate(edge2ptIdxArray)}
@@ -494,7 +433,7 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
             ptValueArray)
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return np.asarray([i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]])
@@ -509,7 +448,7 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     return r
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
     trList = List()
     if invertConvexness:
@@ -529,7 +468,6 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 @njit(cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in trList])
 
 @njit(cache=True)
@@ -633,73 +571,6 @@ def all_njit_func(func, res, tlt):
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
-    #p = findSurfacePnt(func)
-    #print('findSurfacePnt time: {}'.format(time.time()-t0))
-    ##print(p)
-    #t0 = time.time()
-    #cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
-    #print('getSurface time: {}'.format(time.time()-t0))
-    #print('{} - {} - {} - {}'.format(len(cubesArray), len(ptsKeys),
-    #                                      len(ptsVals), len(cvList)))
-    ##print(len(ptsKeys))
-    ##print(cvList)
-    #t0 = time.time()
-    #c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
-    #print('coords2relations time: {}'.format(time.time()-t0))
-    #print('{} - {} - {} - {} - {}'.format(len(c2p), len(c2e), len(e2p),
-    #    len(pc), len(pv)))
-    ##print("c2e=")
-    ##print(c2e)
-    #t0 = time.time()
-    #cCeI = cutCedgeIdx(e2p, pv)
-    #print('cutCedgeIdx time: {}'.format(time.time()-t0))
-    #print(len(cCeI))
-    #t1 = time.time()
-
-    #t0 = time.time()
-    #lcceil = len(cCeI)
-
-
-
-    #precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
-    #print('precTrPnts time: {}'.format(time.time()-t0))
-    #print(len(precTrPtsList))
-
-    ##t0 = time.time()
-    ##circList = calc_polygons(c2e, cvList, [List(e) for e in tlt])
-    ###circList = calc_polygons(c2e, cvList, tlt)
-    ##print('circList time: {}'.format(time.time()-t0))
-
-
-    ##t0 = time.time()
-    ###circList2 = List(circList)
-    ##circList2 = circList
-    ##print('List(circList) time: {}'.format(time.time()-t0))
-
-    ##corCircList = circList2
-    ##t0 = time.time()
-    ##rep = repair_surface(circList2)
-    ##print('repair_surface time: {}'.format(time.time()-t0))
-    ##t0 = time.time()
-    ###corCircList.extend(List(rep))
-    ##corCircList.extend(rep)
-    ##print('extend time: {}'.format(time.time()-t0))
-    ##print(len(corCircList))
-    #t0 = time.time()
-    #corCircList = calc_closed_surface(c2e, cvList, [List(e) for e in tlt])
-    #print('calc_closed_surfcae time: {}'.format(time.time()-t0))
-
-
-
-    #t0 = time.time()
-    #circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
-    #print('TrIdx2TrCoord time: {}'.format(time.time()-t0))
-    #print(len(circPtsCoordList))
-
-    #t0 = time.time()
-    #verticesArray = calcTrianglesCor(circPtsCoordList, True)
-    #print('calcTriangles time: {}'.format(time.time()-t0))
-    ##print(verticesArray.shape[0])
     tlt_L = [List(e) for e in tlt]
     verticesArray = all_njit_func(func, res, tlt_L)
     print('all_njit_func time: {}'.format(time.time()-t0))

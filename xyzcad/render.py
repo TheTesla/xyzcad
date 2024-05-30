@@ -526,13 +526,13 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 
 
 
-@jit(nopython=True,cache=True)
+@njit(cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     #return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in trList])
 
-@njit
+@njit(cache=True)
 def filter_single_edge(poly_edge_list):
     single_edge_set = set()
     for e in poly_edge_list:
@@ -543,7 +543,7 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-@njit
+@njit(cache=True)
 def build_repair_polygons(single_edge_dict):
     ac = List()
     while len(single_edge_dict) > 0:
@@ -558,7 +558,7 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-@njit
+@njit(cache=True)
 def repair_surface(poly_list):
     poly_edge_list = List([(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f
                            in enumerate(e)])
@@ -567,12 +567,12 @@ def repair_surface(poly_list):
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
-@njit
+@njit(cache=True)
 def calc_polygons(c2e, cvList, tlta):
     return List([List([c2e[i][k] for k in t]) for i, c in enumerate(cvList) for t in
                  tlta[c]])
 
-@njit
+@njit(cache=True)
 def calc_closed_surface(c2e, cvList, tlta):
     circList = calc_polygons(c2e, cvList, tlta)
     #circList2 = List(circList)
@@ -584,13 +584,13 @@ def calc_closed_surface(c2e, cvList, tlta):
     return corCircList
 
 
-@njit
+@njit(cache=True)
 def all_njit_func(func, res, tlt):
-    with objmode(time1='f8'):
-        time1 = time.perf_counter()
+    with objmode(time0='f8'):
+        time0 = time.perf_counter()
     p = findSurfacePnt(func)
     with objmode():
-        print('findSurfacePnt time: {}'.format(time.perf_counter() - time1))
+        print('findSurfacePnt time: {}'.format(time.perf_counter() - time0))
     with objmode(time1='f8'):
         time1 = time.perf_counter()
     cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
@@ -626,6 +626,8 @@ def all_njit_func(func, res, tlt):
     verticesArray = calcTrianglesCor(circPtsCoordList, True)
     with objmode():
         print('calcTrianglesCor time: {}'.format(time.perf_counter() - time1))
+    with objmode():
+        print('all_njitINTERN time: {}'.format(time.perf_counter() - time0))
     return verticesArray
 
 

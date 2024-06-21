@@ -4,16 +4,15 @@
 
 #######################################################################
 #
-#    xyzCad - functional cad software for 3d printing
-#    Copyright (c) 2021 Stefan Helmert <stefan.helmert@t-online.de>
+#    xyzCad - implicit surface function cad software for 3d printing
+#    Copyright (c) 2024 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 
 
 import numpy as np
-#import open3d as o3d
 import time
-from numba import njit, objmode, jit, prange, types
+from numba import njit, objmode, prange, types
 from numba.typed import List, Dict
 
 from stl import mesh
@@ -366,10 +365,10 @@ def getSurface(func, startPnt, res=1.3):
     cubeCornerValsDictKeys = np.asarray(list(cubeCornerValsDict.keys()))
     cubeCornerValsDictVals = np.asarray(list(cubeCornerValsDict.values()))
     cvList = [cubeCornerValsDict[c] for c in cubesList]
-    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList #cubeCornerValsDictKeys, cubeCornerValsDictVals
+    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList
 
 
-@jit(nopython=True,cache=True,parallel=True)
+@njit(cache=True,parallel=True)
 def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
     r = res
 
@@ -438,7 +437,7 @@ def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return np.asarray([i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]])
 
-@jit(nopython=True,cache=True,parallel=True)
+@njit(cache=True,parallel=True)
 def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     lcceil = len(cutCedgeIdxArray)
     r = np.zeros((lcceil,3))

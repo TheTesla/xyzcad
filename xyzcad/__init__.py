@@ -5,7 +5,7 @@
 #######################################################################
 #
 #    xyzCad - functional cad software for 3d printing
-#    Copyright (c) 2021 Stefan Helmert <stefan.helmert@t-online.de>
+#    Copyright (c) 2021 - 2024 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 
@@ -13,7 +13,7 @@
 import os
 
 # VERSION
-__version__ = "0.3.0-36"
+__version__ = "0.4.0"
 
 
 if __name__ == '__main__':

@@ -5,7 +5,7 @@
 #######################################################################
 #
 #    xyzCad - implicit surface function cad software for 3d printing
-#    Copyright (c) 2024 Stefan Helmert <stefan.helmert@t-online.de>
+#    Copyright (c) 2021 - 2024 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 

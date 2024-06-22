@@ -5,7 +5,7 @@
 #######################################################################
 #
 #    xyzCad - functional cad software for 3d printing
-#    Copyright (c) 2021 Stefan Helmert <stefan.helmert@t-online.de>
+#    Copyright (c) 2021 - 2024 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 
@@ -20,7 +20,8 @@ setuptools.setup(
     version=xyzcad.__version__,
     author="Stefan Helmert",
     author_email="stefan.helmert@t-online.de",
-    description="Software renders f(x,y,z) into a printable STL.",
+    description="Software renders implicit surface function f(x,y,z) into a" \
+    +"printable STL.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/TheTesla/xyzcad",

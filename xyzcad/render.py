@@ -452,17 +452,29 @@ def getSurface(func, startPnt, res=1.3):
         if s == 8 or s == 0:
             continue
         if (xh,y,z) not in cubeExistsSet:
-            ptsList.append((xh,y,z))
+            if (not (v100 and v110 and v101 and v111)) and \
+                    (v100 or v110 or v101 or v111):
+                ptsList.append((xh,y,z))
         if (x,yh,z) not in cubeExistsSet:
-            ptsList.append((x,yh,z))
+            if (not (v010 and v110 and v011 and v111)) and \
+                    (v010 or v110 or v011 or v111):
+                ptsList.append((x,yh,z))
         if (x,y,zh) not in cubeExistsSet:
-            ptsList.append((x,y,zh))
+            if (not (v001 and v101 and v011 and v111)) and \
+                    (v001 or v101 or v011 or v111):
+                ptsList.append((x,y,zh))
         if (xl,y,z) not in cubeExistsSet:
-            ptsList.append((xl,y,z))
+            if (not (v000 and v010 and v001 and v011)) and \
+                    (v000 or v010 or v001 or v011):
+                ptsList.append((xl,y,z))
         if (x,yl,z) not in cubeExistsSet:
-            ptsList.append((x,yl,z))
+            if (not (v000 and v100 and v001 and v101)) and \
+                    (v000 or v100 or v001 or v101):
+                ptsList.append((x,yl,z))
         if (x,y,zl) not in cubeExistsSet:
-            ptsList.append((x,y,zl))
+            if (not (v000 and v100 and v010 and v110)) and \
+                    (v000 or v100 or v010 or v110):
+                ptsList.append((x,y,zl))
         cubeExistsSet.add((x,y,z))
         cVal = 128*v111+64*v110+32*v101+16*v100+8*v011+4*v010+2*v001+1*v000
         cubeCornerValsDict[(x,y,z)] = np.uint8(cVal)

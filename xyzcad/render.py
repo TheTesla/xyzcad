@@ -647,15 +647,15 @@ def all_njit_func(func, res, tlt):
     with objmode(time1='f8'):
         time1 = time.perf_counter()
     cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
-    print(f"len(cubesArray, ptsKeys, ptsVals, cvList)={len(cubesArray)}, {len(ptsKeys)}, {len(ptsVals)}, \
-          {len(cvList)}")
+    print(f"len(cubesArray, ptsKeys, ptsVals, cvList)={len(cubesArray)}, "
+          +f"{len(ptsKeys)}, {len(ptsVals)},{len(cvList)}")
     with objmode():
         print('getSurface time: {}'.format(time.perf_counter() - time1))
     with objmode(time1='f8'):
         time1 = time.perf_counter()
     c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
-    print(f"len(c2p, c2e, e2p, pc, pv)={len(c2p)}, {len(c2e)}, {len(e2p)}, \
-          {len(pc)}, {len(pv)}")
+    print(f"len(c2p, c2e, e2p, pc, pv)={len(c2p)}, {len(c2e)}, {len(e2p)}, "
+          +f"{len(pc)}, {len(pv)}")
     with objmode():
         print('coords2relations time: {}'.format(time.perf_counter() - time1))
     with objmode(time1='f8'):

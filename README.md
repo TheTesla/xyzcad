@@ -1,3 +1,9 @@
+## Update - 22nd June 2024
+
+- **Triangle Lookup Table implemented** - no defective surfaces anymore
+
+- **nearly all functions compiled with _Numba_** - faster operation 
+
 ## Update - 27th November 2022
 
 A new, much faster version is available. It uses more numba jit compiled python code and more parallelization.
@@ -33,10 +39,10 @@ Let us create a sphere:
 
 #!/usr/bin/env python3
 
-from numba import jit
+from numba import njit
 from xyzcad import render
 
-@jit(nopython=True)
+@njit
 def f(x,y,z):
     r = 10
     return r**2 > x**2 + y**2 + z**2

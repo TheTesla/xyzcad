@@ -450,7 +450,7 @@ def getSurface(func, startPnt, res=1.3):
             v101 = func(xh , y  , zh)
             v011 = 0 < (c_val_old & 128) # v111 old
             v111 = func(xh , yh , zh)
-        if d == -1:
+        elif d == -1:
             v000 = func(x  , y  , z )
             v100 = 0 < (c_val_old & 1) # v000 old
             v010 = func(x  , yh , z )
@@ -459,7 +459,16 @@ def getSurface(func, startPnt, res=1.3):
             v101 = 0 < (c_val_old & 2) # v001 old
             v011 = func(x  , yh , zh)
             v111 = 0 < (c_val_old & 8) # v011 old
-        if d == 2:
+        elif d == 2:
+            v000 = 0 < (c_val_old & 4) # v010 old
+            v100 = 0 < (c_val_old & 64) # v110 old
+            v010 = func(x  , yh , z )
+            v110 = func(xh , yh , z )
+            v001 = 0 < (c_val_old & 8) # v011 old
+            v101 = 0 < (c_val_old & 128) # v111 old
+            v011 = func(x  , yh , zh)
+            v111 = func(xh , yh , zh)
+        elif d == -2:
             v000 = func(x  , y  , z )
             v100 = func(xh , y  , z )
             v010 = 0 < (c_val_old & 1) # v000 old
@@ -467,17 +476,8 @@ def getSurface(func, startPnt, res=1.3):
             v001 = func(x  , y  , zh)
             v101 = func(xh , y  , zh)
             v011 = 0 < (c_val_old & 2) # v001 old
-            v111 = 0 < (c_val_old & 128) # v101 old
-        if d == -2:
-            v000 = 0 < (c_val_old & 4) # v010 old
-            v100 = 0 < (c_val_old & 64) # v110 old
-            v010 = func(x  , yh , z )
-            v110 = func(xh , yh , z )
-            v001 = 0 < (c_val_old & 8) # v011 old
-            v101 = 0 < (c_val_old & 32) # v111 old
-            v011 = func(x  , yh , zh)
-            v111 = func(xh , yh , zh)
-        if d == 4:
+            v111 = 0 < (c_val_old & 32) # v101 old
+        elif d == 4:
             v000 = 0 < (c_val_old & 2) # v001 old
             v100 = 0 < (c_val_old & 32) # v101 old
             v010 = 0 < (c_val_old & 8) # v011 old
@@ -486,7 +486,7 @@ def getSurface(func, startPnt, res=1.3):
             v101 = func(xh , y  , zh)
             v011 = func(x  , yh , zh)
             v111 = func(xh , yh , zh)
-        if d == -4:
+        elif d == -4:
             v000 = func(x  , y  , z )
             v100 = func(xh , y  , z )
             v010 = func(x  , yh , z )
@@ -539,14 +539,45 @@ def getSurface(func, startPnt, res=1.3):
                     ptsList.append((x,y,zl,-4,cVal))
         cubeExistsSet.add((x,y,z))
         cubeCornerValsDict[(x,y,z)] = np.uint8(cVal)
-        ptsResDict[(x,y,z)] = v000
-        ptsResDict[(xh,y,z)] = v100
-        ptsResDict[(x,yh,z)] = v010
-        ptsResDict[(xh,yh,z)] = v110
-        ptsResDict[(x,y,zh)] = v001
-        ptsResDict[(xh,y,zh)] = v101
-        ptsResDict[(x,yh,zh)] = v011
-        ptsResDict[(xh,yh,zh)] = v111
+        if d == 1:
+            ptsResDict[(xh,y,z)] = v100
+            ptsResDict[(xh,yh,z)] = v110
+            ptsResDict[(xh,y,zh)] = v101
+            ptsResDict[(xh,yh,zh)] = v111
+        elif d == -1:
+            ptsResDict[(x,y,z)] = v000
+            ptsResDict[(x,yh,z)] = v010
+            ptsResDict[(x,y,zh)] = v001
+            ptsResDict[(x,yh,zh)] = v011
+        elif d == 2:
+            ptsResDict[(x,yh,z)] = v010
+            ptsResDict[(xh,yh,z)] = v110
+            ptsResDict[(x,yh,zh)] = v011
+            ptsResDict[(xh,yh,zh)] = v111
+        elif d == -2:
+            ptsResDict[(x,y,z)] = v000
+            ptsResDict[(xh,y,z)] = v100
+            ptsResDict[(x,y,zh)] = v001
+            ptsResDict[(xh,y,zh)] = v101
+        elif d == 4:
+            ptsResDict[(x,y,zh)] = v001
+            ptsResDict[(xh,y,zh)] = v101
+            ptsResDict[(x,yh,zh)] = v011
+            ptsResDict[(xh,yh,zh)] = v111
+        elif d == -4:
+            ptsResDict[(x,y,z)] = v000
+            ptsResDict[(xh,y,z)] = v100
+            ptsResDict[(x,yh,z)] = v010
+            ptsResDict[(xh,yh,z)] = v110
+        else:
+            ptsResDict[(x,y,z)] = v000
+            ptsResDict[(xh,y,z)] = v100
+            ptsResDict[(x,yh,z)] = v010
+            ptsResDict[(xh,yh,z)] = v110
+            ptsResDict[(x,y,zh)] = v001
+            ptsResDict[(xh,y,zh)] = v101
+            ptsResDict[(x,yh,zh)] = v011
+            ptsResDict[(xh,yh,zh)] = v111
     cubesList = list(cubeExistsSet)
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))

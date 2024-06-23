@@ -578,10 +578,9 @@ def getSurface(func, startPnt, res=1.3):
             ptsResDict[(x,yh,zh)] = v011
             ptsResDict[(xh,yh,zh)] = v111
     # works:
-    #cubesList = list(set(cubeCornerValsDict.keys()))[::-1]
-    #print(cubesList)
+    cubesList = list(set(cubeCornerValsDict.keys()))
     # doesn't work:
-    cubesList = list(cubeCornerValsDict.keys())
+    #cubesList = list(cubeCornerValsDict.keys())
 
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
@@ -695,21 +694,11 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 def filter_single_edge(poly_edge_list):
     single_edge_set = set()
     for e in poly_edge_list:
-        print(e)
-        print("if1 begin")
         if e not in single_edge_set:
-            print("if2 begin")
             if (e[1], e[0]) not in single_edge_set:
-                print("add")
                 single_edge_set.add(e)
-                print("added")
             else:
-                print("remove")
                 single_edge_set.remove((e[1], e[0]))
-                print("removed")
-            print("if2 end")
-        print("if1 end")
-    print("ready1")
     return single_edge_set
 
 @njit(cache=True)
@@ -747,7 +736,6 @@ def calc_closed_surface(c2e, cvList, tlta):
     #circList2 = List(circList)
     circList2 = circList
     corCircList = circList2
-    print("repair")
     rep = repair_surface(circList2)
     # corCircList.extend(List(rep))
     corCircList.extend(rep)

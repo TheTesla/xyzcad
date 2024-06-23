@@ -428,7 +428,7 @@ def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2),0,0)])
-    cubeExistsSet = set()
+    #cubeExistsSet = set()
     ptsResDict = Dict()
     cubeCornerValsDict = Dict()
     r = res
@@ -510,34 +510,33 @@ def getSurface(func, startPnt, res=1.3):
         if (not (v100 and v110 and v101 and v111)) and \
                 (v100 or v110 or v101 or v111):
             if not d == -1:
-                if (xh,y,z) not in cubeExistsSet:
+                if (xh,y,z) not in cubeCornerValsDict:
                     ptsList.append((xh,y,z,+1,cVal))
         if (not (v010 and v110 and v011 and v111)) and \
                 (v010 or v110 or v011 or v111):
             if not d == -2:
-                if (x,yh,z) not in cubeExistsSet:
+                if (x,yh,z) not in cubeCornerValsDict:
                     ptsList.append((x,yh,z,+2,cVal))
         if (not (v001 and v101 and v011 and v111)) and \
                 (v001 or v101 or v011 or v111):
             if not d == -4:
-                if (x,y,zh) not in cubeExistsSet:
+                if (x,y,zh) not in cubeCornerValsDict:
                     ptsList.append((x,y,zh,+4,cVal))
         if (not (v000 and v010 and v001 and v011)) and \
                 (v000 or v010 or v001 or v011):
             if not d == 1:
-                if (xl,y,z) not in cubeExistsSet:
+                if (xl,y,z) not in cubeCornerValsDict:
                     ptsList.append((xl,y,z,-1,cVal))
         if (not (v000 and v100 and v001 and v101)) and \
                 (v000 or v100 or v001 or v101):
             if not d == 2:
-                if (x,yl,z) not in cubeExistsSet:
+                if (x,yl,z) not in cubeCornerValsDict:
                     ptsList.append((x,yl,z,-2,cVal))
         if (not (v000 and v100 and v010 and v110)) and \
                 (v000 or v100 or v010 or v110):
             if not d == 4:
-                if (x,y,zl) not in cubeExistsSet:
+                if (x,y,zl) not in cubeCornerValsDict:
                     ptsList.append((x,y,zl,-4,cVal))
-        cubeExistsSet.add((x,y,z))
         cubeCornerValsDict[(x,y,z)] = np.uint8(cVal)
         if d == 1:
             ptsResDict[(xh,y,z)] = v100
@@ -578,13 +577,14 @@ def getSurface(func, startPnt, res=1.3):
             ptsResDict[(xh,y,zh)] = v101
             ptsResDict[(x,yh,zh)] = v011
             ptsResDict[(xh,yh,zh)] = v111
-    cubesList = list(cubeExistsSet)
+    # works:
+    cubesList = list(set(cubeCornerValsDict.keys()))
+    # doesn't work:
+    #cubesList = list(cubeCornerValsDict.keys())
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
-    ptCoordDictVals = np.asarray(list(ptsResDict.values()))
-    cubeCornerValsDictKeys = np.asarray(list(cubeCornerValsDict.keys()))
-    cubeCornerValsDictVals = np.asarray(list(cubeCornerValsDict.values()))
-    cvList = [cubeCornerValsDict[c] for c in cubesList]
+    ptCoordDictVals = np.asarray(List(ptsResDict.values()))
+    cvList = np.array([cubeCornerValsDict[c] for c in cubesList])
     return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList
 
 

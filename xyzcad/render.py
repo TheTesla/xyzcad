@@ -424,7 +424,7 @@ def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 
 
 
-@njit(cache=True)
+@njit(parallel=True,cache=True)
 def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2),0,0)])
@@ -585,8 +585,11 @@ def getSurface(func, startPnt, res=1.3):
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(List(ptsResDict.values()))
-    cvList = np.array([cubeCornerValsDict[c] for c in cubesList])
-    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvList
+    cvArr = np.zeros(cubesArray.shape[0],dtype=np.uint8)
+    for i in prange(cubesArray.shape[0]):
+        c = cubesArray[i]
+        cvArr[i] = cubeCornerValsDict[(c[0],c[1],c[2])]
+    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvArr
 
 
 @njit(cache=True,parallel=True)
@@ -674,12 +677,14 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
     if invertConvexness:
         for circ in corCircList:
             n = len(circ)
-            trInCubeList = [(circ[0], circ[i+1], circ[i+2]) for i in range(n-2)]
+            trInCubeList = [(circ[0], circ[i+1], circ[i+2]) \
+                                for i in range(n-2)]
             trList.extend(trInCubeList)
     else:
         for circ2 in corCircList:
             n = len(circ)
-            trInCubeList2 = [(circ2[0], circ2[i2+2], circ2[i2+1]) for i2 in range(n-2)]
+            trInCubeList2 = [(circ2[0], circ2[i2+2], circ2[i2+1]) \
+                                for i2 in range(n-2)]
             trList.extend(trInCubeList2)
     return np.asarray([[[p[0],p[1],p[2]] for p in c] for c in trList])
 

@@ -424,12 +424,10 @@ def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 
 
 
-@njit(parallel=True,cache=True)
+@njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2),0,0)])
-    #cubeExistsSet = set()
-    ptsResDict = Dict()
     cubeCornerValsDict = Dict()
     r = res
     while ptsList:
@@ -538,45 +536,29 @@ def getSurface(func, startPnt, res=1.3):
                 if (x,y,zl) not in cubeCornerValsDict:
                     ptsList.append((x,y,zl,-4,cVal))
         cubeCornerValsDict[(x,y,z)] = np.uint8(cVal)
-        if d == 1:
-            ptsResDict[(xh,y,z)] = v100
-            ptsResDict[(xh,yh,z)] = v110
-            ptsResDict[(xh,y,zh)] = v101
-            ptsResDict[(xh,yh,zh)] = v111
-        elif d == -1:
-            ptsResDict[(x,y,z)] = v000
-            ptsResDict[(x,yh,z)] = v010
-            ptsResDict[(x,y,zh)] = v001
-            ptsResDict[(x,yh,zh)] = v011
-        elif d == 2:
-            ptsResDict[(x,yh,z)] = v010
-            ptsResDict[(xh,yh,z)] = v110
-            ptsResDict[(x,yh,zh)] = v011
-            ptsResDict[(xh,yh,zh)] = v111
-        elif d == -2:
-            ptsResDict[(x,y,z)] = v000
-            ptsResDict[(xh,y,z)] = v100
-            ptsResDict[(x,y,zh)] = v001
-            ptsResDict[(xh,y,zh)] = v101
-        elif d == 4:
-            ptsResDict[(x,y,zh)] = v001
-            ptsResDict[(xh,y,zh)] = v101
-            ptsResDict[(x,yh,zh)] = v011
-            ptsResDict[(xh,yh,zh)] = v111
-        elif d == -4:
-            ptsResDict[(x,y,z)] = v000
-            ptsResDict[(xh,y,z)] = v100
-            ptsResDict[(x,yh,z)] = v010
-            ptsResDict[(xh,yh,z)] = v110
-        else:
-            ptsResDict[(x,y,z)] = v000
-            ptsResDict[(xh,y,z)] = v100
-            ptsResDict[(x,yh,z)] = v010
-            ptsResDict[(xh,yh,z)] = v110
-            ptsResDict[(x,y,zh)] = v001
-            ptsResDict[(xh,y,zh)] = v101
-            ptsResDict[(x,yh,zh)] = v011
-            ptsResDict[(xh,yh,zh)] = v111
+
+    return cubeCornerValsDict
+
+@njit(cache=True,parallel=True)
+def convert_corners2pts(cubeCornerValsDict, r):
+
+    ptsResDict = Dict()
+
+    for k, v in cubeCornerValsDict.items():
+        x, y, z = k
+        xh = round(x+r)
+        yh = round(y+r)
+        zh = round(z+r)
+        ptsResDict[(x,  y, z)] = 0 < (v & 1) #v000
+        ptsResDict[(xh, y, z)] = 0 < (v & 16) #v100
+        ptsResDict[(x, yh, z)] = 0 < (v & 4) #v010
+        ptsResDict[(x, y, zh)] = 0 < (v & 2) #v001
+        ptsResDict[(xh, y, zh)] = 0 < (v & 32) #v101
+        ptsResDict[(x, yh, zh)] = 0 < (v & 8) #v011
+        ptsResDict[(xh, yh, z)] = 0 < (v & 64) #v110
+        ptsResDict[(xh, yh, zh)] = 0 < (v & 128) #v111
+
+
     # works:
     cubesList = list(set(cubeCornerValsDict.keys()))
     # doesn't work:
@@ -596,7 +578,16 @@ def getSurface(func, startPnt, res=1.3):
 def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
     r = res
 
-    ptCoordDictRev = {(e[0], e[1], e[2]): i for i, e in enumerate(ptCoordArray)}
+    arr_split = 16
+    spl_dict = [{(0.,0.,0.):0}]*arr_split
+    for k in prange(arr_split):
+        len_arr = int(ptCoordArray.shape[0]/arr_split + 0.5)
+        splitted_arr = ptCoordArray[(len_arr*k):min(len_arr*(k+1),ptCoordArray.shape[0])]
+        spl_dict[k] = {(e[0], e[1], e[2]): i+len_arr*k for i, e in enumerate(splitted_arr)}
+
+    ptCoordDictRev = spl_dict[0]
+    for k in range(1,arr_split):
+        ptCoordDictRev.update(spl_dict[k])
 
     cube2ptIdxArray = np.zeros((cubeCoordArray.shape[0],8),dtype='int')
     for i in prange(cubeCoordArray.shape[0]):
@@ -756,11 +747,17 @@ def all_njit_func(func, res, tlt):
         print('findSurfacePnt time: {}'.format(time.perf_counter() - time0))
     with objmode(time1='f8'):
         time1 = time.perf_counter()
-    cubesArray, ptsKeys, ptsVals, cvList = getSurface(func, p, res)
+    corners = getSurface(func, p, res)
+    print(f"len(corners)={len(corners)}")
+    with objmode():
+        print('getSurface time: {}'.format(time.perf_counter() - time1))
+    with objmode(time1='f8'):
+        time1 = time.perf_counter()
+    cubesArray, ptsKeys, ptsVals, cvList = convert_corners2pts(corners, res)
     print(f"len(cubesArray, ptsKeys, ptsVals, cvList)={len(cubesArray)}, "
           +f"{len(ptsKeys)}, {len(ptsVals)},{len(cvList)}")
     with objmode():
-        print('getSurface time: {}'.format(time.perf_counter() - time1))
+        print('convert_corners2pts time: {}'.format(time.perf_counter() - time1))
     with objmode(time1='f8'):
         time1 = time.perf_counter()
     c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)

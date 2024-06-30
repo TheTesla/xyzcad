@@ -1,3 +1,7 @@
+## Update - 30th June 2024
+
+- some optimizations to speed up
+
 ## Update - 22nd June 2024
 
 - **Triangle Lookup Table implemented** - no defective surfaces anymore

@@ -539,7 +539,8 @@ def getSurface(func, startPnt, res=1.3):
 
     return cubeCornerValsDict
 
-@njit(cache=True,parallel=True)
+#@njit(cache=True,parallel=True)
+@njit(cache=True,parallel=False)
 def convert_corners2pts(cubeCornerValsDict, r):
 
     ptsResDict = Dict()
@@ -559,16 +560,20 @@ def convert_corners2pts(cubeCornerValsDict, r):
         ptsResDict[(xh, yh, zh)] = 0 < (v & 128) #v111
 
 
-    # works:
+    # worked in implementation, when convert_corners2pts() was part of
+    # getSurface(), but this variant doesn't work good in this separated
+    # implementation, it produces missing datapoints:
     cubesList = list(set(cubeCornerValsDict.keys()))
-    # doesn't work:
+    # didn't work in implementation, when convert_corners2pts() was part of
+    # getSurface(), but this variant works in this separated implementation:
     #cubesList = list(cubeCornerValsDict.keys())
 
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
-    ptCoordDictVals = np.asarray(List(ptsResDict.values()))
+    ptCoordDictVals = np.asarray(list(ptsResDict.values()))
     cvArr = np.zeros(cubesArray.shape[0],dtype=np.uint8)
-    for i in prange(cubesArray.shape[0]):
+    #for i in prange(cubesArray.shape[0]):
+    for i in range(cubesArray.shape[0]):
         c = cubesArray[i]
         cvArr[i] = cubeCornerValsDict[(c[0],c[1],c[2])]
     return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvArr

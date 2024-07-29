@@ -563,10 +563,10 @@ def convert_corners2pts(cubeCornerValsDict, r):
     # worked in implementation, when convert_corners2pts() was part of
     # getSurface(), but this variant doesn't work good in this separated
     # implementation, it produces missing datapoints:
-    cubesList = list(set(cubeCornerValsDict.keys()))
+    #cubesList = list(set(cubeCornerValsDict.keys()))
     # didn't work in implementation, when convert_corners2pts() was part of
     # getSurface(), but this variant works in this separated implementation:
-    #cubesList = list(cubeCornerValsDict.keys())
+    cubesList = list(cubeCornerValsDict.keys())
 
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))

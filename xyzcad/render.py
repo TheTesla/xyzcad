@@ -366,11 +366,11 @@ tlt[128] = [[3, 5, 4]]
 
 
 
-@njit(cache=False)
+@njit(cache=True)
 def round(x):
     return np.floor(10000.*x+0.5)/10000.
 
-@njit(cache=False)
+@njit(cache=True)
 def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
     s0 = func(0.,0.,0.)
     for d in range(resSteps):
@@ -389,7 +389,7 @@ def getInitPnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 
 
 
-@njit(cache=False)
+@njit(cache=True)
 def getSurfacePnt(func, p0, p1, resSteps=24):
     x1 = p1[0]
     y1 = p1[1]
@@ -415,7 +415,7 @@ def getSurfacePnt(func, p0, p1, resSteps=24):
 
 
 
-@njit(cache=False)
+@njit(cache=True)
 def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
     ps = getInitPnt(func, minVal, maxVal, resSteps)
     p =  getSurfacePnt(func, (ps[0],ps[1],ps[2]), (ps[3],ps[4],ps[5]), resSteps)
@@ -424,7 +424,7 @@ def findSurfacePnt(func, minVal=-1000., maxVal=+1000., resSteps=24):
 
 
 
-@njit(cache=False)
+@njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x,y,z = startPnt
     ptsList = List([(round(x-res/2), round(y-res/2), round(z-res/2),0,0)])
@@ -539,8 +539,7 @@ def getSurface(func, startPnt, res=1.3):
 
     return cubeCornerValsDict
 
-#@njit(cache=False,parallel=True)
-@njit(cache=False,parallel=False)
+@njit(cache=True,parallel=True)
 def convert_corners2pts(cubeCornerValsDict, r):
 
     ptsResDict = Dict()
@@ -577,61 +576,36 @@ def convert_corners2pts(cubeCornerValsDict, r):
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
     cvArr = np.zeros(cubesArray.shape[0],dtype=np.uint8)
-    #for i in prange(cubesArray.shape[0]):
-    for i in range(cubesArray.shape[0]):
+    for i in prange(cubesArray.shape[0]):
         c = cubesArray[i]
         cvArr[i] = cubeCornerValsDict[(c[0],c[1],c[2])]
     return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvArr
 
 
-#@njit(cache=False,parallel=True)
-@njit(cache=False,parallel=False)
+@njit(cache=True,parallel=True)
 def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
     r = res
 
     arr_split = 16
-    spl_dict = [{(-1000000000.,-1000000000.,-1000000000.):0}]*arr_split
+    spl_dict = [{(0., 0., 0.):0}]*arr_split
     for k in range(arr_split):
         spl_dict[k].clear()
-    print("clear()")
     for k in prange(arr_split):
         len_arr = int(ptCoordArray.shape[0]/arr_split + 1.0)
         splitted_arr = ptCoordArray[(len_arr*k):min(len_arr*(k+1),ptCoordArray.shape[0])]
         spl_dict[k] = {(e[0], e[1], e[2]): i+len_arr*k for i, e in enumerate(splitted_arr)}
 
-    print("spl_dict")
     ptCoordDictRev = spl_dict[0]
-    print(f"len(spl_dict[0])={len(spl_dict[0])}")
     for k in range(1,arr_split):
-        print(f"len(spl_dict[{k}])={len(spl_dict[k])}")
         ptCoordDictRev.update(spl_dict[k])
-    print(f"len(ptCoordDictRev)={len(ptCoordDictRev)}")
 
     cube2ptIdxArray = np.zeros((cubeCoordArray.shape[0],8),dtype='int')
     for i in prange(cubeCoordArray.shape[0]):
-        #print(i)
         p = cubeCoordArray[i]
-        #print(p)
         x, y, z = p
         xh = round(x+r)
         yh = round(y+r)
         zh = round(z+r)
-        if (x, y, z ) not in ptCoordDictRev:
-            print("not in")
-        if (xh,y, z ) not in ptCoordDictRev:
-            print("not in")
-        if (x, yh,z ) not in ptCoordDictRev:
-            print("not in")
-        if (xh,yh,z ) not in ptCoordDictRev:
-            print("not in")
-        if (x, y, zh) not in ptCoordDictRev:
-            print("not in")
-        if (xh,y, zh) not in ptCoordDictRev:
-            print("not in")
-        if (x, yh,zh) not in ptCoordDictRev:
-            print("not in")
-        if (xh,yh,zh) not in ptCoordDictRev:
-            print("not in")
         cube2ptIdxArray[i] = [  ptCoordDictRev[(x, y, z )],
                                 ptCoordDictRev[(xh,y, z )],
                                 ptCoordDictRev[(x, yh,z )],
@@ -641,7 +615,6 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
                                 ptCoordDictRev[(x, yh,zh)],
                                 ptCoordDictRev[(xh,yh,zh)]]
 
-    print("for 1")
 
     cEdgeArray = np.zeros((cube2ptIdxArray.shape[0]*12,2),dtype='int')
     for i in prange(cube2ptIdxArray.shape[0]):
@@ -660,7 +633,6 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
         cEdgeArray[12*i+11] = (cube[4], cube[5])
     cEdgesSet = set([(e[0], e[1]) for e in cEdgeArray])
 
-    print("for 2")
     edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
     edge2ptIdxDict = {(e[0], e[1]): i for i, e in enumerate(edge2ptIdxArray)}
@@ -682,17 +654,16 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
                                 edge2ptIdxDict[(cube[4], cube[6])],
                                 edge2ptIdxDict[(cube[4], cube[5])]]
 
-    print("for 3")
     return (cube2ptIdxArray, cube2edgeIdxArray, edge2ptIdxArray, ptCoordArray,
             ptValueArray)
 
 
-@njit(cache=False)
+@njit(cache=True)
 def cutCedgeIdx(edge2ptIdxList, ptValueList):
     return np.asarray([i for i, e in enumerate(edge2ptIdxList) if ptValueList[e[0]]
             != ptValueList[e[1]]])
 
-@njit(cache=False,parallel=True)
+@njit(cache=True,parallel=True)
 def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     lcceil = len(cutCedgeIdxArray)
     r = np.zeros((lcceil,3))
@@ -702,7 +673,7 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     return r
 
 
-@njit(cache=False)
+@njit(cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
     trList = List()
     if invertConvexness:
@@ -721,12 +692,12 @@ def calcTrianglesCor(corCircList, invertConvexness=False):
 
 
 
-@njit(cache=False)
+@njit(cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     return List([[precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict] for e in trList])
 
-@njit(cache=False)
+@njit(cache=True)
 def filter_single_edge(poly_edge_list):
     single_edge_set = set()
     for e in poly_edge_list:
@@ -737,7 +708,7 @@ def filter_single_edge(poly_edge_list):
                 single_edge_set.remove((e[1], e[0]))
     return single_edge_set
 
-@njit(cache=False)
+@njit(cache=True)
 def build_repair_polygons(single_edge_dict):
     ac = List()
     while len(single_edge_dict) > 0:
@@ -752,7 +723,7 @@ def build_repair_polygons(single_edge_dict):
     return ac
 
 
-@njit(cache=False)
+@njit(cache=True)
 def repair_surface(poly_list):
     poly_edge_list = List([(e[(i+1)%len(e)], e[i]) for e in poly_list for i, f
                            in enumerate(e)])
@@ -761,12 +732,12 @@ def repair_surface(poly_list):
     ac = build_repair_polygons(singleEdgeDict)
     return ac
 
-@njit(cache=False)
+@njit(cache=True)
 def calc_polygons(c2e, cvList, tlta):
     return List([List([c2e[i][k] for k in t]) for i, c in enumerate(cvList) for t in
                  tlta[c]])
 
-@njit(cache=False)
+@njit(cache=True)
 def calc_closed_surface(c2e, cvList, tlta):
     circList = calc_polygons(c2e, cvList, tlta)
     #circList2 = List(circList)
@@ -778,7 +749,7 @@ def calc_closed_surface(c2e, cvList, tlta):
     return corCircList
 
 
-@njit(cache=False)
+@njit(cache=True)
 def all_njit_func(func, res, tlt):
     with objmode(time0='f8'):
         time0 = time.perf_counter()

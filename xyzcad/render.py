@@ -566,8 +566,13 @@ def convert_corners2pts(cubeCornerValsDict, r):
     #cubesList = list(set(cubeCornerValsDict.keys()))
     # didn't work in implementation, when convert_corners2pts() was part of
     # getSurface(), but this variant works in this separated implementation:
-    cubesList = list(cubeCornerValsDict.keys())
+    #cubesList = list(cubeCornerValsDict.keys())
 
+    # much more mess:
+    cubesList = list(set(list(set(list(cubeCornerValsDict.keys())))))
+    #cubesList = list(set(list(set(list(set(list(cubeCornerValsDict.keys())))))))
+
+    print(f"len(cubesList)={len(cubesList)}")
     cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))

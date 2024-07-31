@@ -20,23 +20,18 @@ setuptools.setup(
     version=xyzcad.__version__,
     author="Stefan Helmert",
     author_email="stefan.helmert@t-online.de",
-    description="Software renders implicit surface function f(x,y,z) into a" \
-    +"printable STL.",
+    description="Software renders implicit surface function f(x,y,z) into a"
+    + "printable STL.",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/TheTesla/xyzcad",
-    packages=setuptools.find_packages(exclude=['test*']),
-    #include_package_data=True,
-    install_requires=[
-        "numpy",
-        "numpy-stl",
-        "numba"
-    ],
-    license = 'https://www.fsf.org/licensing/licenses/agpl-3.0.html',
+    packages=setuptools.find_packages(exclude=["test*"]),
+    # include_package_data=True,
+    install_requires=["numpy", "numpy-stl", "numba"],
+    license="https://www.fsf.org/licensing/licenses/agpl-3.0.html",
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU Affero General Public License v3",
         "Operating System :: OS Independent",
     ],
 )
-

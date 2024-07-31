@@ -17,11 +17,12 @@ import time
 
 
 @njit
-def sphere(x,y,z):
+def sphere(x, y, z):
     return 13**2 > x**2 + y**2 + z**2
+
 
 t0 = time.time()
 
-render.renderAndSave(sphere, 'demo.stl', 1)
+render.renderAndSave(sphere, "demo.stl", 1)
 
 print(time.time() - t0)

@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies
       run: |
         python3 -m pip install poetry
-        apt-get install -y libadmesh-dev
+        sudo apt-get install -y libadmesh-dev
         poetry install
     - name: Lint with black and isort
       run: |

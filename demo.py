@@ -10,10 +10,12 @@
 #######################################################################
 
 
-from numba import jit, njit
 import math
-from xyzcad import render
 import time
+
+from numba import jit, njit
+
+from xyzcad import render
 
 
 @jit(nopython=True, cache=True)

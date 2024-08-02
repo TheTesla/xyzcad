@@ -17,6 +17,7 @@ import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
+
 from xyzcad import __version__
 
 tlt = [[[0]]] * 256

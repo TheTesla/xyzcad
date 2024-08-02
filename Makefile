@@ -4,6 +4,7 @@ PROJ_SLUG = xyzcad
 SHELL = bash
 
 build:
+	poetry version $(shell git describe --tags --abbrev=0)
 	poetry build
 
 lint:
@@ -25,6 +26,7 @@ publish:
 	poetry publish
 
 clean:
+	poetry version 0.0.0+devel
 	rm -rf .pytest_cache \
 	rm -rf dist \
 	rm -rf build \

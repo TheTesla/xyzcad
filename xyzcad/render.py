@@ -10,13 +10,13 @@
 #######################################################################
 
 
+import importlib.metadata
 import time
 
 import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
-import importlib.metadata
 
 tlt = [[[0]]] * 256
 tlt[1] = [[0, 1, 2]]
@@ -830,7 +830,7 @@ def all_njit_func(func, res, tlt):
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
-    #version = importlib.metadata.version('xyzcad')
+    # version = importlib.metadata.version('xyzcad')
     print(__package__)
     print(__name__)
     version = importlib.metadata.version(__package__ or __name__)

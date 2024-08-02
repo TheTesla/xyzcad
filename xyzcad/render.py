@@ -17,6 +17,7 @@ import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
+from xyzcad import __version__
 
 tlt = [[[0]]] * 256
 tlt[1] = [[0, 1, 2]]
@@ -830,11 +831,12 @@ def all_njit_func(func, res, tlt):
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
-    # version = importlib.metadata.version('xyzcad')
-    print(__package__)
-    print(__name__)
-    version = importlib.metadata.version(__package__ or __name__)
-    print(f"running xyzcad version {version}")
+    version_run = __version__
+    try:
+        version_inst = importlib.metadata.version(__package__ or __name__)
+    except importlib.metadata.PackageNotFoundError as e:
+        version_inst = None
+    print(f"running xyzcad version {version_run} (installed: {version_inst})")
 
     tlt_L = [List(e) for e in tlt]
     verticesArray = all_njit_func(func, res, tlt_L)

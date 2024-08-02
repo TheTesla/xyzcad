@@ -3,8 +3,11 @@
 PROJ_SLUG = xyzcad
 SHELL = bash
 
+version=$(shell git describe --tags --abbrev=0)
+
 build:
-	poetry version $(shell git describe --tags --abbrev=0)
+	echo "__version__ = \"$(version)\"" > ./$(PROJ_SLUG)/_version.py
+	poetry version $(version)
 	poetry build
 
 lint:
@@ -26,6 +29,7 @@ publish:
 	poetry publish
 
 clean:
+	echo "__version__ = \"0.0.0+devel\"" > ./$(PROJ_SLUG)/_version.py
 	poetry version 0.0.0+devel
 	rm -rf .pytest_cache \
 	rm -rf dist \

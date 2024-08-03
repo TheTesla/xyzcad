@@ -537,7 +537,22 @@ def getSurface(func, startPnt, res=1.3):
     return cubeCornerValsDict
 
 
-@njit(cache=True, parallel=True)
+# removed convert to set() - may trigger numba bug
+@njit(cache=True)
+def convert_corners2cubes(cubes_coord2cornersval_dict):
+    return np.asarray(list(cubes_coord2cornersval_dict.keys())), \
+            np.asarray(list(cubes_coord2cornersval_dict.values()))
+
+#    cubes_coord_arr = np.asarray(list(set(cubes_coord2cornersval_dict.keys())))
+#    cubes_cornersval_arr = np.zeros(cubes_coord_arr.shape[0], dtype=np.uint8)
+#    for i in prange(cubes_coord_arr.shape[0]):
+#        c = cubes_coord_arr[i]
+#        cubes_cornersval_arr[i] = cubes_coord2cornersval_dict[(c[0], c[1], c[2])]
+#    return cubes_coord_arr, cubes_cornersval_arr
+
+
+
+@njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
 
     ptsResDict = Dict()
@@ -556,21 +571,13 @@ def convert_corners2pts(cubeCornerValsDict, r):
         ptsResDict[(xh, yh, z)] = 0 < (v & 64)  # v110
         ptsResDict[(xh, yh, zh)] = 0 < (v & 128)  # v111
 
-    cubesList = list(set(cubeCornerValsDict.keys()))
-
-    print(f"len(cubesList)={len(cubesList)}")
-    cubesArray = np.asarray(cubesList)
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
-    cvArr = np.zeros(cubesArray.shape[0], dtype=np.uint8)
-    for i in prange(cubesArray.shape[0]):
-        c = cubesArray[i]
-        cvArr[i] = cubeCornerValsDict[(c[0], c[1], c[2])]
-    return cubesArray, ptCoordDictKeys, ptCoordDictVals, cvArr
+    return ptCoordDictKeys, ptCoordDictVals
 
 
 @njit(cache=True, parallel=True)
-def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
+def coords2relations(cubeCoordArray, ptCoordArray, res):
     r = res
 
     arr_split = 16
@@ -652,8 +659,6 @@ def coords2relations(cubeCoordArray, ptCoordArray, ptValueArray, res):
         cube2ptIdxArray,
         cube2edgeIdxArray,
         edge2ptIdxArray,
-        ptCoordArray,
-        ptValueArray,
     )
 
 
@@ -779,19 +784,25 @@ def all_njit_func(func, res, tlt):
         print("getSurface time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    cubesArray, ptsKeys, ptsVals, cvList = convert_corners2pts(corners, res)
+    ptsKeys, pv = convert_corners2pts(corners, res)
     print(
-        f"len(cubesArray, ptsKeys, ptsVals, cvList)={len(cubesArray)}, "
-        + f"{len(ptsKeys)}, {len(ptsVals)},{len(cvList)}"
+        f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}"
     )
     with objmode():
         print("convert_corners2pts time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    c2p, c2e, e2p, pc, pv = coords2relations(cubesArray, ptsKeys, ptsVals, res)
+    cubesArray, cvList = convert_corners2cubes(corners)
     print(
-        f"len(c2p, c2e, e2p, pc, pv)={len(c2p)}, {len(c2e)}, {len(e2p)}, "
-        + f"{len(pc)}, {len(pv)}"
+        f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}"
+    )
+    with objmode():
+        print("convert_corners2cubes time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
+    print(
+        f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}"
     )
     with objmode():
         print("coords2relations time: {}".format(time.perf_counter() - time1))
@@ -803,7 +814,7 @@ def all_njit_func(func, res, tlt):
         print("cutCedgeIdx time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    precTrPtsList = precTrPnts(func, cCeI, e2p, pc)
+    precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
     print(f"len(precTrPtsList)={len(precTrPtsList)}")
     with objmode():
         print("precTrPnts time: {}".format(time.perf_counter() - time1))

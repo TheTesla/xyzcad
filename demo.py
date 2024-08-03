@@ -119,5 +119,8 @@ def cube(x, y, z):
 
 # render.renderAndSave(cube, 'demo.stl', 1)
 render.renderAndSave(f, "demo.stl", 0.5)
+render.renderAndSave(f, "demo1.stl", 0.6)
+render.renderAndSave(f, "demo2.stl", 0.4)
+render.renderAndSave(f, "demo3.stl", 0.1)
 
 print(time.time() - t0)

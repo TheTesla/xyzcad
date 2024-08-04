@@ -540,8 +540,10 @@ def getSurface(func, startPnt, res=1.3):
 # removed convert to set() - may trigger numba bug
 @njit(cache=True)
 def convert_corners2cubes(cubes_coord2cornersval_dict):
-    return np.asarray(list(cubes_coord2cornersval_dict.keys())), \
-            np.asarray(list(cubes_coord2cornersval_dict.values()))
+    return np.asarray(list(cubes_coord2cornersval_dict.keys())), np.asarray(
+        list(cubes_coord2cornersval_dict.values())
+    )
+
 
 #    cubes_coord_arr = np.asarray(list(set(cubes_coord2cornersval_dict.keys())))
 #    cubes_cornersval_arr = np.zeros(cubes_coord_arr.shape[0], dtype=np.uint8)
@@ -549,7 +551,6 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
 #        c = cubes_coord_arr[i]
 #        cubes_cornersval_arr[i] = cubes_coord2cornersval_dict[(c[0], c[1], c[2])]
 #    return cubes_coord_arr, cubes_cornersval_arr
-
 
 
 @njit(cache=True)
@@ -714,14 +715,9 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 @njit(cache=True)
 def filter_single_edge(poly_edge_list):
-    single_edge_set = set()
-    for e in poly_edge_list:
-        if e not in single_edge_set:
-            if (e[1], e[0]) not in single_edge_set:
-                single_edge_set.add(e)
-            else:
-                single_edge_set.remove((e[1], e[0]))
-    return single_edge_set
+    s1 = set(poly_edge_list)
+    s2 = set([(e[1], e[0]) for e in poly_edge_list])
+    return s1.difference(s2)
 
 
 @njit(cache=True)
@@ -759,13 +755,26 @@ def calc_polygons(c2e, cvList, tlta):
 
 @njit(cache=True)
 def calc_closed_surface(c2e, cvList, tlta):
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     circList = calc_polygons(c2e, cvList, tlta)
+    with objmode():
+        print("calc_polygons time: {}".format(time.perf_counter() - time1))
     # circList2 = List(circList)
     circList2 = circList
     corCircList = circList2
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     rep = repair_surface(circList2)
+    print(f"repair polygons: {len(rep)}")
+    with objmode():
+        print("repair_surface time: {}".format(time.perf_counter() - time1))
     # corCircList.extend(List(rep))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     corCircList.extend(rep)
+    with objmode():
+        print("corCircList.extend time: {}".format(time.perf_counter() - time1))
     return corCircList
 
 
@@ -785,25 +794,19 @@ def all_njit_func(func, res, tlt):
     with objmode(time1="f8"):
         time1 = time.perf_counter()
     ptsKeys, pv = convert_corners2pts(corners, res)
-    print(
-        f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}"
-    )
+    print(f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}")
     with objmode():
         print("convert_corners2pts time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
     cubesArray, cvList = convert_corners2cubes(corners)
-    print(
-        f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}"
-    )
+    print(f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}")
     with objmode():
         print("convert_corners2cubes time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
     c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
-    print(
-        f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}"
-    )
+    print(f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}")
     with objmode():
         print("coords2relations time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):

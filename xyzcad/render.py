@@ -545,13 +545,6 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
     )
 
 
-#    cubes_coord_arr = np.asarray(list(set(cubes_coord2cornersval_dict.keys())))
-#    cubes_cornersval_arr = np.zeros(cubes_coord_arr.shape[0], dtype=np.uint8)
-#    for i in prange(cubes_coord_arr.shape[0]):
-#        c = cubes_coord_arr[i]
-#        cubes_cornersval_arr[i] = cubes_coord2cornersval_dict[(c[0], c[1], c[2])]
-#    return cubes_coord_arr, cubes_cornersval_arr
-
 
 @njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
@@ -737,12 +730,26 @@ def build_repair_polygons(single_edge_dict):
 
 @njit(cache=True)
 def repair_surface(poly_list):
-    poly_edge_list = List(
-        [(e[(i + 1) % len(e)], e[i]) for e in poly_list for i, f in enumerate(e)]
-    )
-    singleEdgeSet = filter_single_edge(poly_edge_list)
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    poly_edge_list = [(0,0)]*(len(poly_list)*6)
+    poly_edge_list = [(e[(i + 1) % len(e)], e[i]) for e in poly_list \
+            for i, f in enumerate(e)]
+    s1 = set(poly_edge_list)
+    s2 = set([(e[1], e[0]) for e in poly_edge_list])
+    singleEdgeSet = s1.difference(s2)
+    with objmode():
+        print("filter_single_edge_new time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     singleEdgeDict = {k: v for k, v in singleEdgeSet}
+    with objmode():
+        print("singleEdgeDict time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     ac = build_repair_polygons(singleEdgeDict)
+    with objmode():
+        print("build_repair_polygons time: {}".format(time.perf_counter() - time1))
     return ac
 
 
@@ -760,22 +767,19 @@ def calc_closed_surface(c2e, cvList, tlta):
     circList = calc_polygons(c2e, cvList, tlta)
     with objmode():
         print("calc_polygons time: {}".format(time.perf_counter() - time1))
-    # circList2 = List(circList)
-    circList2 = circList
-    corCircList = circList2
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    rep = repair_surface(circList2)
+    rep = repair_surface(circList)
     print(f"repair polygons: {len(rep)}")
     with objmode():
         print("repair_surface time: {}".format(time.perf_counter() - time1))
     # corCircList.extend(List(rep))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    corCircList.extend(rep)
+    circList.extend(rep)
     with objmode():
         print("corCircList.extend time: {}".format(time.perf_counter() - time1))
-    return corCircList
+    return circList
 
 
 @njit(cache=True)

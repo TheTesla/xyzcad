@@ -545,11 +545,8 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
     )
 
 
-
 @njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
-
-    #ptsResDict = Dict()
 
     with objmode(time1="f8"):
         time1 = time.perf_counter()
@@ -574,7 +571,6 @@ def convert_corners2pts(cubeCornerValsDict, r):
     ptsResDict = Dict(pts_res_list)
     with objmode():
         print("ptsResDict time: {}".format(time.perf_counter() - time1))
-
 
     with objmode(time1="f8"):
         time1 = time.perf_counter()
@@ -747,9 +743,10 @@ def build_repair_polygons(single_edge_dict):
 def repair_surface(poly_list):
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    poly_edge_list = [(0,0)]*(len(poly_list)*6)
-    poly_edge_list = [(e[(i + 1) % len(e)], e[i]) for e in poly_list \
-            for i, f in enumerate(e)]
+    poly_edge_list = [(0, 0)] * (len(poly_list) * 6)
+    poly_edge_list = [
+        (e[(i + 1) % len(e)], e[i]) for e in poly_list for i, f in enumerate(e)
+    ]
     s1 = set(poly_edge_list)
     s2 = set([(e[1], e[0]) for e in poly_edge_list])
     singleEdgeSet = s1.difference(s2)

@@ -549,24 +549,39 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
 @njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
 
-    ptsResDict = Dict()
+    #ptsResDict = Dict()
 
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    pts_res_list = []
     for k, v in cubeCornerValsDict.items():
         x, y, z = k
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        ptsResDict[(x, y, z)] = 0 < (v & 1)  # v000
-        ptsResDict[(xh, y, z)] = 0 < (v & 16)  # v100
-        ptsResDict[(x, yh, z)] = 0 < (v & 4)  # v010
-        ptsResDict[(x, y, zh)] = 0 < (v & 2)  # v001
-        ptsResDict[(xh, y, zh)] = 0 < (v & 32)  # v101
-        ptsResDict[(x, yh, zh)] = 0 < (v & 8)  # v011
-        ptsResDict[(xh, yh, z)] = 0 < (v & 64)  # v110
-        ptsResDict[(xh, yh, zh)] = 0 < (v & 128)  # v111
+        pts_res_list.append(((x, y, z), int(0 < (v & 1))))  # v000
+        pts_res_list.append(((xh, y, z), int(0 < (v & 16))))  # v100
+        pts_res_list.append(((x, yh, z), int(0 < (v & 4))))  # v010
+        pts_res_list.append(((x, y, zh), int(0 < (v & 2))))  # v001
+        pts_res_list.append(((xh, y, zh), int(0 < (v & 32))))  # v101
+        pts_res_list.append(((x, yh, zh), int(0 < (v & 8))))  # v011
+        pts_res_list.append(((xh, yh, z), int(0 < (v & 64))))  # v110
+        pts_res_list.append(((xh, yh, zh), int(0 < (v & 128))))  # v111
+    with objmode():
+        print("pts_res_list time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    ptsResDict = Dict(pts_res_list)
+    with objmode():
+        print("ptsResDict time: {}".format(time.perf_counter() - time1))
 
+
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
+    with objmode():
+        print("ptCoord time: {}".format(time.perf_counter() - time1))
     return ptCoordDictKeys, ptCoordDictVals
 
 

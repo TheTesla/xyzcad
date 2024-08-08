@@ -689,21 +689,25 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
 
 @njit(cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
+    tr_arr = np.zeros((len(corCircList)*6,3,3))
+    c = 0
     if invertConvexness:
-        trList = [
-            (circ[0], circ[i + 1], circ[i + 2]) \
-                    for circ in corCircList \
-                    for i in range(len(circ) - 2)
-        ]
-
+        for k in range(len(corCircList)):
+            circ = corCircList[k]
+            for i in range(len(circ)-2):
+                tr_arr[c][0] = circ[0]
+                tr_arr[c][1] = circ[i+1]
+                tr_arr[c][2] = circ[i+2]
+                c += 1
     else:
-        trList = [
-            (circ[0], circ[i + 2], circ[i + 1]) \
-                    for circ in corCircList \
-                    for i in range(len(circ) - 2)
-        ]
-
-    return np.asarray([[[p[0], p[1], p[2]] for p in c] for c in trList])
+        for k in range(len(corCircList)):
+            circ = corCircList[k]
+            for i in range(len(circ)-2):
+                tr_arr[c][0] = circ[0]
+                tr_arr[c][1] = circ[i+2]
+                tr_arr[c][2] = circ[i+1]
+                c += 1
+    return tr_arr[:c]
 
 
 @njit(cache=True)

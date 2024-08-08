@@ -365,6 +365,7 @@ tlt[129] = [[0, 1, 2], [3, 5, 4]]
 tlt[127] = [[3, 4, 5]]
 tlt[128] = [[3, 5, 4]]
 
+
 @njit(cache=True)
 def round(x):
     return np.floor(10000.0 * x + 0.5) / 10000.0
@@ -689,23 +690,23 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
 
 @njit(cache=True)
 def calcTrianglesCor(corCircList, invertConvexness=False):
-    tr_arr = np.zeros((len(corCircList)*6,3,3))
+    tr_arr = np.zeros((len(corCircList) * 6, 3, 3))
     c = 0
     if invertConvexness:
         for k in range(len(corCircList)):
             circ = corCircList[k]
-            for i in range(len(circ)-2):
+            for i in range(len(circ) - 2):
                 tr_arr[c][0] = circ[0]
-                tr_arr[c][1] = circ[i+1]
-                tr_arr[c][2] = circ[i+2]
+                tr_arr[c][1] = circ[i + 1]
+                tr_arr[c][2] = circ[i + 2]
                 c += 1
     else:
         for k in range(len(corCircList)):
             circ = corCircList[k]
-            for i in range(len(circ)-2):
+            for i in range(len(circ) - 2):
                 tr_arr[c][0] = circ[0]
-                tr_arr[c][1] = circ[i+2]
-                tr_arr[c][2] = circ[i+1]
+                tr_arr[c][1] = circ[i + 2]
+                tr_arr[c][2] = circ[i + 1]
                 c += 1
     return tr_arr[:c]
 

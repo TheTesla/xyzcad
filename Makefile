@@ -34,7 +34,9 @@ clean:
 	rm -rf .pytest_cache \
 	rm -rf dist \
 	rm -rf build \
-	rm -rf __pycache__
+	rm -rf __pycache__ \
+	rm -rf $(PROJ_SLUG)/__pycache__ \
+	rm -rf tests/__pycache__
 	#rm -rf docs/build \
 	rm -rf *.egg-info \
 	rm -rf docs/source/modules \

@@ -688,13 +688,13 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     return r
 
 
-@njit(parallel=True, cache=True)
+@njit(cache=True)
 def poly2triangle(poly_lst):
     tr_arr = np.zeros((len(poly_lst) * 6, 3, 3))
     c = 0
-    for k in prange(len(poly_lst)):
+    for k in range(len(poly_lst)):
         circ = poly_lst[k]
-        for i in prange(len(circ) - 2):
+        for i in range(len(circ) - 2):
             tr_arr[c][0] = circ[0]
             tr_arr[c][1] = circ[i + 1]
             tr_arr[c][2] = circ[i + 2]

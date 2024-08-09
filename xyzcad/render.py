@@ -865,7 +865,7 @@ def renderAndSave(func, filename, res=1):
         version_inst = None
     print(f"running xyzcad version {version_run} (installed: {version_inst})")
 
-    tlt_L = [List(e) for e in tlt]
+    tlt_L = List([List([List(f) for f in e]) for e in tlt])
     verticesArray = all_njit_func(func, res, tlt_L)
     print("all_njit_func time: {}".format(time.time() - t0))
 

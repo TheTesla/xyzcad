@@ -688,26 +688,17 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     return r
 
 
-@njit(cache=True)
-def calcTrianglesCor(corCircList, invertConvexness=False):
-    tr_arr = np.zeros((len(corCircList) * 6, 3, 3))
+@njit(parallel=True, cache=True)
+def poly2triangle(poly_lst):
+    tr_arr = np.zeros((len(poly_lst) * 6, 3, 3))
     c = 0
-    if invertConvexness:
-        for k in range(len(corCircList)):
-            circ = corCircList[k]
-            for i in range(len(circ) - 2):
-                tr_arr[c][0] = circ[0]
-                tr_arr[c][1] = circ[i + 1]
-                tr_arr[c][2] = circ[i + 2]
-                c += 1
-    else:
-        for k in range(len(corCircList)):
-            circ = corCircList[k]
-            for i in range(len(circ) - 2):
-                tr_arr[c][0] = circ[0]
-                tr_arr[c][1] = circ[i + 2]
-                tr_arr[c][2] = circ[i + 1]
-                c += 1
+    for k in prange(len(poly_lst)):
+        circ = poly_lst[k]
+        for i in prange(len(circ) - 2):
+            tr_arr[c][0] = circ[0]
+            tr_arr[c][1] = circ[i + 1]
+            tr_arr[c][2] = circ[i + 2]
+            c += 1
     return tr_arr[:c]
 
 
@@ -856,10 +847,10 @@ def all_njit_func(func, res, tlt):
         print("TrIdx2TrCoord time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    verticesArray = calcTrianglesCor(circPtsCoordList, True)
+    verticesArray = poly2triangle(circPtsCoordList)
     print(f"len(verticesArray)={len(verticesArray)}")
     with objmode():
-        print("calcTrianglesCor time: {}".format(time.perf_counter() - time1))
+        print("poly2triangle time: {}".format(time.perf_counter() - time1))
     with objmode():
         print("all_njitINTERN time: {}".format(time.perf_counter() - time0))
     return verticesArray

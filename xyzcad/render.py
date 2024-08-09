@@ -693,24 +693,33 @@ def poly2triangle(poly_lst):
     tr_arr = np.zeros((len(poly_lst) * 6, 3, 3))
     c = 0
     for k in range(len(poly_lst)):
-        circ = poly_lst[k]
-        for i in range(len(circ) - 2):
-            tr_arr[c][0] = circ[0]
-            tr_arr[c][1] = circ[i + 1]
-            tr_arr[c][2] = circ[i + 2]
+        poly = poly_lst[k]
+        for i in range(len(poly) - 2):
+            tr_arr[c][0] = poly[0]
+            tr_arr[c][1] = poly[i + 1]
+            tr_arr[c][2] = poly[i + 2]
             c += 1
     return tr_arr[:c]
 
 
 @njit(cache=True)
 def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    return List(
+    with objmode():
+        print("cutCedgeIdxRevDict time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    coord_lst = List(
         [
             [precTrPnts[cutCedgeIdxRevDict[f]] for f in e if f in cutCedgeIdxRevDict]
             for e in trList
         ]
     )
+    with objmode():
+        print("coord_lst time: {}".format(time.perf_counter() - time1))
+    return coord_lst
 
 
 @njit(cache=True)
@@ -772,22 +781,22 @@ def calc_polygons(c2e, cvList, tlta):
 def calc_closed_surface(c2e, cvList, tlta):
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    circList = calc_polygons(c2e, cvList, tlta)
+    polyList = calc_polygons(c2e, cvList, tlta)
     with objmode():
         print("calc_polygons time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    rep = repair_surface(circList)
+    rep = repair_surface(polyList)
     print(f"repair polygons: {len(rep)}")
     with objmode():
         print("repair_surface time: {}".format(time.perf_counter() - time1))
     # corCircList.extend(List(rep))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    circList.extend(rep)
+    polyList.extend(rep)
     with objmode():
         print("corCircList.extend time: {}".format(time.perf_counter() - time1))
-    return circList
+    return polyList
 
 
 @njit(cache=True)
@@ -841,13 +850,13 @@ def all_njit_func(func, res, tlt):
         print("calc_closed_surface time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    circPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
-    print(f"len(circPtsCoordList)={len(circPtsCoordList)}")
+    polyPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
+    print(f"len(polyPtsCoordList)={len(polyPtsCoordList)}")
     with objmode():
         print("TrIdx2TrCoord time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    verticesArray = poly2triangle(circPtsCoordList)
+    verticesArray = poly2triangle(polyPtsCoordList)
     print(f"len(verticesArray)={len(verticesArray)}")
     with objmode():
         print("poly2triangle time: {}".format(time.perf_counter() - time1))

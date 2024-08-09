@@ -17,7 +17,6 @@ pylint = "^3.2.6"
 black = "^24.4.2"
 isort = "^5.13.2"
 pytest = "^8.3.2"
-admesh = "^0.98.9"
 
 [tool.isort]
 line_length = 79

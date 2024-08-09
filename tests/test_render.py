@@ -38,3 +38,10 @@ def test_render_sphere():
     assert stats["Max Z"] < 21
     assert stats["Min Z"] < -19
     assert stats["Min Z"] > -21
+    assert stats["Number of parts"] == 1
+    assert stats["Degenerate facets"] == 0
+    assert stats["Edges fixed"] == 0
+    assert stats["Facets removed"] == 0
+    assert stats["Facets added"] == 0
+    assert stats["Facets reversed"] == 0
+    assert stats["Backwards edges"] == 0

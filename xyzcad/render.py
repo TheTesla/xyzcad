@@ -723,6 +723,25 @@ def TrIdx2TrCoord(trList, cutCedgeIdxList, precTrPnts):
 
 
 @njit(cache=True)
+def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
+    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
+    tr_arr = np.zeros((len(tr_lst) * 8, 3, 3))
+    c = 0
+    for k in range(len(tr_lst)):
+        poly = [
+            precTrPnts[cutCedgeIdxRevDict[f]]
+            for f in tr_lst[k]
+            if f in cutCedgeIdxRevDict
+        ]
+        for i in range(len(poly) - 2):
+            tr_arr[c][0] = poly[0]
+            tr_arr[c][1] = poly[i + 1]
+            tr_arr[c][2] = poly[i + 2]
+            c += 1
+    return tr_arr[:c]
+
+
+@njit(cache=True)
 def filter_single_edge(poly_edge_list):
     s1 = set(poly_edge_list)
     s2 = set([(e[1], e[0]) for e in poly_edge_list])
@@ -850,16 +869,17 @@ def all_njit_func(func, res, tlt):
         print("calc_closed_surface time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    polyPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
-    print(f"len(polyPtsCoordList)={len(polyPtsCoordList)}")
-    with objmode():
-        print("TrIdx2TrCoord time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
-    verticesArray = poly2triangle(polyPtsCoordList)
+    verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
+    # polyPtsCoordList = TrIdx2TrCoord(corCircList, cCeI, precTrPtsList)
+    # print(f"len(polyPtsCoordList)={len(polyPtsCoordList)}")
+    # with objmode():
+    #    print("TrIdx2TrCoord time: {}".format(time.perf_counter() - time1))
+    # with objmode(time1="f8"):
+    #    time1 = time.perf_counter()
+    # verticesArray = poly2triangle(polyPtsCoordList)
     print(f"len(verticesArray)={len(verticesArray)}")
     with objmode():
-        print("poly2triangle time: {}".format(time.perf_counter() - time1))
+        print("tridx2triangle time: {}".format(time.perf_counter() - time1))
     with objmode():
         print("all_njitINTERN time: {}".format(time.perf_counter() - time0))
     return verticesArray

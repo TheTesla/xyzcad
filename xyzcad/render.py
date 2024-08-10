@@ -727,13 +727,16 @@ def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
     tr_arr = np.zeros((len(tr_lst) * 8, 3, 3))
     c = 0
+    poly = np.zeros((6, 3))
     for k in range(len(tr_lst)):
-        poly = [
-            precTrPnts[cutCedgeIdxRevDict[f]]
-            for f in tr_lst[k]
-            if f in cutCedgeIdxRevDict
-        ]
-        for i in range(len(poly) - 2):
+        tr = tr_lst[k]
+        n = 0
+        for m in range(len(tr)):
+            f = tr[m]
+            if f in cutCedgeIdxRevDict:
+                poly[n] = precTrPnts[cutCedgeIdxRevDict[f]]
+                n += 1
+        for i in range(n - 2):
             tr_arr[c][0] = poly[0]
             tr_arr[c][1] = poly[i + 1]
             tr_arr[c][2] = poly[i + 2]

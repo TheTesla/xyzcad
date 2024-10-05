@@ -20,7 +20,7 @@ from xyzcad import render
 
 @njit
 def sphere(x, y, z):
-    return 13**2 > x**2 + y**2 + z**2
+    return 2**2 > x**2 + y**2 + z**2
 
 
 t0 = time.time()

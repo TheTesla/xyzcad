@@ -17,6 +17,8 @@ import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
+import cadquery as cq
+
 
 from xyzcad import __version__
 
@@ -709,6 +711,22 @@ def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
             c += 1
     return tr_arr[:c]
 
+@njit(cache=True)
+def tridx2polygons(tr_lst, cutCedgeIdxList, precTrPnts):
+    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
+    poly_arr = np.zeros((len(tr_lst) * 4, 6, 3))
+    c = 0
+    for k in range(len(tr_lst)):
+        tr = tr_lst[k]
+        n = 0
+        for m in range(len(tr)):
+            f = tr[m]
+            if f in cutCedgeIdxRevDict:
+                poly_arr[c][n] = precTrPnts[cutCedgeIdxRevDict[f]]
+                n += 1
+        c += 1
+    return poly_arr[:c]
+
 
 @njit(cache=True)
 def build_repair_polygons(single_edge_dict):
@@ -834,9 +852,41 @@ def all_njit_func(func, res, tlt):
     print(f"len(verticesArray)={len(verticesArray)}")
     with objmode():
         print("tridx2triangle time: {}".format(time.perf_counter() - time1))
+    with objmode(time1="f8"):
+        time1 = time.perf_counter()
+    polyArray = tridx2polygons(corCircList, cCeI, precTrPtsList)
+    print(f"len(polyArray)={len(polyArray)}")
+    with objmode():
+        print("tridx2polygons time: {}".format(time.perf_counter() - time1))
     with objmode():
         print("all_njitINTERN time: {}".format(time.perf_counter() - time0))
-    return verticesArray
+    return verticesArray, polyArray
+
+
+def tr2step(tr_arr, filename):
+    w = []
+    for tr in tr_arr:
+        w.append(cq.Wire.makePolygon([[c for c in tr[i%3]] for i in range(4)]))
+    f = [cq.Face.makeFromWires(e, []) for e in w]
+    shell = cq.Shell.makeShell(f)
+    #cq.exporters.export(shell, f"{filename[:-4]}.step")
+    solid = cq.Solid.makeSolid(shell)
+    cq.exporters.export(solid, f"{filename[:-4]}.step")
+
+#def poly2step(poly_arr, filename):
+#    w = []
+#    for poly in poly_arr:
+#        w.append(cq.Wire.makePolygon([[c for c in e] for e in poly]))
+#    f = [cq.Face.makeFromWires(e, []) for e in w]
+
+#def poly2step(poly_arr, filename):
+#    s = []
+#    for poly in poly_arr:
+#        s.append(cq.Edge.makeSpline([cq.Vector([c for c in e]) for e in poly if
+#                                     not( e[0] == 0 and e[1] == 0 and e[2] == 0)]))
+#    shell = cq.Shell.makeShell(s)
+#    #solid = cq.Solid.makeSolid(shell)
+#    cq.exporters.export(shell, f"{filename[:-4]}.step")
 
 
 def renderAndSave(func, filename, res=1):
@@ -849,8 +899,11 @@ def renderAndSave(func, filename, res=1):
     print(f"running xyzcad version {version_run} (installed: {version_inst})")
 
     tlt_L = List([List([List(f) for f in e]) for e in tlt])
-    verticesArray = all_njit_func(func, res, tlt_L)
+    verticesArray, polyArray = all_njit_func(func, res, tlt_L)
     print("all_njit_func time: {}".format(time.time() - t0))
+    tr2step(verticesArray,filename)
+    #poly2step(polyArray,filename)
+
 
     t0 = time.time()
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))

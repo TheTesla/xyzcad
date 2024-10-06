@@ -714,6 +714,7 @@ def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
 @njit(cache=True)
 def tridx2polygons(tr_lst, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
+    print(cutCedgeIdxRevDict)
     poly_arr = np.zeros((len(tr_lst) * 4, 6, 3))
     c = 0
     for k in range(len(tr_lst)):
@@ -796,6 +797,23 @@ def calc_closed_surface(c2e, cvList, tlta):
         print("corCircList.extend time: {}".format(time.perf_counter() - time1))
     return polyList
 
+@njit(cache=True)
+def reduce_poly(poly_list, cutCedgeIdxList, precTrPnts):
+    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
+    print(poly_list)
+    poly_coord_list = [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in poly_list]
+    print(poly_coord_list)
+    dirs = [[np.cross(e[1]-e[0],f-e[0]) for f in e[2:]] for e in poly_coord_list]
+    print(dirs)
+    norm_dirs = [[f/sum(f**2)**0.5 for f in e] for e in dirs]
+    print(norm_dirs)
+    flat_poly_q = [[e[0] - f for f in e] for e in norm_dirs]
+    print(flat_poly_q)
+    is_flat = [0==sum([10**-10<sum(f**2)**0.5 for f in e]) for e in flat_poly_q]
+    print(is_flat)
+    flat_poly = [e for i, e in enumerate(poly_list) if is_flat[i]]
+    not_flat_poly = [e for i, e in enumerate(poly_list) if not is_flat[i]]
+    return flat_poly, not_flat_poly
 
 @njit(cache=True)
 def all_njit_func(func, res, tlt):
@@ -846,6 +864,11 @@ def all_njit_func(func, res, tlt):
     print(f"len(corCircList)={len(corCircList)}")
     with objmode():
         print("calc_closed_surface time: {}".format(time.perf_counter() - time1))
+
+
+    flt_ply, nflt_ply = reduce_poly(corCircList, cCeI, precTrPtsList)
+
+
     with objmode(time1="f8"):
         time1 = time.perf_counter()
     verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
@@ -854,24 +877,39 @@ def all_njit_func(func, res, tlt):
         print("tridx2triangle time: {}".format(time.perf_counter() - time1))
     with objmode(time1="f8"):
         time1 = time.perf_counter()
-    polyArray = tridx2polygons(corCircList, cCeI, precTrPtsList)
+
+    polyArray = tridx2polygons(flt_ply, cCeI, precTrPtsList)
+    polyArray2 = tridx2triangle(nflt_ply, cCeI, precTrPtsList)
+
     print(f"len(polyArray)={len(polyArray)}")
     with objmode():
         print("tridx2polygons time: {}".format(time.perf_counter() - time1))
     with objmode():
         print("all_njitINTERN time: {}".format(time.perf_counter() - time0))
-    return verticesArray, polyArray
+    return verticesArray, [polyArray, polyArray2]
 
 
 def tr2step(tr_arr, filename):
     w = []
     for tr in tr_arr:
-        w.append(cq.Wire.makePolygon([[c for c in tr[i%3]] for i in range(4)]))
+        w.append(cq.Wire.makePolygon([[c for c in tr[i%len(tr)]] for i in range(len(tr)+1)]))
     f = [cq.Face.makeFromWires(e, []) for e in w]
     shell = cq.Shell.makeShell(f)
     #cq.exporters.export(shell, f"{filename[:-4]}.step")
     solid = cq.Solid.makeSolid(shell)
     cq.exporters.export(solid, f"{filename[:-4]}.step")
+
+def poly2step(poly_arr_list, filename):
+    w = []
+    for poly_arr in poly_arr_list:
+        for poly_r in poly_arr:
+            poly = [e for e in poly_r if e[0] != 0 and e[1] != 0 and e[2] != 0]
+            w.append(cq.Wire.makePolygon([[c for c in poly[i%len(poly)]] for i in range(len(poly)+1)]))
+    f = [cq.Face.makeFromWires(e, []) for e in w]
+    shell = cq.Shell.makeShell(f)
+    cq.exporters.export(shell, f"{filename[:-4]}.step")
+    #solid = cq.Solid.makeSolid(shell)
+    #cq.exporters.export(solid, f"{filename[:-4]}.step")
 
 #def poly2step(poly_arr, filename):
 #    w = []
@@ -901,8 +939,8 @@ def renderAndSave(func, filename, res=1):
     tlt_L = List([List([List(f) for f in e]) for e in tlt])
     verticesArray, polyArray = all_njit_func(func, res, tlt_L)
     print("all_njit_func time: {}".format(time.time() - t0))
-    tr2step(verticesArray,filename)
-    #poly2step(polyArray,filename)
+    #tr2step(verticesArray,filename)
+    poly2step(polyArray,filename)
 
 
     t0 = time.time()

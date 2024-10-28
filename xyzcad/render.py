@@ -693,9 +693,9 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
 @njit(cache=True)
 def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    tr_arr = np.zeros((len(tr_lst) * 8, 3, 3))
+    tr_arr = np.zeros((len(tr_lst) * 88, 3, 3))
     c = 0
-    poly = np.zeros((6, 3))
+    poly = np.zeros((86, 3))
     for k in range(len(tr_lst)):
         tr = tr_lst[k]
         n = 0
@@ -714,8 +714,7 @@ def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
 @njit(cache=True)
 def tridx2polygons(tr_lst, cutCedgeIdxList, precTrPnts):
     cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    print(cutCedgeIdxRevDict)
-    poly_arr = np.zeros((len(tr_lst) * 4, 6, 3))
+    poly_arr = np.zeros((len(tr_lst) * 4, 20, 3))
     c = 0
     for k in range(len(tr_lst)):
         tr = tr_lst[k]
@@ -797,23 +796,75 @@ def calc_closed_surface(c2e, cvList, tlta):
         print("corCircList.extend time: {}".format(time.perf_counter() - time1))
     return polyList
 
+
+
+@njit(cache=True)
+def dot(a, b):
+    return a[0]*b[0] + a[1]*b[1] + a[2]*b[2]
+
+
+@njit(cache=True)
+def poly2dirs(poly_list, cutCedgeIdxList, precTrPnts):
+    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
+    poly_coord_list = [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in poly_list]
+    dirs = [[np.cross(e[1]-e[0],f-e[0]) for f in e[2:]] for e in poly_coord_list]
+    norm_dirs = [[f/sum(f**2)**0.5 for f in e] for e in dirs]
+    distances = [dot(e[0],poly_coord_list[i][0]) for i, e in enumerate(norm_dirs)]
+    return norm_dirs, dirs, poly_coord_list, distances
+
+
 @njit(cache=True)
 def reduce_poly(poly_list, cutCedgeIdxList, precTrPnts):
-    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    print(poly_list)
-    poly_coord_list = [[precTrPnts[cutCedgeIdxRevDict[f]] for f in e] for e in poly_list]
-    print(poly_coord_list)
-    dirs = [[np.cross(e[1]-e[0],f-e[0]) for f in e[2:]] for e in poly_coord_list]
-    print(dirs)
-    norm_dirs = [[f/sum(f**2)**0.5 for f in e] for e in dirs]
-    print(norm_dirs)
+    norm_dirs, _, _, distances = poly2dirs(poly_list, cutCedgeIdxList, precTrPnts) #[[f/sum(f**2)**0.5 for f in e] for e in dirs]
     flat_poly_q = [[e[0] - f for f in e] for e in norm_dirs]
-    print(flat_poly_q)
-    is_flat = [0==sum([10**-10<sum(f**2)**0.5 for f in e]) for e in flat_poly_q]
-    print(is_flat)
+    is_flat = [0==sum([10**-11<sum(f**2)**0.5 for f in e]) for e in flat_poly_q]
     flat_poly = [e for i, e in enumerate(poly_list) if is_flat[i]]
+
+    flat_norm_dirs = [(e[0][0], e[0][1], e[0][2], distances[i]) for i, e in enumerate(norm_dirs) if is_flat[i]]
+    flat_norm_dict = {(0.0,0.0,0.0,0.0): List([0])}
+    del flat_norm_dict[(0.0,0.0,0.0,0.0)]
+    for i, e in enumerate(flat_norm_dirs):
+        if e not in flat_norm_dict:
+            flat_norm_dict[e] = List([i])
+        else:
+            flat_norm_dict[e].append(i)
+    reduceable = {k: v for k, v in flat_norm_dict.items()} # if len(v) > 1}
+    poly_list_reduceable_dict = {k: List([flat_poly[e] for e in v]) for k, v in reduceable.items()}
+    poly_list_reduced_dict_raw = {k: repair_surface(v) for k, v in poly_list_reduceable_dict.items()}
+    poly_list_reduced_dict = \
+        {k: List([e for e in v if len(e) > 2]) for k, v in poly_list_reduced_dict_raw.items()}
+    print(poly_list_reduceable_dict)
+    print(poly_list_reduced_dict_raw)
+    #flat_norm_dirs_set = set(flat_norm_dirs)
+    #print(flat_norm_dirs_set)
+
+    poly_list_reduced = List([e for k, v in poly_list_reduced_dict.items() for e in v])
+
+
+
+    #poly_list_reduced = List([e for k, v in poly_list_reduceable_dict.items() for e in v])
+
+
+
+
+    bnorm_dirs, _, bpcl, _ = poly2dirs(poly_list_reduced, cutCedgeIdxList, precTrPnts) #[[f/sum(f**2)**0.5 for f in e] for e in dirs]
+    print(bnorm_dirs)
+    bflat_poly_q = [[e[0] - f for f in e] for e in bnorm_dirs]
+    bis_flat = [0==sum([10**-10<sum(f**2)**0.5 for f in e]) for e in bflat_poly_q]
+    bflat_poly = [e for i, e in enumerate(poly_list_reduced) if bis_flat[i]]
+    bnot_flat_poly = [e for i, e in enumerate(poly_list_reduced) if not bis_flat[i]]
+    #print(bflat_poly)
+    
+    print(bpcl)
+
+
     not_flat_poly = [e for i, e in enumerate(poly_list) if not is_flat[i]]
-    return flat_poly, not_flat_poly
+    #return flat_poly, not_flat_poly
+    return poly_list_reduced, not_flat_poly
+    #return poly_list_reduced, poly_list_reduced
+    #return poly_list_reduceable, not_flat_poly
+    #return bflat_poly, bnot_flat_poly
+    #return bnot_flat_poly, bflat_poly
 
 @njit(cache=True)
 def all_njit_func(func, res, tlt):
@@ -901,6 +952,7 @@ def tr2step(tr_arr, filename):
 
 def poly2step(poly_arr_list, filename):
     w = []
+    print(poly_arr_list)
     for poly_arr in poly_arr_list:
         for poly_r in poly_arr:
             poly = [e for e in poly_r if e[0] != 0 and e[1] != 0 and e[2] != 0]

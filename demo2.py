@@ -20,11 +20,13 @@ from xyzcad import render
 
 @njit
 def sphere(x, y, z):
+    if z > 1.1:
+        return False
     return 2**2 > x**2 + y**2 + z**2
 
 
 t0 = time.time()
 
-render.renderAndSave(sphere, "demo.stl", 1)
+render.renderAndSave(sphere, "demo.stl", 0.61)
 
 print(time.time() - t0)

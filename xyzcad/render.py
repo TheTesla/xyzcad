@@ -547,9 +547,6 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
 
 @njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
-
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     pts_res_list = []
     for k, v in cubeCornerValsDict.items():
         x, y, z = k
@@ -564,20 +561,9 @@ def convert_corners2pts(cubeCornerValsDict, r):
         pts_res_list.append(((x, yh, zh), int(0 < (v & 8))))  # v011
         pts_res_list.append(((xh, yh, z), int(0 < (v & 64))))  # v110
         pts_res_list.append(((xh, yh, zh), int(0 < (v & 128))))  # v111
-    with objmode():
-        print("pts_res_list time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     ptsResDict = Dict(pts_res_list)
-    with objmode():
-        print("ptsResDict time: {}".format(time.perf_counter() - time1))
-
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
     ptCoordDictVals = np.asarray(list(ptsResDict.values()))
-    with objmode():
-        print("ptCoord time: {}".format(time.perf_counter() - time1))
     return ptCoordDictKeys, ptCoordDictVals
 
 
@@ -586,7 +572,7 @@ def coords2relations(cubeCoordArray, ptCoordArray, res):
     r = res
 
     arr_split = 16
-    spl_dict = [{(0.0, 0.0, 0.0): 0}] * arr_split
+    spl_dict = [{(0.0, 0.0, 0.0): 0} for i0 in range(arr_split)]
     for k in range(arr_split):
         spl_dict[k].clear()
     for k in prange(arr_split):
@@ -595,7 +581,7 @@ def coords2relations(cubeCoordArray, ptCoordArray, res):
             (len_arr * k) : min(len_arr * (k + 1), ptCoordArray.shape[0])
         ]
         spl_dict[k] = {
-            (e[0], e[1], e[2]): i + len_arr * k for i, e in enumerate(splitted_arr)
+            (p[0], p[1], p[2]): i1 + len_arr * k for i1, p in enumerate(splitted_arr)
         }
 
     ptCoordDictRev = spl_dict[0]
@@ -603,13 +589,13 @@ def coords2relations(cubeCoordArray, ptCoordArray, res):
         ptCoordDictRev.update(spl_dict[k])
 
     cube2ptIdxArray = np.zeros((cubeCoordArray.shape[0], 8), dtype="int")
-    for i in prange(cubeCoordArray.shape[0]):
-        p = cubeCoordArray[i]
+    for i2 in prange(cubeCoordArray.shape[0]):
+        p = cubeCoordArray[i2]
         x, y, z = p
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        cube2ptIdxArray[i] = [
+        cube2ptIdxArray[i2] = [
             ptCoordDictRev[(x, y, z)],
             ptCoordDictRev[(xh, y, z)],
             ptCoordDictRev[(x, yh, z)],
@@ -621,31 +607,31 @@ def coords2relations(cubeCoordArray, ptCoordArray, res):
         ]
 
     cEdgeArray = np.zeros((cube2ptIdxArray.shape[0] * 12, 2), dtype="int")
-    for i in prange(cube2ptIdxArray.shape[0]):
-        cube = cube2ptIdxArray[i]
-        cEdgeArray[12 * i + 0] = (cube[0], cube[1])
-        cEdgeArray[12 * i + 1] = (cube[0], cube[2])
-        cEdgeArray[12 * i + 2] = (cube[0], cube[4])
-        cEdgeArray[12 * i + 3] = (cube[6], cube[7])
-        cEdgeArray[12 * i + 4] = (cube[5], cube[7])
-        cEdgeArray[12 * i + 5] = (cube[3], cube[7])
-        cEdgeArray[12 * i + 6] = (cube[1], cube[5])
-        cEdgeArray[12 * i + 7] = (cube[1], cube[3])
-        cEdgeArray[12 * i + 8] = (cube[2], cube[3])
-        cEdgeArray[12 * i + 9] = (cube[2], cube[6])
-        cEdgeArray[12 * i + 10] = (cube[4], cube[6])
-        cEdgeArray[12 * i + 11] = (cube[4], cube[5])
+    for i3 in prange(cube2ptIdxArray.shape[0]):
+        cube = cube2ptIdxArray[i3]
+        cEdgeArray[12 * i3 + 0] = (cube[0], cube[1])
+        cEdgeArray[12 * i3 + 1] = (cube[0], cube[2])
+        cEdgeArray[12 * i3 + 2] = (cube[0], cube[4])
+        cEdgeArray[12 * i3 + 3] = (cube[6], cube[7])
+        cEdgeArray[12 * i3 + 4] = (cube[5], cube[7])
+        cEdgeArray[12 * i3 + 5] = (cube[3], cube[7])
+        cEdgeArray[12 * i3 + 6] = (cube[1], cube[5])
+        cEdgeArray[12 * i3 + 7] = (cube[1], cube[3])
+        cEdgeArray[12 * i3 + 8] = (cube[2], cube[3])
+        cEdgeArray[12 * i3 + 9] = (cube[2], cube[6])
+        cEdgeArray[12 * i3 + 10] = (cube[4], cube[6])
+        cEdgeArray[12 * i3 + 11] = (cube[4], cube[5])
     cEdgesSet = set([(e[0], e[1]) for e in cEdgeArray])
 
     edge2ptIdxArray = np.asarray(list(cEdgesSet))
 
-    edge2ptIdxDict = {(e[0], e[1]): i for i, e in enumerate(edge2ptIdxArray)}
+    edge2ptIdxDict = {(e[0], e[1]): i4 for i4, e in enumerate(edge2ptIdxArray)}
 
     cube2edgeIdxArray = np.zeros((cube2ptIdxArray.shape[0], 12), dtype="int")
 
-    for i in prange(len(cube2ptIdxArray)):
-        cube = cube2ptIdxArray[i]
-        cube2edgeIdxArray[i] = [
+    for i5 in prange(len(cube2ptIdxArray)):
+        cube = cube2ptIdxArray[i5]
+        cube2edgeIdxArray[i5] = [
             edge2ptIdxDict[(cube[0], cube[1])],
             edge2ptIdxDict[(cube[0], cube[2])],
             edge2ptIdxDict[(cube[0], cube[4])],
@@ -724,29 +710,38 @@ def build_repair_polygons(single_edge_dict):
         ac.append(f)
     return ac
 
+@njit(cache=True)
+def time_it():
+    with objmode(t="f8"):
+        t = time.perf_counter()
+    return t
+
+@njit(cache=True)
+def print_state(state, t0c):
+    t2 = time_it()
+    t0, t1, fn_name = state
+    with objmode():
+        print("{:36s} {:9.4f} s {:9.4f} s {:9.4f} s".format(fn_name, t0 - t0c,
+                                                            t1 - t0, t2 - t1))
+    return time_it()
+
+@njit(cache=True)
+def log_it(t0, text):
+    t1 = time_it()
+    with objmode():
+        print("[{:9.4f}] {}".format(t1 - t0, text))
+
 
 @njit(cache=True)
 def repair_surface(poly_list):
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     poly_edge_list = [
         (e[(i + 1) % len(e)], e[i]) for e in poly_list for i, f in enumerate(e)
     ]
     s1 = set(poly_edge_list)
     s2 = set([(e[1], e[0]) for e in poly_edge_list])
     singleEdgeSet = s1.difference(s2)
-    with objmode():
-        print("filter_single_edge_new time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     singleEdgeDict = {k: v for k, v in singleEdgeSet}
-    with objmode():
-        print("singleEdgeDict time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     ac = build_repair_polygons(singleEdgeDict)
-    with objmode():
-        print("build_repair_polygons time: {}".format(time.perf_counter() - time1))
     return ac
 
 
@@ -759,83 +754,42 @@ def calc_polygons(c2e, cvList, tlta):
 
 @njit(cache=True)
 def calc_closed_surface(c2e, cvList, tlta):
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     polyList = calc_polygons(c2e, cvList, tlta)
-    with objmode():
-        print("calc_polygons time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     rep = repair_surface(polyList)
     print(f"repair polygons: {len(rep)}")
-    with objmode():
-        print("repair_surface time: {}".format(time.perf_counter() - time1))
-    # corCircList.extend(List(rep))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
     polyList.extend(rep)
-    with objmode():
-        print("corCircList.extend time: {}".format(time.perf_counter() - time1))
     return polyList
 
 
 @njit(cache=True)
-def all_njit_func(func, res, tlt):
-    with objmode(time0="f8"):
-        time0 = time.perf_counter()
+def all_njit_func(func, res, tlt, t0):
+    log_it(t0, "Searching initial point on surface")
     p = findSurfacePnt(func)
-    with objmode():
-        print("findSurfacePnt time: {}".format(time.perf_counter() - time0))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Walking over entire surface")
     corners = getSurface(func, p, res)
-    print(f"len(corners)={len(corners)}")
-    with objmode():
-        print("getSurface time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    #print(f"len(corners)={len(corners)}")
+    log_it(t0, "Converting corners into points")
     ptsKeys, pv = convert_corners2pts(corners, res)
-    print(f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}")
-    with objmode():
-        print("convert_corners2pts time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Comverting corners into cubes")
+    #print(f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}")
     cubesArray, cvList = convert_corners2cubes(corners)
-    print(f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}")
-    with objmode():
-        print("convert_corners2cubes time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Converting coordinate into relations")
+    #print(f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}")
     c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
-    print(f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}")
-    with objmode():
-        print("coords2relations time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Searching all marching cubes edges, cut by surface")
+    #print(f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}")
     cCeI = cutCedgeIdx(e2p, pv)
-    print(f"len(cCeI)={len(cCeI)}")
-    with objmode():
-        print("cutCedgeIdx time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Approximating exact coordinates of the cuts")
+    #print(f"len(cCeI)={len(cCeI)}")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
-    print(f"len(precTrPtsList)={len(precTrPtsList)}")
-    with objmode():
-        print("precTrPnts time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Calcuating closed surface")
+    #print(f"len(precTrPtsList)={len(precTrPtsList)}")
     corCircList = calc_closed_surface(c2e, cvList, tlt)
-    print(f"len(corCircList)={len(corCircList)}")
-    with objmode():
-        print("calc_closed_surface time: {}".format(time.perf_counter() - time1))
-    with objmode(time1="f8"):
-        time1 = time.perf_counter()
+    log_it(t0, "Building triangles")
+    #print(f"len(corCircList)={len(corCircList)}")
     verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
-    print(f"len(verticesArray)={len(verticesArray)}")
-    with objmode():
-        print("tridx2triangle time: {}".format(time.perf_counter() - time1))
-    with objmode():
-        print("all_njitINTERN time: {}".format(time.perf_counter() - time0))
+    log_it(t0, "Calculations done")
+    #print(f"len(verticesArray)={len(verticesArray)}")
     return verticesArray
 
 
@@ -846,16 +800,14 @@ def renderAndSave(func, filename, res=1):
         version_inst = importlib.metadata.version(__package__ or __name__)
     except importlib.metadata.PackageNotFoundError as e:
         version_inst = None
-    print(f"running xyzcad version {version_run} (installed: {version_inst})")
-
+    t0 = time_it()
+    log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     tlt_L = List([List([List(f) for f in e]) for e in tlt])
-    verticesArray = all_njit_func(func, res, tlt_L)
-    print("all_njit_func time: {}".format(time.time() - t0))
-
-    t0 = time.time()
+    log_it(t0, "Compiling")
+    verticesArray = all_njit_func(func, res, tlt_L, t0)
+    log_it(t0, "Building mesh")
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
     solid.vectors[:] = verticesArray
-    print("to mesh time: {}".format(time.time() - t0))
-    t0 = time.time()
+    log_it(t0, f"Saving file: {filename}")
     solid.save(filename)
-    print("save time: {}".format(time.time() - t0))
+    log_it(t0, "Done.")

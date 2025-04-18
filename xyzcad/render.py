@@ -203,23 +203,22 @@ def convert_corners2cubes(cubes_coord2cornersval_dict):
 
 @njit(cache=True)
 def convert_corners2pts(cubeCornerValsDict, r):
-    pts_res_list = []
+    pts_res_dict = {}
     for k, v in cubeCornerValsDict.items():
         x, y, z = k
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        pts_res_list.append(((x, y, z), int(0 < (v & 1))))  # v000
-        pts_res_list.append(((xh, y, z), int(0 < (v & 16))))  # v100
-        pts_res_list.append(((x, yh, z), int(0 < (v & 4))))  # v010
-        pts_res_list.append(((x, y, zh), int(0 < (v & 2))))  # v001
-        pts_res_list.append(((xh, y, zh), int(0 < (v & 32))))  # v101
-        pts_res_list.append(((x, yh, zh), int(0 < (v & 8))))  # v011
-        pts_res_list.append(((xh, yh, z), int(0 < (v & 64))))  # v110
-        pts_res_list.append(((xh, yh, zh), int(0 < (v & 128))))  # v111
-    ptsResDict = Dict(pts_res_list)
-    ptCoordDictKeys = np.asarray(list(ptsResDict.keys()))
-    ptCoordDictVals = np.asarray(list(ptsResDict.values()))
+        pts_res_dict[(x, y, z)] = int(0 < (v & 1))
+        pts_res_dict[(xh, y, z)] = int(0 < (v & 16))
+        pts_res_dict[(x, yh, z)] = int(0 < (v & 4))
+        pts_res_dict[(x, y, zh)] = int(0 < (v & 2))
+        pts_res_dict[(xh, y, zh)] = int(0 < (v & 32))
+        pts_res_dict[(x, yh, zh)] = int(0 < (v & 8))
+        pts_res_dict[(xh, yh, z)] = int(0 < (v & 64))
+        pts_res_dict[(xh, yh, zh)] = int(0 < (v & 128))
+    ptCoordDictKeys = np.asarray(list(pts_res_dict.keys()))
+    ptCoordDictVals = np.asarray(list(pts_res_dict.values()))
     return ptCoordDictKeys, ptCoordDictVals
 
 
@@ -443,9 +442,9 @@ def all_njit_func(func, res, t0):
     log_it(t0, "Converting corners into points")
     ptsKeys, pv = convert_corners2pts(corners, res)
     summary["cube points"] = len(pv)
-    log_it(t0, "Comverting corners into cubes")
+    log_it(t0, "Converting corners into cubes")
     cubesArray, cvList = convert_corners2cubes(corners)
-    log_it(t0, "Converting coordinate into relations")
+    log_it(t0, "Converting coordinates into relations")
     c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
     summary["cube edges"] = len(e2p)
     log_it(t0, "Searching all marching cubes edges, cut by surface")
@@ -453,7 +452,7 @@ def all_njit_func(func, res, t0):
     summary["surface points"] = len(cCeI)
     log_it(t0, "Approximating exact coordinates of the cuts")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
-    log_it(t0, "Calcuating closed surface")
+    log_it(t0, "Calculating closed surface")
     corCircList, len_rep = calc_closed_surface(c2e, cvList)
     log_it(t0, "Building triangles")
     summary["polygons"] = len(corCircList)

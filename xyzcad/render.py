@@ -726,6 +726,14 @@ def print_state(state, t0c):
     return time_it()
 
 @njit(cache=True)
+def print_summary(summary, indent = 0):
+    for k, v in summary.items():
+        with objmode():
+            print("{:s}{:22s} {:20d}".format(" "*indent, k, v))
+
+
+    return time_it()
+@njit(cache=True)
 def log_it(t0, text):
     t1 = time_it()
     with objmode():
@@ -752,45 +760,46 @@ def calc_polygons(c2e, cvList, tlta):
     )
 
 
+
+
 @njit(cache=True)
 def calc_closed_surface(c2e, cvList, tlta):
     polyList = calc_polygons(c2e, cvList, tlta)
     rep = repair_surface(polyList)
-    print(f"repair polygons: {len(rep)}")
     polyList.extend(rep)
-    return polyList
+    return polyList, len(rep)
 
 
 @njit(cache=True)
 def all_njit_func(func, res, tlt, t0):
+    summary = {}
     log_it(t0, "Searching initial point on surface")
     p = findSurfacePnt(func)
     log_it(t0, "Walking over entire surface")
     corners = getSurface(func, p, res)
-    #print(f"len(corners)={len(corners)}")
+    summary["cubes"] = len(corners)
     log_it(t0, "Converting corners into points")
     ptsKeys, pv = convert_corners2pts(corners, res)
+    summary["cube points"] = len(pv)
     log_it(t0, "Comverting corners into cubes")
-    #print(f"len(ptsKeys, pv)={len(ptsKeys)}, {len(pv)}")
     cubesArray, cvList = convert_corners2cubes(corners)
     log_it(t0, "Converting coordinate into relations")
-    #print(f"len(cubesArray, cvList)={len(cubesArray)}, {len(cvList)}")
     c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
+    summary["cube edges"] = len(e2p)
     log_it(t0, "Searching all marching cubes edges, cut by surface")
-    #print(f"len(c2p, c2e, e2p)={len(c2p)}, {len(c2e)}, {len(e2p)}")
     cCeI = cutCedgeIdx(e2p, pv)
+    summary["surface points"] = len(cCeI)
     log_it(t0, "Approximating exact coordinates of the cuts")
-    #print(f"len(cCeI)={len(cCeI)}")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
     log_it(t0, "Calcuating closed surface")
-    #print(f"len(precTrPtsList)={len(precTrPtsList)}")
-    corCircList = calc_closed_surface(c2e, cvList, tlt)
+    corCircList, len_rep = calc_closed_surface(c2e, cvList, tlt)
     log_it(t0, "Building triangles")
-    #print(f"len(corCircList)={len(corCircList)}")
+    summary["polygons"] = len(corCircList)
+    summary["repaired polygons"] = len_rep
     verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
     log_it(t0, "Calculations done")
-    #print(f"len(verticesArray)={len(verticesArray)}")
-    return verticesArray
+    summary["triangles"] = len(verticesArray)
+    return verticesArray, summary
 
 
 def renderAndSave(func, filename, res=1):
@@ -804,7 +813,8 @@ def renderAndSave(func, filename, res=1):
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     tlt_L = List([List([List(f) for f in e]) for e in tlt])
     log_it(t0, "Compiling")
-    verticesArray = all_njit_func(func, res, tlt_L, t0)
+    verticesArray, summary = all_njit_func(func, res, tlt_L, t0)
+    print_summary(summary, 14)
     log_it(t0, "Building mesh")
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
     solid.vectors[:] = verticesArray

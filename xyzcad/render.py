@@ -5,7 +5,7 @@
 #######################################################################
 #
 #    xyzCad - implicit surface function cad software for 3d printing
-#    Copyright (c) 2021 - 2024 Stefan Helmert <stefan.helmert@t-online.de>
+#    Copyright (c) 2021 - 2025 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 
@@ -431,6 +431,34 @@ def calc_closed_surface(c2e, cvList):
     return polyList, len(rep)
 
 
+
+def write_obj_with_mtl(filename, vertices, faces):
+    # Inhalte der MTL-Datei (Materialdefinition)
+    mtl_content = """\
+newmtl red
+Ka 1.0 0.0 0.0
+Kd 1.0 0.0 0.0
+Ks 1.0 0.0 0.0
+d 1.0
+illum 1
+"""
+
+    with open(filename+".mtl", 'w') as mtl_file:
+        mtl_file.write(mtl_content)
+
+    with open(filename+".obj", 'w') as obj_file:
+        obj_file.write(f"mtllib {filename}.mtl\n")
+        obj_file.write("usemtl red\n")
+
+        for v in vertices:
+            obj_file.write(f"v {v[0]} {v[1]} {v[2]}\n")
+
+        for f in faces:
+            obj_file.write(f"f {' '.join(str(i+1) for i in f)}\n")
+
+
+
+
 @njit(cache=True)
 def all_njit_func(func, res, t0):
     summary = {}
@@ -460,7 +488,9 @@ def all_njit_func(func, res, t0):
     verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
     log_it(t0, "Calculations done")
     summary["triangles"] = len(verticesArray)
-    return verticesArray, summary
+    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cCeI)}
+    faces = [[cutCedgeIdxRevDict[e] for e in f] for f in corCircList]
+    return verticesArray, precTrPtsList, faces, summary
 
 
 def renderAndSave(func, filename, res=1):
@@ -473,7 +503,11 @@ def renderAndSave(func, filename, res=1):
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
-    verticesArray, summary = all_njit_func(func, res, t0)
+    verticesArray, vertices, faces, summary = all_njit_func(func, res, t0)
+    print(vertices)
+    print(faces)
+    log_it(t0, "Write obj")
+    write_obj_with_mtl(filename[:-4], vertices, faces)
     print_summary(summary, 14)
     log_it(t0, "Building mesh")
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))

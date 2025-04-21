@@ -4,6 +4,29 @@ from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
 
+@njit(cache=True)
+def poly2triangle(polygons, vertices):
+    polys_coord = [[vertices[idx] for idx in p] for p in polygons]
+    tr_arr = np.zeros((len(polys_coord) * 8, 3, 3))
+    c = 0
+    poly = np.zeros((6, 3))
+    for k in range(len(polys_coord)):
+        poly = polys_coord[k]
+        n = len(poly)
+        for i in range(n - 2):
+            tr_arr[c][0] = poly[0]
+            tr_arr[c][1] = poly[i + 1]
+            tr_arr[c][2] = poly[i + 2]
+            c += 1
+    return tr_arr[:c]
+
+
+def export_stl(stl_filename, vertices, poly):
+    verticesArray = poly2triangle(poly, vertices)
+    solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
+    solid.vectors[:] = verticesArray
+    solid.save(stl_filename+".stl")
+
 
 def write_obj(obj_filename, vertices, poly_grpd, mtl_filename="", mtl_lst=[]):
     if mtl_filename == "":

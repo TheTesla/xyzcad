@@ -20,6 +20,8 @@ from stl import mesh
 
 from xyzcad import __version__
 from xyzcad.tlt import TLT
+from xyzcad.export import export_wavefront_obj_simple
+
 
 
 @njit(cache=True)
@@ -330,19 +332,14 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
 
 
 @njit(cache=True)
-def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
-    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    tr_arr = np.zeros((len(tr_lst) * 8, 3, 3))
+def poly2triangle(polygons, vertices):
+    polys_coord = [[vertices[idx] for idx in p] for p in polygons]
+    tr_arr = np.zeros((len(polys_coord) * 8, 3, 3))
     c = 0
     poly = np.zeros((6, 3))
-    for k in range(len(tr_lst)):
-        tr = tr_lst[k]
-        n = 0
-        for m in range(len(tr)):
-            f = tr[m]
-            if f in cutCedgeIdxRevDict:
-                poly[n] = precTrPnts[cutCedgeIdxRevDict[f]]
-                n += 1
+    for k in range(len(polys_coord)):
+        poly = polys_coord[k]
+        n = len(poly)
         for i in range(n - 2):
             tr_arr[c][0] = poly[0]
             tr_arr[c][1] = poly[i + 1]
@@ -432,13 +429,80 @@ def calc_closed_surface(c2e, cvList):
 
 
 
-def write_obj_with_mtl(filename, vertices, faces):
+def write_obj_with_mtl(filename, vertices, faces_grpd):
     # Inhalte der MTL-Datei (Materialdefinition)
     mtl_content = """\
-newmtl red
+newmtl neg
 Ka 1.0 0.0 0.0
 Kd 1.0 0.0 0.0
 Ks 1.0 0.0 0.0
+d 1.0
+illum 1
+newmtl negl
+Ka 1.0 0.0 0.0
+Kd 1.0 0.0 0.0
+Ks 1.0 0.0 0.0
+d 0.5
+illum 2
+newmtl pos
+Ka 0.0 1.0 0.0
+Kd 0.0 1.0 0.0
+Ks 0.0 1.0 0.0
+d 1.0
+illum 1
+newmtl posl
+Ka 0.0 1.0 0.0
+Kd 0.0 1.0 0.0
+Ks 0.0 1.0 0.0
+d 0.5
+illum 2
+
+newmtl mtl0
+Ka 0.0 0.0 0.0
+Kd 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1
+newmtl mtl1
+Ka 0.0 0.0 1.0
+Kd 0.0 0.0 1.0
+Ks 0.0 0.0 1.0
+d 1.0
+illum 1
+newmtl mtl2
+Ka 0.0 1.0 0.0
+Kd 0.0 1.0 0.0
+Ks 0.0 1.0 0.0
+d 1.0
+illum 1
+newmtl mtl3
+Ka 0.0 1.0 1.0
+Kd 0.0 1.0 1.0
+Ks 0.0 1.0 1.0
+d 1.0
+illum 1
+newmtl mtl4
+Ka 1.0 0.0 0.0
+Kd 1.0 0.0 0.0
+Ks 1.0 0.0 0.0
+d 1.0
+illum 1
+newmtl mtl5
+Ka 1.0 0.0 1.0
+Kd 1.0 0.0 1.0
+Ks 1.0 0.0 1.0
+d 1.0
+illum 1
+newmtl mtl6
+Ka 1.0 1.0 0.0
+Kd 1.0 1.0 0.0
+Ks 1.0 1.0 0.0
+d 1.0
+illum 1
+newmtl mtl7
+Ka 1.0 1.0 1.0
+Kd 1.0 1.0 1.0
+Ks 1.0 1.0 1.0
 d 1.0
 illum 1
 """
@@ -448,19 +512,42 @@ illum 1
 
     with open(filename+".obj", 'w') as obj_file:
         obj_file.write(f"mtllib {filename}.mtl\n")
-        obj_file.write("usemtl red\n")
 
         for v in vertices:
             obj_file.write(f"v {v[0]} {v[1]} {v[2]}\n")
+        
+        for i, faces in enumerate(faces_grpd):
+            obj_file.write(f"usemtl mtl{i}\n")
+            for f in faces:
+                obj_file.write(f"f {' '.join(str(k+1) for k in f)}\n")
 
-        for f in faces:
-            obj_file.write(f"f {' '.join(str(i+1) for i in f)}\n")
 
 
+@njit(parallel=True,cache=True)
+def calc_classes(clss_fun, prec_pnts):
+    clss_arr = np.zeros((prec_pnts.shape[0],8),dtype=np.uint8)
+    res = 0.1
+    for i in prange(prec_pnts.shape[0]):
+        x, y, z = prec_pnts[i]
+        clss_arr[i,0] = clss_fun(x - res, y - res, z - res)
+        clss_arr[i,1] = clss_fun(x + res, y - res, z - res)
+        clss_arr[i,2] = clss_fun(x - res, y + res, z - res)
+        clss_arr[i,3] = clss_fun(x + res, y + res, z - res)
+        clss_arr[i,4] = clss_fun(x - res, y - res, z + res)
+        clss_arr[i,5] = clss_fun(x + res, y - res, z + res)
+        clss_arr[i,6] = clss_fun(x - res, y + res, z + res)
+        clss_arr[i,7] = clss_fun(x + res, y + res, z + res)
+    return clss_arr
+
+@njit
+def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
+    cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
+    poly_vrtx_idx = [[cut_edges_rev[e] for e in f] for f in poly_cube_edge_idx]
+    return poly_vrtx_idx
 
 
 @njit(cache=True)
-def all_njit_func(func, res, t0):
+def all_njit_func(func, res, t0, clss_fun):
     summary = {}
     log_it(t0, "Searching initial point on surface")
     p = findSurfacePnt(func)
@@ -485,15 +572,33 @@ def all_njit_func(func, res, t0):
     log_it(t0, "Building triangles")
     summary["polygons"] = len(corCircList)
     summary["repaired polygons"] = len_rep
-    verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
+    poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
+    #verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
+    verticesArray = poly2triangle(poly_vrtx_idx, precTrPtsList)
+    log_it(t0, "Calculate classes")
+    clss_arr = calc_classes(clss_fun, precTrPtsList)
     log_it(t0, "Calculations done")
+    print(clss_arr)
+    faces = poly_vrtx_idx
+
+    clss_poly_arr = np.zeros((len(corCircList), 256))
+    for i in range(len(corCircList)):
+        for v in faces[i]:
+            for c in clss_arr[v]:
+                if c == 0:
+                    continue
+                clss_poly_arr[i,c] += 1
+
+
+    print(clss_poly_arr)
+    clss = np.argmax(clss_poly_arr, axis=1)
+
+
     summary["triangles"] = len(verticesArray)
-    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cCeI)}
-    faces = [[cutCedgeIdxRevDict[e] for e in f] for f in corCircList]
-    return verticesArray, precTrPtsList, faces, summary
+    return verticesArray, precTrPtsList, faces, clss, summary
 
 
-def renderAndSave(func, filename, res=1):
+def renderAndSave(func, filename, res=1, clss_fun=None):
     t0 = time.time()
     version_run = __version__
     try:
@@ -503,11 +608,18 @@ def renderAndSave(func, filename, res=1):
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
-    verticesArray, vertices, faces, summary = all_njit_func(func, res, t0)
+    verticesArray, vertices, faces, clss, summary = all_njit_func(func, res,
+                                                                  t0, clss_fun)
     print(vertices)
     print(faces)
+    print(clss)
+    faces_grpd = [[] for e in range(1+max(clss))]
+    for i in range(len(clss)):
+        faces_grpd[clss[i]].append(faces[i])
+
+    print(faces_grpd)
     log_it(t0, "Write obj")
-    write_obj_with_mtl(filename[:-4], vertices, faces)
+    export_wavefront_obj_simple(filename[:-4], vertices, faces_grpd)
     print_summary(summary, 14)
     log_it(t0, "Building mesh")
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))

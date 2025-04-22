@@ -20,7 +20,8 @@ from stl import mesh
 
 from xyzcad import __version__
 from xyzcad.tlt import TLT
-from xyzcad.export import export_wavefront_obj_simple, export_stl
+from xyzcad.export import export_wavefront_obj_simple, export_stl, \
+export_obj_printable
 
 
 
@@ -504,7 +505,8 @@ def renderAndSave(func, filename, res=1, clss_fun=None):
         faces_grpd[clss[i]].append(faces[i])
 
     log_it(t0, "Write obj")
-    export_wavefront_obj_simple(filename[:-4], vertices, faces_grpd)
+    #export_wavefront_obj_simple(filename[:-4], vertices, faces_grpd)
+    export_obj_printable(filename[:-4], vertices, faces_grpd)
     log_it(t0, "Write stl")
     export_stl(filename[:-4], vertices, List([f for e in faces_grpd for f in
                                               e]))

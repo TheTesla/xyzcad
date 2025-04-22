@@ -439,9 +439,21 @@ def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     poly_vrtx_idx = [[cut_edges_rev[e] for e in f] for f in poly_cube_edge_idx]
     return poly_vrtx_idx
 
+@njit
+def count_clss(clss_arr, poly_vrtx_idx):
+    clss_poly_arr = np.zeros((len(poly_vrtx_idx), 256))
+    for i in range(len(poly_vrtx_idx)):
+        for v in poly_vrtx_idx[i]:
+            for c in clss_arr[v]:
+                if c == 0:
+                    continue
+                clss_poly_arr[i,c] += 1
+    return clss_poly_arr
+
+
 
 @njit(cache=True)
-def all_njit_func(func, res, t0, clss_fun):
+def mesh_surface_function(func, res, t0):
     summary = {}
     log_it(t0, "Searching initial point on surface")
     p = findSurfacePnt(func)
@@ -467,25 +479,18 @@ def all_njit_func(func, res, t0, clss_fun):
     summary["repaired polygons"] = len_rep
     log_it(t0, "Prepare polygons")
     poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
-    #log_it(t0, "Building triangles")
-    #verticesArray = poly2triangle(poly_vrtx_idx, precTrPtsList)
-    #summary["triangles"] = len(verticesArray)
-    log_it(t0, "Calculate classes")
+    log_it(t0, "Meshing done")
+    return precTrPtsList, poly_vrtx_idx, summary
+
+@njit(cache=True)
+def all_njit_func(func, res, t0, clss_fun):
+    precTrPtsList, poly_vrtx_idx, summary = mesh_surface_function(func, res, t0)
+    log_it(t0, "Calculating classes")
     clss_arr = calc_classes(clss_fun, precTrPtsList)
-    log_it(t0, "Calculations done")
-
-    clss_poly_arr = np.zeros((len(corCircList), 256))
-    for i in range(len(corCircList)):
-        for v in poly_vrtx_idx[i]:
-            for c in clss_arr[v]:
-                if c == 0:
-                    continue
-                clss_poly_arr[i,c] += 1
-
-
+    log_it(t0, "Counting classes")
+    clss_poly_arr = count_clss(clss_arr, poly_vrtx_idx)
     clss = np.argmax(clss_poly_arr, axis=1)
-
-
+    log_it(t0, "Calculations done")
     return precTrPtsList, poly_vrtx_idx, clss, summary
 
 

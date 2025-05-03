@@ -499,25 +499,29 @@ def all_njit_func(func, res, t0, clss_fun):
 
 
 
-def save_files(name, vertices, faces_grpd):
-    export_types = {"stl", "stl_parts", "obj", "printable_obj"}
+def save_files(name, vertices, faces_grpd, t0):
+    export_formats = {"stl", "obj", "obj_printable"}
     if len(name) > 4:
         if name[-4:] == ".stl":
             name = name[:-4]
-            export_types = {"stl"}
+            export_formats = {"stl"}
         elif name [-4:] == ".obj":
             name = name[:-4]
-            export_types = {"obj", "printable_obj"}
-    if "obj" in export_types:
+            export_formats = {"obj", "obj_printable"}
+    if "obj" in export_formats:
+        log_it(t0, f"Saving {name}_not_printable.obj")
         export_obj(f"{name}_not_printable", vertices, faces_grpd)
-    if "obj_printable" in export_types:
+    if "obj_printable" in export_formats:
+        log_it(t0, f"Saving {name}_printable.obj")
         export_obj_printable(f"{name}_printable", vertices, faces_grpd)
-    if "stl" in export_types:
+    if "stl" in export_formats:
+        log_it(t0, f"Saving {name}.stl")
         export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
-    if "stl_parts" in export_types:
+    if "stl_parts" in export_formats:
         for i, faces in enumerate(faces_grpd):
             if len(faces) == 0:
                 continue
+            log_it(t0, f"Saving {name}_prt{i:03d}.stl")
             export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
@@ -532,7 +536,6 @@ def renderAndSave(func, filename, res=1, clss_fun=None):
     faces_grpd = [[] for e in range(1+max(clss))]
     for i in range(len(clss)):
         faces_grpd[clss[i]].append(faces[i])
-    log_it(t0, "Save files")
-    save_files(filename, vertices, faces_grpd)
-    print_summary(summary, 14)
+    save_files(filename, vertices, faces_grpd, t0)
     log_it(t0, "Done.")
+    print_summary(summary, 14)

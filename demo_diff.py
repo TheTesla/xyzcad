@@ -66,6 +66,6 @@ def shape_diff(x, y, z):
 
 t0 = time.time()
 
-render.renderAndSave(full_shape, "demo_diff.stl", 0.1, shape_diff)
+render.renderAndSave(full_shape, "demo_diff", 0.1, shape_diff)
 
 print(time.time() - t0)

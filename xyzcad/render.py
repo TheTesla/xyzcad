@@ -512,8 +512,8 @@ def save_files(name, vertices, faces_grpd, t0):
         log_it(t0, f"Saving {name}_not_printable.obj")
         export_obj(f"{name}_not_printable", vertices, faces_grpd)
     if "obj_printable" in export_formats:
-        log_it(t0, f"Saving {name}_printable.obj")
-        export_obj_printable(f"{name}_printable", vertices, faces_grpd)
+        log_it(t0, f"Saving {name}.obj")
+        export_obj_printable(f"{name}", vertices, faces_grpd)
     if "stl" in export_formats:
         log_it(t0, f"Saving {name}.stl")
         export_stl(name, vertices, List([f for e in faces_grpd for f in e]))

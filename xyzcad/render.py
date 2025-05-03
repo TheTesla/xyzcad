@@ -500,13 +500,25 @@ def all_njit_func(func, res, t0, clss_fun):
 
 
 def save_files(name, vertices, faces_grpd):
-    export_obj(f"{name}_not_printable", vertices, faces_grpd)
-    export_obj_printable(f"{name}_printable", vertices, faces_grpd)
-    for i, faces in enumerate(faces_grpd):
-        if len(faces) == 0:
-            continue
-        export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
-    export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
+    export_types = {"stl", "stl_parts", "obj", "printable_obj"}
+    if len(name) > 4:
+        if name[-4:] == ".stl":
+            name = name[:-4]
+            export_types = {"stl"}
+        elif name [-4:] == ".obj":
+            name = name[:-4]
+            export_types = {"obj", "printable_obj"}
+    if "obj" in export_types:
+        export_obj(f"{name}_not_printable", vertices, faces_grpd)
+    if "obj_printable" in export_types:
+        export_obj_printable(f"{name}_printable", vertices, faces_grpd)
+    if "stl" in export_types:
+        export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
+    if "stl_parts" in export_types:
+        for i, faces in enumerate(faces_grpd):
+            if len(faces) == 0:
+                continue
+            export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
 def renderAndSave(func, filename, res=1, clss_fun=None):
@@ -520,8 +532,7 @@ def renderAndSave(func, filename, res=1, clss_fun=None):
     faces_grpd = [[] for e in range(1+max(clss))]
     for i in range(len(clss)):
         faces_grpd[clss[i]].append(faces[i])
-
     log_it(t0, "Save files")
-    save_files(filename[:-4], vertices, faces_grpd)
+    save_files(filename, vertices, faces_grpd)
     print_summary(summary, 14)
     log_it(t0, "Done.")

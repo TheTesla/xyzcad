@@ -100,12 +100,12 @@ def create_gen_color(n):
     color_mat[0] = 3/4, 3/4, 3/4
     return color_mat
 
-def export_wavefront_obj_simple(obj_filename, vertices, poly_grpd):
+def export_obj(obj_filename, vertices, poly_grpd):
     write_mtl(obj_filename, create_gen_color(len(poly_grpd)))
     write_obj(obj_filename, vertices, poly_grpd)
 
 def export_obj_printable(obj_filename, vertices, poly_grpd):
-    export_wavefront_obj_simple(obj_filename, vertices, \
+    export_obj(obj_filename, vertices, \
             [[] if len(e) == 0 else poly2triangle_idx(e) for e in poly_grpd])
 
 

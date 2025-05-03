@@ -20,10 +20,14 @@ from stl import mesh
 
 from xyzcad import __version__
 from xyzcad.tlt import TLT
-from xyzcad.export import export_wavefront_obj_simple, export_stl, \
-export_obj_printable
+from xyzcad.export import export_obj, export_stl, export_obj_printable
 
 
+def get_installed_version():
+    try:
+        version_inst = importlib.metadata.version(__package__ or __name__)
+    except importlib.metadata.PackageNotFoundError as e:
+        version_inst = None
 
 @njit(cache=True)
 def round(x):
@@ -494,13 +498,21 @@ def all_njit_func(func, res, t0, clss_fun):
     return precTrPtsList, poly_vrtx_idx, clss, summary
 
 
+
+def save_files(name, vertices, faces_grpd):
+    export_obj(f"{name}_not_printable", vertices, faces_grpd)
+    export_obj_printable(f"{name}_printable", vertices, faces_grpd)
+    for i, faces in enumerate(faces_grpd):
+        if len(faces) == 0:
+            continue
+        export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
+    export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
+
+
 def renderAndSave(func, filename, res=1, clss_fun=None):
     t0 = time.time()
     version_run = __version__
-    try:
-        version_inst = importlib.metadata.version(__package__ or __name__)
-    except importlib.metadata.PackageNotFoundError as e:
-        version_inst = None
+    version_inst = get_installed_version()
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
@@ -509,11 +521,7 @@ def renderAndSave(func, filename, res=1, clss_fun=None):
     for i in range(len(clss)):
         faces_grpd[clss[i]].append(faces[i])
 
-    log_it(t0, "Write obj")
-    #export_wavefront_obj_simple(filename[:-4], vertices, faces_grpd)
-    export_obj_printable(filename[:-4], vertices, faces_grpd)
-    log_it(t0, "Write stl")
-    export_stl(filename[:-4], vertices, List([f for e in faces_grpd for f in
-                                              e]))
+    log_it(t0, "Save files")
+    save_files(filename[:-4], vertices, faces_grpd)
     print_summary(summary, 14)
     log_it(t0, "Done.")

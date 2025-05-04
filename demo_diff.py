@@ -34,6 +34,7 @@ def old_shape(x, y, z):
         return False
     return True
 
+
 @njit
 def new_shape(x, y, z):
     if x > 1:
@@ -50,9 +51,11 @@ def new_shape(x, y, z):
         return False
     return True
 
+
 @njit
 def full_shape(x, y, z):
     return old_shape(x, y, z) or new_shape(x, y, z)
+
 
 @njit
 def shape_diff(x, y, z):
@@ -63,6 +66,7 @@ def shape_diff(x, y, z):
     if not old_shape(x, y, z) and new_shape(x, y, z):
         return 2
     return 0
+
 
 t0 = time.time()
 

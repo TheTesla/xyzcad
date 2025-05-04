@@ -1,12 +1,10 @@
-
 import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
 
 
-
-#@njit(cache=True)
+# @njit(cache=True)
 def poly2triangle_idx(polygons):
     tr_arr = np.zeros((len(polygons) * 8, 3), dtype=np.uint64)
     c = 0
@@ -20,6 +18,7 @@ def poly2triangle_idx(polygons):
             tr_arr[c][2] = poly[i + 2]
             c += 1
     return tr_arr[:c]
+
 
 @njit(cache=True)
 def poly2triangle_coord(polygons, vertices):
@@ -42,13 +41,13 @@ def export_stl(stl_filename, vertices, poly):
     verticesArray = poly2triangle_coord(poly, vertices)
     solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
     solid.vectors[:] = verticesArray
-    solid.save(stl_filename+".stl")
+    solid.save(stl_filename + ".stl")
 
 
 def write_obj(obj_filename, vertices, poly_grpd, mtl_filename="", mtl_lst=[]):
     if mtl_filename == "":
         mtl_filename = obj_filename
-    with open(obj_filename+".obj", 'w') as obj_file:
+    with open(obj_filename + ".obj", "w") as obj_file:
         obj_file.write(f"mtllib {mtl_filename}.mtl\n")
         for v in vertices:
             obj_file.write(f"v {v[0]} {v[1]} {v[2]}\n")
@@ -85,27 +84,40 @@ def write_mtl(mtl_filename, color_mat, mtl_lst=[]):
             mtl_content += f"Ks {c[6]} {c[7]} {c[8]}\n"
             mtl_content += f"d {c[9]}\n"
             mtl_content += f"illum {c[10]}\n"
-    with open(mtl_filename+".mtl", 'w') as mtl_file:
+    with open(mtl_filename + ".mtl", "w") as mtl_file:
         mtl_file.write(mtl_content)
 
+
 def create_gen_color(n):
-    color_mat = np.zeros((n,3))
+    color_mat = np.zeros((n, 3))
     for i in range(n):
-        color_mat[i,2] = 1/2 * (int(i/1) % 2) + 1/4 * (int(i/8 ) % 2) + 1/8 * \
-        (int(i/64) % 2)
-        color_mat[i,1] = 1/2 * (int(i/2) % 2) + 1/4 * (int(i/16) % 2) + 1/8 * \
-        (int(i/128) % 2)
-        color_mat[i,0] = 1/2 * (int(i/4) % 2) + 1/4 * (int(i/32) % 2) + 1/8 * \
-        (int(i/256) % 2)
-    color_mat[0] = 3/4, 3/4, 3/4
+        color_mat[i, 2] = (
+            1 / 2 * (int(i / 1) % 2)
+            + 1 / 4 * (int(i / 8) % 2)
+            + 1 / 8 * (int(i / 64) % 2)
+        )
+        color_mat[i, 1] = (
+            1 / 2 * (int(i / 2) % 2)
+            + 1 / 4 * (int(i / 16) % 2)
+            + 1 / 8 * (int(i / 128) % 2)
+        )
+        color_mat[i, 0] = (
+            1 / 2 * (int(i / 4) % 2)
+            + 1 / 4 * (int(i / 32) % 2)
+            + 1 / 8 * (int(i / 256) % 2)
+        )
+    color_mat[0] = 3 / 4, 3 / 4, 3 / 4
     return color_mat
+
 
 def export_obj(obj_filename, vertices, poly_grpd):
     write_mtl(obj_filename, create_gen_color(len(poly_grpd)))
     write_obj(obj_filename, vertices, poly_grpd)
 
+
 def export_obj_printable(obj_filename, vertices, poly_grpd):
-    export_obj(obj_filename, vertices, \
-            [[] if len(e) == 0 else poly2triangle_idx(e) for e in poly_grpd])
-
-
+    export_obj(
+        obj_filename,
+        vertices,
+        [[] if len(e) == 0 else poly2triangle_idx(e) for e in poly_grpd],
+    )

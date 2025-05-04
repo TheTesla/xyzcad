@@ -17,6 +17,7 @@ from numba import jit, njit
 
 from xyzcad import render
 
+
 @njit
 def sphere_clss(x, y, z):
     k = 1
@@ -27,6 +28,7 @@ def sphere_clss(x, y, z):
     if z > 0:
         k += 4
     return k
+
 
 @njit
 def sphere(x, y, z):

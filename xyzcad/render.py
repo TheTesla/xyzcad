@@ -19,8 +19,8 @@ from numba.typed import Dict, List
 from stl import mesh
 
 from xyzcad import __version__
+from xyzcad.export import export_obj, export_obj_printable, export_stl
 from xyzcad.tlt import TLT
-from xyzcad.export import export_obj, export_stl, export_obj_printable
 
 
 def get_installed_version():
@@ -28,6 +28,7 @@ def get_installed_version():
         version_inst = importlib.metadata.version(__package__ or __name__)
     except importlib.metadata.PackageNotFoundError as e:
         version_inst = None
+
 
 @njit(cache=True)
 def round(x):
@@ -336,7 +337,6 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
     return r
 
 
-
 @njit(cache=True)
 def build_repair_polygons(single_edge_dict):
     ac = List()
@@ -417,31 +417,31 @@ def calc_closed_surface(c2e, cvList):
     return polyList, len(rep)
 
 
-
-
-
-
-@njit(parallel=True,cache=True)
+@njit(parallel=True, cache=True)
 def calc_classes(clss_fun, prec_pnts):
-    clss_arr = np.zeros((prec_pnts.shape[0],8),dtype=np.uint8)
+    clss_arr = np.zeros((prec_pnts.shape[0], 8), dtype=np.uint8)
     res = 0.1
     for i in prange(prec_pnts.shape[0]):
         x, y, z = prec_pnts[i]
-        clss_arr[i,0] = clss_fun(x - res, y - res, z - res)
-        clss_arr[i,1] = clss_fun(x + res, y - res, z - res)
-        clss_arr[i,2] = clss_fun(x - res, y + res, z - res)
-        clss_arr[i,3] = clss_fun(x + res, y + res, z - res)
-        clss_arr[i,4] = clss_fun(x - res, y - res, z + res)
-        clss_arr[i,5] = clss_fun(x + res, y - res, z + res)
-        clss_arr[i,6] = clss_fun(x - res, y + res, z + res)
-        clss_arr[i,7] = clss_fun(x + res, y + res, z + res)
+        clss_arr[i, 0] = clss_fun(x - res, y - res, z - res)
+        clss_arr[i, 1] = clss_fun(x + res, y - res, z - res)
+        clss_arr[i, 2] = clss_fun(x - res, y + res, z - res)
+        clss_arr[i, 3] = clss_fun(x + res, y + res, z - res)
+        clss_arr[i, 4] = clss_fun(x - res, y - res, z + res)
+        clss_arr[i, 5] = clss_fun(x + res, y - res, z + res)
+        clss_arr[i, 6] = clss_fun(x - res, y + res, z + res)
+        clss_arr[i, 7] = clss_fun(x + res, y + res, z + res)
     return clss_arr
+
 
 @njit
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
-    poly_vrtx_idx = [[cut_edges_rev[e] for e in f] for f in poly_cube_edge_idx]
+    poly_vrtx_idx = [
+        [cut_edges_rev[e] for e in f if e in cut_edges_rev] for f in poly_cube_edge_idx
+    ]
     return poly_vrtx_idx
+
 
 @njit
 def count_clss(clss_arr, poly_vrtx_idx):
@@ -451,9 +451,8 @@ def count_clss(clss_arr, poly_vrtx_idx):
             for c in clss_arr[v]:
                 if c == 0:
                     continue
-                clss_poly_arr[i,c] += 1
+                clss_poly_arr[i, c] += 1
     return clss_poly_arr
-
 
 
 @njit(cache=True)
@@ -486,8 +485,14 @@ def mesh_surface_function(func, res, t0):
     log_it(t0, "Meshing done")
     return precTrPtsList, poly_vrtx_idx, summary
 
+
 @njit(cache=True)
-def all_njit_func(func, res, t0, clss_fun):
+def std_clss_fun(x, y, z):
+    return 1
+
+
+@njit(cache=True)
+def all_njit_func(func, res, t0, clss_fun=std_clss_fun):
     precTrPtsList, poly_vrtx_idx, summary = mesh_surface_function(func, res, t0)
     log_it(t0, "Calculating classes")
     clss_arr = calc_classes(clss_fun, precTrPtsList)
@@ -498,14 +503,13 @@ def all_njit_func(func, res, t0, clss_fun):
     return precTrPtsList, poly_vrtx_idx, clss, summary
 
 
-
 def save_files(name, vertices, faces_grpd, t0):
     export_formats = {"stl", "obj", "obj_printable"}
     if len(name) > 4:
         if name[-4:] == ".stl":
             name = name[:-4]
             export_formats = {"stl"}
-        elif name [-4:] == ".obj":
+        elif name[-4:] == ".obj":
             name = name[:-4]
             export_formats = {"obj", "obj_printable"}
     if "obj" in export_formats:
@@ -525,7 +529,7 @@ def save_files(name, vertices, faces_grpd, t0):
             export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
-def renderAndSave(func, filename, res=1, clss_fun=None):
+def renderAndSave(func, filename, res=1, clss_fun=std_clss_fun):
     t0 = time.time()
     version_run = __version__
     version_inst = get_installed_version()
@@ -533,7 +537,7 @@ def renderAndSave(func, filename, res=1, clss_fun=None):
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
     vertices, faces, clss, summary = all_njit_func(func, res, t0, clss_fun)
-    faces_grpd = [[] for e in range(1+max(clss))]
+    faces_grpd = [[] for e in range(1 + max(clss))]
     for i in range(len(clss)):
         faces_grpd[clss[i]].append(faces[i])
     save_files(filename, vertices, faces_grpd, t0)

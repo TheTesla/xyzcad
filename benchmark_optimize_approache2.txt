@@ -1,0 +1,80 @@
+[   0.2573] running xyzcad version 0.0.0+devel (installed: None)
+[   0.2582] Compiling
+[ 103.4998] Searching initial point on surface
+[ 103.5007] Walking over entire surface
+[ 104.1537] Converting corners into points
+[ 104.5347] Converting corners into cubes
+[ 104.5439] Converting coordinates into relations
+[ 105.3033] Searching all marching cubes edges, cut by surface
+[ 105.3175] Approximating exact coordinates of the cuts
+[ 105.4299] Calculating closed surface
+[ 116.2771] Prepare polygons
+[ 116.4941] Meshing done
+[ 116.4950] Calculating classes
+[ 116.4962] Counting classes
+[ 117.2530] Calculations done
+[ 117.3740] Saving demo.stl
+[ 120.8399] Done.
+              cubes                                160555
+              cube points                          335003
+              cube edges                           830187
+              surface points                       174378
+              polygons                             171584
+              repaired polygons                     11006
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[   0.4438] Converting corners into points
+[   0.6839] Converting corners into cubes
+[   0.6891] Converting coordinates into relations
+[   1.1492] Searching all marching cubes edges, cut by surface
+[   1.1586] Approximating exact coordinates of the cuts
+[   1.2250] Calculating closed surface
+[   6.5952] Prepare polygons
+[   6.7188] Meshing done
+[   6.7189] Calculating classes
+[   6.7195] Counting classes
+[   7.2388] Calculations done
+[   7.3213] Saving demo1.stl
+[   9.2769] Done.
+              cubes                                110580
+              cube points                          230813
+              cube edges                           571934
+              surface points                       120246
+              polygons                             118320
+              repaired polygons                      7707
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[   1.0233] Converting corners into points
+[   1.6043] Converting corners into cubes
+[   1.6173] Converting coordinates into relations
+[   2.8242] Searching all marching cubes edges, cut by surface
+[   2.8472] Approximating exact coordinates of the cuts
+[   3.0094] Calculating closed surface
+[  28.4147] Prepare polygons
+[  28.7556] Meshing done
+[  28.7557] Calculating classes
+[  28.7565] Counting classes
+[  29.9327] Calculations done
+[  30.1182] Saving demo2.stl
+[  34.5316] Done.
+              cubes                                250760
+              cube points                          523269
+              cube edges                          1296620
+              surface points                       272218
+              polygons                             267754
+              repaired polygons                     16961
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[  18.3335] Converting corners into points
+[  30.2513] Converting corners into cubes
+[  30.4646] Converting coordinates into relations
+[  54.5575] Searching all marching cubes edges, cut by surface
+[  55.2130] Approximating exact coordinates of the cuts
+[  57.7486] Calculating closed surface
+

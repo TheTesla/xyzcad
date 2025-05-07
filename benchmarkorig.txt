@@ -1,0 +1,94 @@
+[   0.2666] running xyzcad version 0.0.0+devel (installed: None)
+[   0.2675] Compiling
+[ 104.6505] Searching initial point on surface
+[ 104.6517] Walking over entire surface
+[ 105.2936] Converting corners into points
+[ 105.7484] Converting corners into cubes
+[ 105.7572] Converting coordinates into relations
+[ 106.7097] Searching all marching cubes edges, cut by surface
+[ 106.7255] Approximating exact coordinates of the cuts
+[ 106.8239] Calculating closed surface
+[ 107.3929] Prepare polygons
+[ 107.6159] Meshing done
+[ 107.6168] Calculating classes
+[ 107.6184] Counting classes
+[ 108.4254] Calculations done
+[ 108.5502] Saving demo.stl
+[ 113.2144] Done.
+              cubes                                176174
+              cube points                          351666
+              cube edges                           879610
+              surface points                       176208
+              polygons                             176243
+              repaired polygons                        25
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[   0.4074] Converting corners into points
+[   0.6650] Converting corners into cubes
+[   0.6699] Converting coordinates into relations
+[   1.1501] Searching all marching cubes edges, cut by surface
+[   1.1595] Approximating exact coordinates of the cuts
+[   1.2310] Calculating closed surface
+[   1.5756] Prepare polygons
+[   1.7028] Meshing done
+[   1.7029] Calculating classes
+[   1.7035] Counting classes
+[   2.2535] Calculations done
+[   2.3487] Saving demo1.stl
+[   4.4480] Done.
+              cubes                                121532
+              cube points                          242432
+              cube edges                           606522
+              surface points                       121566
+              polygons                             121601
+              repaired polygons                        24
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[   0.9187] Converting corners into points
+[   1.5337] Converting corners into cubes
+[   1.5462] Converting coordinates into relations
+[   2.7895] Searching all marching cubes edges, cut by surface
+[   2.8128] Approximating exact coordinates of the cuts
+[   2.9638] Calculating closed surface
+[   3.9009] Prepare polygons
+[   4.2504] Meshing done
+[   4.2505] Calculating classes
+[   4.2513] Counting classes
+[   5.5042] Calculations done
+[   5.6955] Saving demo2.stl
+[  10.3500] Done.
+              cubes                                275478
+              cube points                          550044
+              cube edges                          1375674
+              surface points                       275524
+              polygons                             275586
+              repaired polygons                        39
+[   0.0000] running xyzcad version 0.0.0+devel (installed: None)
+[   0.0001] Compiling
+[   0.0002] Searching initial point on surface
+[   0.0002] Walking over entire surface
+[  16.9175] Converting corners into points
+[  30.0981] Converting corners into cubes
+[  30.3924] Converting coordinates into relations
+[  55.5749] Searching all marching cubes edges, cut by surface
+[  56.3123] Approximating exact coordinates of the cuts
+[  58.9437] Calculating closed surface
+[  76.2703] Prepare polygons
+[  83.7066] Meshing done
+[  83.7067] Calculating classes
+[  83.7132] Counting classes
+[ 103.4314] Calculations done
+[ 106.8880] Saving demo3.stl
+[ 184.6786] Done.
+              cubes                               4419721
+              cube points                         8836171
+              cube edges                         22092295
+              surface points                      4419852
+              polygons                            4420092
+              repaired polygons                       131
+314.05793595314026
+

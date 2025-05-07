@@ -170,29 +170,30 @@ def getSurface(func, startPnt, res=1.3):
             + 2 * v001
             + 1 * v000
         )
-        if cVal == 255 or cVal == 0:
+        if v000 == v100 and v000 == v010 and v000 == v110 and v000 == v001 \
+        and v000 == v101 and v000 == v011 and v000 ==  v111:
             continue
-        if (not (v100 and v110 and v101 and v111)) and (v100 or v110 or v101 or v111):
+        if not (v100 == v110 and v100 == v101 and v100 == v111):
             if not d == -1:
                 if (xh, y, z) not in cubeCornerValsDict:
                     ptsList.append((xh, y, z, +1, cVal))
-        if (not (v010 and v110 and v011 and v111)) and (v010 or v110 or v011 or v111):
+        if not (v010 == v110 and v010 == v011 and v010 == v111):
             if not d == -2:
                 if (x, yh, z) not in cubeCornerValsDict:
                     ptsList.append((x, yh, z, +2, cVal))
-        if (not (v001 and v101 and v011 and v111)) and (v001 or v101 or v011 or v111):
+        if not (v001 == v101 and v001 == v011 and v001 == v111):
             if not d == -4:
                 if (x, y, zh) not in cubeCornerValsDict:
                     ptsList.append((x, y, zh, +4, cVal))
-        if (not (v000 and v010 and v001 and v011)) and (v000 or v010 or v001 or v011):
+        if not (v000 == v010 and v000 == v001 and v000 == v011):
             if not d == 1:
                 if (xl, y, z) not in cubeCornerValsDict:
                     ptsList.append((xl, y, z, -1, cVal))
-        if (not (v000 and v100 and v001 and v101)) and (v000 or v100 or v001 or v101):
+        if not (v000 == v100 and v000 == v001 and v000 == v101):
             if not d == 2:
                 if (x, yl, z) not in cubeCornerValsDict:
                     ptsList.append((x, yl, z, -2, cVal))
-        if (not (v000 and v100 and v010 and v110)) and (v000 or v100 or v010 or v110):
+        if not (v000 == v100 and v000 == v010 and v000 == v110):
             if not d == 4:
                 if (x, y, zl) not in cubeCornerValsDict:
                     ptsList.append((x, y, zl, -4, cVal))

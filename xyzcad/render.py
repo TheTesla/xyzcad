@@ -85,11 +85,13 @@ def findSurfacePnt(func, minVal=-1000.0, maxVal=+1000.0, resSteps=24):
 @njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x, y, z = startPnt
-    ptsList = List([(round(x - res / 2), round(y - res / 2), round(z - res / 2), 0, 0)])
+    ptsList = List([(round(x - res / 2), round(y - res / 2), round(z - res /
+                                                                   2), 0,
+                     0,0,0,0)])
     cubeCornerValsDict = Dict()
     r = res
     while ptsList:
-        x, y, z, d, c_val_old = ptsList.pop()
+        x, y, z, d, va, vb, vc, vd = ptsList.pop()
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
@@ -98,46 +100,46 @@ def getSurface(func, startPnt, res=1.3):
         zl = round(z - r)
 
         if d == 1:
-            v000 = 0 < (c_val_old & 16)  # v100 old
+            v000 = va  # v100 old
             v100 = func(xh, y, z)
-            v010 = 0 < (c_val_old & 64)  # v110 old
+            v010 = vb # v110 old
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 32)  # v101 old
+            v001 = vc   # v101 old
             v101 = func(xh, y, zh)
-            v011 = 0 < (c_val_old & 128)  # v111 old
+            v011 = vd  # v111 old
             v111 = func(xh, yh, zh)
         elif d == -1:
             v000 = func(x, y, z)
-            v100 = 0 < (c_val_old & 1)  # v000 old
+            v100 = va  # v000 old
             v010 = func(x, yh, z)
-            v110 = 0 < (c_val_old & 4)  # v010 old
+            v110 = vb  # v010 old
             v001 = func(x, y, zh)
-            v101 = 0 < (c_val_old & 2)  # v001 old
+            v101 = vc  # v001 old
             v011 = func(x, yh, zh)
-            v111 = 0 < (c_val_old & 8)  # v011 old
+            v111 = vd  # v011 old
         elif d == 2:
-            v000 = 0 < (c_val_old & 4)  # v010 old
-            v100 = 0 < (c_val_old & 64)  # v110 old
+            v000 = va  # v010 old
+            v100 = vb  # v110 old
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 8)  # v011 old
-            v101 = 0 < (c_val_old & 128)  # v111 old
+            v001 = vc  # v011 old
+            v101 = vd  # v111 old
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
         elif d == -2:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
-            v010 = 0 < (c_val_old & 1)  # v000 old
-            v110 = 0 < (c_val_old & 16)  # v100 old
+            v010 = va  # v000 old
+            v110 = vb  # v100 old
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
-            v011 = 0 < (c_val_old & 2)  # v001 old
-            v111 = 0 < (c_val_old & 32)  # v101 old
+            v011 = vc  # v001 old
+            v111 = vd  # v101 old
         elif d == 4:
-            v000 = 0 < (c_val_old & 2)  # v001 old
-            v100 = 0 < (c_val_old & 32)  # v101 old
-            v010 = 0 < (c_val_old & 8)  # v011 old
-            v110 = 0 < (c_val_old & 128)  # v111 old
+            v000 = va # v001 old
+            v100 = vb  # v101 old
+            v010 = vc # v011 old
+            v110 = vd  # v111 old
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
@@ -147,10 +149,10 @@ def getSurface(func, startPnt, res=1.3):
             v100 = func(xh, y, z)
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 1)  # v000 old
-            v101 = 0 < (c_val_old & 16)  # v100 old
-            v011 = 0 < (c_val_old & 4)  # v010 old
-            v111 = 0 < (c_val_old & 64)  # v110 old
+            v001 = va # v000 old
+            v101 = vb  # v100 old
+            v011 = vc # v010 old
+            v111 = vd  # v110 old
         else:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
@@ -160,6 +162,39 @@ def getSurface(func, startPnt, res=1.3):
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
+        if v000 == v100 and v000 == v010 and v000 == v110 and v000 == v001 \
+        and v000 == v101 and v000 == v011 and v000 ==  v111:
+            continue
+        if not (v100 == v110 and v100 == v101 and v100 == v111):
+            if not d == -1:
+                if (xh, y, z) not in cubeCornerValsDict:
+                    #ptsList.append((xh, y, z, +1, cVal))
+                    ptsList.append((xh, y, z, +1, v100, v110, v101, v111))
+        if not (v010 == v110 and v010 == v011 and v010 == v111):
+            if not d == -2:
+                if (x, yh, z) not in cubeCornerValsDict:
+                    #ptsList.append((x, yh, z, +2, cVal))
+                    ptsList.append((x, yh, z, +2, v010, v110, v011, v111))
+        if not (v001 == v101 and v001 == v011 and v001 == v111):
+            if not d == -4:
+                if (x, y, zh) not in cubeCornerValsDict:
+                    #ptsList.append((x, y, zh, +4, cVal))
+                    ptsList.append((x, y, zh, +4, v001, v101, v011, v111))
+        if not (v000 == v010 and v000 == v001 and v000 == v011):
+            if not d == 1:
+                if (xl, y, z) not in cubeCornerValsDict:
+                    #ptsList.append((xl, y, z, -1, cVal))
+                    ptsList.append((xl, y, z, -1, v000, v010, v001, v011))
+        if not (v000 == v100 and v000 == v001 and v000 == v101):
+            if not d == 2:
+                if (x, yl, z) not in cubeCornerValsDict:
+                    #ptsList.append((x, yl, z, -2, cVal))
+                    ptsList.append((x, yl, z, -2, v000, v100, v001, v101))
+        if not (v000 == v100 and v000 == v010 and v000 == v110):
+            if not d == 4:
+                if (x, y, zl) not in cubeCornerValsDict:
+                    #ptsList.append((x, y, zl, -4, cVal))
+                    ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
         cVal = (
             128 * v111
             + 64 * v110
@@ -170,33 +205,6 @@ def getSurface(func, startPnt, res=1.3):
             + 2 * v001
             + 1 * v000
         )
-        if v000 == v100 and v000 == v010 and v000 == v110 and v000 == v001 \
-        and v000 == v101 and v000 == v011 and v000 ==  v111:
-            continue
-        if not (v100 == v110 and v100 == v101 and v100 == v111):
-            if not d == -1:
-                if (xh, y, z) not in cubeCornerValsDict:
-                    ptsList.append((xh, y, z, +1, cVal))
-        if not (v010 == v110 and v010 == v011 and v010 == v111):
-            if not d == -2:
-                if (x, yh, z) not in cubeCornerValsDict:
-                    ptsList.append((x, yh, z, +2, cVal))
-        if not (v001 == v101 and v001 == v011 and v001 == v111):
-            if not d == -4:
-                if (x, y, zh) not in cubeCornerValsDict:
-                    ptsList.append((x, y, zh, +4, cVal))
-        if not (v000 == v010 and v000 == v001 and v000 == v011):
-            if not d == 1:
-                if (xl, y, z) not in cubeCornerValsDict:
-                    ptsList.append((xl, y, z, -1, cVal))
-        if not (v000 == v100 and v000 == v001 and v000 == v101):
-            if not d == 2:
-                if (x, yl, z) not in cubeCornerValsDict:
-                    ptsList.append((x, yl, z, -2, cVal))
-        if not (v000 == v100 and v000 == v010 and v000 == v110):
-            if not d == 4:
-                if (x, y, zl) not in cubeCornerValsDict:
-                    ptsList.append((x, y, zl, -4, cVal))
         cubeCornerValsDict[(x, y, z)] = np.uint8(cVal)
 
     return cubeCornerValsDict

@@ -195,17 +195,18 @@ def getSurface(func, startPnt, res=1.3):
                 if (x, y, zl) not in cubeCornerValsDict:
                     #ptsList.append((x, y, zl, -4, cVal))
                     ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
-        cVal = (
-            128 * v111
-            + 64 * v110
-            + 32 * v101
-            + 16 * v100
-            + 8 * v011
-            + 4 * v010
-            + 2 * v001
-            + 1 * v000
-        )
-        cubeCornerValsDict[(x, y, z)] = np.uint8(cVal)
+        #cVal = (
+        #    128 * v111
+        #    + 64 * v110
+        #    + 32 * v101
+        #    + 16 * v100
+        #    + 8 * v011
+        #    + 4 * v010
+        #    + 2 * v001
+        #    + 1 * v000
+        #)
+        cubeCornerValsDict[(x, y, z)] = (v111, v110, v101, v100, v011, v010,
+                                         v001, v000) #np.uint8(cVal)
 
     return cubeCornerValsDict
 
@@ -226,6 +227,14 @@ def convert_corners2pts(cubeCornerValsDict, r):
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
+        #pts_res_dict[(x, y, z)] = v[0] #int(0 < (v & 1))
+        #pts_res_dict[(xh, y, z)] = v[4] #int(0 < (v & 16))
+        #pts_res_dict[(x, yh, z)] = v[2] #int(0 < (v & 4))
+        #pts_res_dict[(x, y, zh)] = v[1] #int(0 < (v & 2))
+        #pts_res_dict[(xh, y, zh)] = v[5] #int(0 < (v & 32))
+        #pts_res_dict[(x, yh, zh)] = v[3] #int(0 < (v & 8))
+        #pts_res_dict[(xh, yh, z)] = v[6] #int(0 < (v & 64))
+        #pts_res_dict[(xh, yh, zh)] = v[7] #int(0 < (v & 128))
         pts_res_dict[(x, y, z)] = int(0 < (v & 1))
         pts_res_dict[(xh, y, z)] = int(0 < (v & 16))
         pts_res_dict[(x, yh, z)] = int(0 < (v & 4))
@@ -473,25 +482,33 @@ def mesh_surface_function(func, res, t0):
     corners = getSurface(func, p, res)
     summary["cubes"] = len(corners)
     log_it(t0, "Converting corners into points")
-    ptsKeys, pv = convert_corners2pts(corners, res)
-    summary["cube points"] = len(pv)
-    log_it(t0, "Converting corners into cubes")
-    cubesArray, cvList = convert_corners2cubes(corners)
-    log_it(t0, "Converting coordinates into relations")
-    c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
-    summary["cube edges"] = len(e2p)
-    log_it(t0, "Searching all marching cubes edges, cut by surface")
-    cCeI = cutCedgeIdx(e2p, pv)
-    summary["surface points"] = len(cCeI)
-    log_it(t0, "Approximating exact coordinates of the cuts")
-    precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
-    log_it(t0, "Calculating closed surface")
-    corCircList, len_rep = calc_closed_surface(c2e, cvList)
-    summary["polygons"] = len(corCircList)
-    summary["repaired polygons"] = len_rep
-    log_it(t0, "Prepare polygons")
-    poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
-    log_it(t0, "Meshing done")
+    materials = list(set([c for v in corners.values() for c in v]))
+    summary["materials"] = len(materials)-1
+    for imat, mat in enumerate(materials[1:]):
+        filtered_corners = {k: sum(((np.array(v,dtype=np.int64))==mat) *
+                                np.array([128,64,32,16,8,4,2,1])) for k, v in
+                            corners.items() if mat in v}
+        summary["filtered cubes"] = len(filtered_corners)
+        log_it(t0, "Converting corners into points")
+        ptsKeys, pv = convert_corners2pts(filtered_corners, res)
+        summary["cube points"] = len(pv)
+        log_it(t0, "Converting corners into cubes")
+        cubesArray, cvList = convert_corners2cubes(filtered_corners)
+        log_it(t0, "Converting coordinates into relations")
+        c2p, c2e, e2p = coords2relations(cubesArray, ptsKeys, res)
+        summary["cube edges"] = len(e2p)
+        log_it(t0, "Searching all marching cubes edges, cut by surface")
+        cCeI = cutCedgeIdx(e2p, pv)
+        summary["surface points"] = len(cCeI)
+        log_it(t0, "Approximating exact coordinates of the cuts")
+        precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
+        log_it(t0, "Calculating closed surface")
+        corCircList, len_rep = calc_closed_surface(c2e, cvList)
+        summary["polygons"] = len(corCircList)
+        summary["repaired polygons"] = len_rep
+        log_it(t0, "Prepare polygons")
+        poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
+        log_it(t0, "Meshing done")
     return precTrPtsList, poly_vrtx_idx, summary
 
 

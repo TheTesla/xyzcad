@@ -20,6 +20,8 @@ from xyzcad import render
 
 @njit
 def sphere_clss(x, y, z):
+    if not sphere(x, y, z):
+        return 0
     k = 1
     if x > 0:
         k += 1
@@ -37,6 +39,6 @@ def sphere(x, y, z):
 
 t0 = time.time()
 
-render.renderAndSave(sphere, "demo_clss.stl", 1, sphere_clss)
+render.renderAndSave(sphere_clss, "demo_clss", 1, sphere_clss)
 
 print(time.time() - t0)

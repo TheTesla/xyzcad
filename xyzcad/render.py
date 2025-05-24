@@ -195,16 +195,6 @@ def getSurface(func, startPnt, res=1.3):
                 if (x, y, zl) not in cubeCornerValsDict:
                     #ptsList.append((x, y, zl, -4, cVal))
                     ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
-        #cVal = (
-        #    128 * v111
-        #    + 64 * v110
-        #    + 32 * v101
-        #    + 16 * v100
-        #    + 8 * v011
-        #    + 4 * v010
-        #    + 2 * v001
-        #    + 1 * v000
-        #)
         cubeCornerValsDict[(x, y, z)] = (v111, v110, v101, v100, v011, v010,
                                          v001, v000) #np.uint8(cVal)
 
@@ -227,22 +217,14 @@ def convert_corners2pts(cubeCornerValsDict, r):
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        pts_res_dict[(x, y, z)] = v[0] #int(0 < (v & 1))
-        pts_res_dict[(xh, y, z)] = v[4] #int(0 < (v & 16))
-        pts_res_dict[(x, yh, z)] = v[2] #int(0 < (v & 4))
-        pts_res_dict[(x, y, zh)] = v[1] #int(0 < (v & 2))
-        pts_res_dict[(xh, y, zh)] = v[5] #int(0 < (v & 32))
-        pts_res_dict[(x, yh, zh)] = v[3] #int(0 < (v & 8))
-        pts_res_dict[(xh, yh, z)] = v[6] #int(0 < (v & 64))
-        pts_res_dict[(xh, yh, zh)] = v[7] #int(0 < (v & 128))
-        #pts_res_dict[(x, y, z)] = int(0 < (v & 1))
-        #pts_res_dict[(xh, y, z)] = int(0 < (v & 16))
-        #pts_res_dict[(x, yh, z)] = int(0 < (v & 4))
-        #pts_res_dict[(x, y, zh)] = int(0 < (v & 2))
-        #pts_res_dict[(xh, y, zh)] = int(0 < (v & 32))
-        #pts_res_dict[(x, yh, zh)] = int(0 < (v & 8))
-        #pts_res_dict[(xh, yh, z)] = int(0 < (v & 64))
-        #pts_res_dict[(xh, yh, zh)] = int(0 < (v & 128))
+        pts_res_dict[(x, y, z)] = v[7] #int(0 < (v & 1))
+        pts_res_dict[(xh, y, z)] = v[3] #int(0 < (v & 16))
+        pts_res_dict[(x, yh, z)] = v[5] #int(0 < (v & 4))
+        pts_res_dict[(x, y, zh)] = v[6] #int(0 < (v & 2))
+        pts_res_dict[(xh, y, zh)] = v[2] #int(0 < (v & 32))
+        pts_res_dict[(x, yh, zh)] = v[4] #int(0 < (v & 8))
+        pts_res_dict[(xh, yh, z)] = v[1] #int(0 < (v & 64))
+        pts_res_dict[(xh, yh, zh)] = v[0] #int(0 < (v & 128))
     ptCoordDictKeys = np.asarray(list(pts_res_dict.keys()))
     ptCoordDictVals = np.asarray(list(pts_res_dict.values()))
     return ptCoordDictKeys, ptCoordDictVals
@@ -569,9 +551,7 @@ def renderAndSave(func, filename, res=1, clss_fun=std_clss_fun):
     #for i in range(len(clss)):
     #    faces_grpd[clss[i]].append(faces[i])
     vertices, faces_grpd, summary = mesh_surface_function(func, res, t0)
-    print(faces_grpd)
     faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
-    print(faces_grpd_cln)
     save_files(filename, vertices, faces_grpd_cln, t0)
     log_it(t0, "Done.")
     print_summary(summary, 14)

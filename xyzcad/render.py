@@ -5,7 +5,7 @@
 #######################################################################
 #
 #    xyzCad - implicit surface function cad software for 3d printing
-#    Copyright (c) 2021 - 2024 Stefan Helmert <stefan.helmert@t-online.de>
+#    Copyright (c) 2021 - 2025 Stefan Helmert <stefan.helmert@t-online.de>
 #
 #######################################################################
 
@@ -19,7 +19,15 @@ from numba.typed import Dict, List
 from stl import mesh
 
 from xyzcad import __version__
+from xyzcad.export import export_obj, export_obj_printable, export_stl
 from xyzcad.tlt import TLT
+
+
+def get_installed_version():
+    try:
+        version_inst = importlib.metadata.version(__package__ or __name__)
+    except importlib.metadata.PackageNotFoundError as e:
+        version_inst = None
 
 
 @njit(cache=True)
@@ -77,11 +85,13 @@ def findSurfacePnt(func, minVal=-1000.0, maxVal=+1000.0, resSteps=24):
 @njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x, y, z = startPnt
-    ptsList = List([(round(x - res / 2), round(y - res / 2), round(z - res / 2), 0, 0)])
+    ptsList = List(
+        [(round(x - res / 2), round(y - res / 2), round(z - res / 2), 0, 0, 0, 0, 0)]
+    )
     cubeCornerValsDict = Dict()
     r = res
     while ptsList:
-        x, y, z, d, c_val_old = ptsList.pop()
+        x, y, z, d, va, vb, vc, vd = ptsList.pop()
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
@@ -90,46 +100,46 @@ def getSurface(func, startPnt, res=1.3):
         zl = round(z - r)
 
         if d == 1:
-            v000 = 0 < (c_val_old & 16)  # v100 old
+            v000 = va  # v100 old
             v100 = func(xh, y, z)
-            v010 = 0 < (c_val_old & 64)  # v110 old
+            v010 = vb  # v110 old
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 32)  # v101 old
+            v001 = vc  # v101 old
             v101 = func(xh, y, zh)
-            v011 = 0 < (c_val_old & 128)  # v111 old
+            v011 = vd  # v111 old
             v111 = func(xh, yh, zh)
         elif d == -1:
             v000 = func(x, y, z)
-            v100 = 0 < (c_val_old & 1)  # v000 old
+            v100 = va  # v000 old
             v010 = func(x, yh, z)
-            v110 = 0 < (c_val_old & 4)  # v010 old
+            v110 = vb  # v010 old
             v001 = func(x, y, zh)
-            v101 = 0 < (c_val_old & 2)  # v001 old
+            v101 = vc  # v001 old
             v011 = func(x, yh, zh)
-            v111 = 0 < (c_val_old & 8)  # v011 old
+            v111 = vd  # v011 old
         elif d == 2:
-            v000 = 0 < (c_val_old & 4)  # v010 old
-            v100 = 0 < (c_val_old & 64)  # v110 old
+            v000 = va  # v010 old
+            v100 = vb  # v110 old
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 8)  # v011 old
-            v101 = 0 < (c_val_old & 128)  # v111 old
+            v001 = vc  # v011 old
+            v101 = vd  # v111 old
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
         elif d == -2:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
-            v010 = 0 < (c_val_old & 1)  # v000 old
-            v110 = 0 < (c_val_old & 16)  # v100 old
+            v010 = va  # v000 old
+            v110 = vb  # v100 old
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
-            v011 = 0 < (c_val_old & 2)  # v001 old
-            v111 = 0 < (c_val_old & 32)  # v101 old
+            v011 = vc  # v001 old
+            v111 = vd  # v101 old
         elif d == 4:
-            v000 = 0 < (c_val_old & 2)  # v001 old
-            v100 = 0 < (c_val_old & 32)  # v101 old
-            v010 = 0 < (c_val_old & 8)  # v011 old
-            v110 = 0 < (c_val_old & 128)  # v111 old
+            v000 = va  # v001 old
+            v100 = vb  # v101 old
+            v010 = vc  # v011 old
+            v110 = vd  # v111 old
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
@@ -139,10 +149,10 @@ def getSurface(func, startPnt, res=1.3):
             v100 = func(xh, y, z)
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = 0 < (c_val_old & 1)  # v000 old
-            v101 = 0 < (c_val_old & 16)  # v100 old
-            v011 = 0 < (c_val_old & 4)  # v010 old
-            v111 = 0 < (c_val_old & 64)  # v110 old
+            v001 = va  # v000 old
+            v101 = vb  # v100 old
+            v011 = vc  # v010 old
+            v111 = vd  # v110 old
         else:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
@@ -152,43 +162,56 @@ def getSurface(func, startPnt, res=1.3):
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
-        cVal = (
-            128 * v111
-            + 64 * v110
-            + 32 * v101
-            + 16 * v100
-            + 8 * v011
-            + 4 * v010
-            + 2 * v001
-            + 1 * v000
-        )
-        if cVal == 255 or cVal == 0:
+        if (
+            v000 == v100
+            and v000 == v010
+            and v000 == v110
+            and v000 == v001
+            and v000 == v101
+            and v000 == v011
+            and v000 == v111
+        ):
             continue
-        if (not (v100 and v110 and v101 and v111)) and (v100 or v110 or v101 or v111):
+        if not (v100 == v110 and v100 == v101 and v100 == v111):
             if not d == -1:
                 if (xh, y, z) not in cubeCornerValsDict:
-                    ptsList.append((xh, y, z, +1, cVal))
-        if (not (v010 and v110 and v011 and v111)) and (v010 or v110 or v011 or v111):
+                    # ptsList.append((xh, y, z, +1, cVal))
+                    ptsList.append((xh, y, z, +1, v100, v110, v101, v111))
+        if not (v010 == v110 and v010 == v011 and v010 == v111):
             if not d == -2:
                 if (x, yh, z) not in cubeCornerValsDict:
-                    ptsList.append((x, yh, z, +2, cVal))
-        if (not (v001 and v101 and v011 and v111)) and (v001 or v101 or v011 or v111):
+                    # ptsList.append((x, yh, z, +2, cVal))
+                    ptsList.append((x, yh, z, +2, v010, v110, v011, v111))
+        if not (v001 == v101 and v001 == v011 and v001 == v111):
             if not d == -4:
                 if (x, y, zh) not in cubeCornerValsDict:
-                    ptsList.append((x, y, zh, +4, cVal))
-        if (not (v000 and v010 and v001 and v011)) and (v000 or v010 or v001 or v011):
+                    # ptsList.append((x, y, zh, +4, cVal))
+                    ptsList.append((x, y, zh, +4, v001, v101, v011, v111))
+        if not (v000 == v010 and v000 == v001 and v000 == v011):
             if not d == 1:
                 if (xl, y, z) not in cubeCornerValsDict:
-                    ptsList.append((xl, y, z, -1, cVal))
-        if (not (v000 and v100 and v001 and v101)) and (v000 or v100 or v001 or v101):
+                    # ptsList.append((xl, y, z, -1, cVal))
+                    ptsList.append((xl, y, z, -1, v000, v010, v001, v011))
+        if not (v000 == v100 and v000 == v001 and v000 == v101):
             if not d == 2:
                 if (x, yl, z) not in cubeCornerValsDict:
-                    ptsList.append((x, yl, z, -2, cVal))
-        if (not (v000 and v100 and v010 and v110)) and (v000 or v100 or v010 or v110):
+                    # ptsList.append((x, yl, z, -2, cVal))
+                    ptsList.append((x, yl, z, -2, v000, v100, v001, v101))
+        if not (v000 == v100 and v000 == v010 and v000 == v110):
             if not d == 4:
                 if (x, y, zl) not in cubeCornerValsDict:
-                    ptsList.append((x, y, zl, -4, cVal))
-        cubeCornerValsDict[(x, y, z)] = np.uint8(cVal)
+                    # ptsList.append((x, y, zl, -4, cVal))
+                    ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
+        cubeCornerValsDict[(x, y, z)] = (
+            v111,
+            v110,
+            v101,
+            v100,
+            v011,
+            v010,
+            v001,
+            v000,
+        )  # np.uint8(cVal)
 
     return cubeCornerValsDict
 
@@ -209,14 +232,14 @@ def convert_corners2pts(cubeCornerValsDict, r):
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        pts_res_dict[(x, y, z)] = int(0 < (v & 1))
-        pts_res_dict[(xh, y, z)] = int(0 < (v & 16))
-        pts_res_dict[(x, yh, z)] = int(0 < (v & 4))
-        pts_res_dict[(x, y, zh)] = int(0 < (v & 2))
-        pts_res_dict[(xh, y, zh)] = int(0 < (v & 32))
-        pts_res_dict[(x, yh, zh)] = int(0 < (v & 8))
-        pts_res_dict[(xh, yh, z)] = int(0 < (v & 64))
-        pts_res_dict[(xh, yh, zh)] = int(0 < (v & 128))
+        pts_res_dict[(x, y, z)] = v[7]  # int(0 < (v & 1))
+        pts_res_dict[(xh, y, z)] = v[3]  # int(0 < (v & 16))
+        pts_res_dict[(x, yh, z)] = v[5]  # int(0 < (v & 4))
+        pts_res_dict[(x, y, zh)] = v[6]  # int(0 < (v & 2))
+        pts_res_dict[(xh, y, zh)] = v[2]  # int(0 < (v & 32))
+        pts_res_dict[(x, yh, zh)] = v[4]  # int(0 < (v & 8))
+        pts_res_dict[(xh, yh, z)] = v[1]  # int(0 < (v & 64))
+        pts_res_dict[(xh, yh, zh)] = v[0]  # int(0 < (v & 128))
     ptCoordDictKeys = np.asarray(list(pts_res_dict.keys()))
     ptCoordDictVals = np.asarray(list(pts_res_dict.values()))
     return ptCoordDictKeys, ptCoordDictVals
@@ -330,28 +353,6 @@ def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
 
 
 @njit(cache=True)
-def tridx2triangle(tr_lst, cutCedgeIdxList, precTrPnts):
-    cutCedgeIdxRevDict = {e: i for i, e in enumerate(cutCedgeIdxList)}
-    tr_arr = np.zeros((len(tr_lst) * 8, 3, 3))
-    c = 0
-    poly = np.zeros((6, 3))
-    for k in range(len(tr_lst)):
-        tr = tr_lst[k]
-        n = 0
-        for m in range(len(tr)):
-            f = tr[m]
-            if f in cutCedgeIdxRevDict:
-                poly[n] = precTrPnts[cutCedgeIdxRevDict[f]]
-                n += 1
-        for i in range(n - 2):
-            tr_arr[c][0] = poly[0]
-            tr_arr[c][1] = poly[i + 1]
-            tr_arr[c][2] = poly[i + 2]
-            c += 1
-    return tr_arr[:c]
-
-
-@njit(cache=True)
 def build_repair_polygons(single_edge_dict):
     ac = List()
     while len(single_edge_dict) > 0:
@@ -431,14 +432,55 @@ def calc_closed_surface(c2e, cvList):
     return polyList, len(rep)
 
 
+@njit(parallel=True, cache=True)
+def calc_classes(clss_fun, prec_pnts):
+    clss_arr = np.zeros((prec_pnts.shape[0], 8), dtype=np.uint8)
+    res = 0.1
+    for i in prange(prec_pnts.shape[0]):
+        x, y, z = prec_pnts[i]
+        clss_arr[i, 0] = clss_fun(x - res, y - res, z - res)
+        clss_arr[i, 1] = clss_fun(x + res, y - res, z - res)
+        clss_arr[i, 2] = clss_fun(x - res, y + res, z - res)
+        clss_arr[i, 3] = clss_fun(x + res, y + res, z - res)
+        clss_arr[i, 4] = clss_fun(x - res, y - res, z + res)
+        clss_arr[i, 5] = clss_fun(x + res, y - res, z + res)
+        clss_arr[i, 6] = clss_fun(x - res, y + res, z + res)
+        clss_arr[i, 7] = clss_fun(x + res, y + res, z + res)
+    return clss_arr
+
+
+@njit
+def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
+    cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
+    poly_vrtx_idx = [
+        [cut_edges_rev[e] for e in f if e in cut_edges_rev] for f in poly_cube_edge_idx
+    ]
+    return poly_vrtx_idx
+
+
+@njit
+def count_clss(clss_arr, poly_vrtx_idx):
+    clss_poly_arr = np.zeros((len(poly_vrtx_idx), 256))
+    for i in range(len(poly_vrtx_idx)):
+        for v in poly_vrtx_idx[i]:
+            for c in clss_arr[v]:
+                if c == 0:
+                    continue
+                clss_poly_arr[i, c] += 1
+    return clss_poly_arr
+
+
 @njit(cache=True)
-def all_njit_func(func, res, t0):
+def mesh_surface_function(func, res, t0):
     summary = {}
     log_it(t0, "Searching initial point on surface")
     p = findSurfacePnt(func)
     log_it(t0, "Walking over entire surface")
     corners = getSurface(func, p, res)
     summary["cubes"] = len(corners)
+    log_it(t0, "Converting corners into points")
+    materials = list(set([c for v in corners.values() for c in v]))
+    summary["materials"] = len(materials) - 1
     log_it(t0, "Converting corners into points")
     ptsKeys, pv = convert_corners2pts(corners, res)
     summary["cube points"] = len(pv)
@@ -452,32 +494,70 @@ def all_njit_func(func, res, t0):
     summary["surface points"] = len(cCeI)
     log_it(t0, "Approximating exact coordinates of the cuts")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
-    log_it(t0, "Calculating closed surface")
-    corCircList, len_rep = calc_closed_surface(c2e, cvList)
-    log_it(t0, "Building triangles")
-    summary["polygons"] = len(corCircList)
-    summary["repaired polygons"] = len_rep
-    verticesArray = tridx2triangle(corCircList, cCeI, precTrPtsList)
-    log_it(t0, "Calculations done")
-    summary["triangles"] = len(verticesArray)
-    return verticesArray, summary
+    poly_vrtx_idx_grpd = []
+    summary["filtered cubes"] = 0
+    summary["polygons"] = 0
+    summary["repaired polygons"] = 0
+    for imat, mat in enumerate(materials[1:]):
+        log_it(t0, f"Material {mat}")
+        filtered_cv = np.asarray(
+            [
+                np.sum((v == mat) * np.array([128, 64, 32, 16, 8, 4, 2, 1]))
+                for v in cvList
+            ]
+        )
+        summary["filtered cubes"] += len(filtered_cv)
+        log_it(t0, "  Calculating closed surface")
+        corCircList, len_rep = calc_closed_surface(c2e, filtered_cv)
+        summary["polygons"] += len(corCircList)
+        summary["repaired polygons"] += len_rep
+        log_it(t0, "  Prepare polygons")
+        poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
+        log_it(t0, "  Meshing done")
+        poly_vrtx_idx_grpd.append(poly_vrtx_idx)
+    return precTrPtsList, poly_vrtx_idx_grpd, summary
+
+
+@njit(cache=True)
+def std_clss_fun(x, y, z):
+    return 1
+
+
+def save_files(name, vertices, faces_grpd, t0):
+    export_formats = {"stl", "obj", "obj_printable"}
+    if len(name) > 4:
+        if name[-4:] == ".stl":
+            name = name[:-4]
+            export_formats = {"stl"}
+        elif name[-4:] == ".obj":
+            name = name[:-4]
+            export_formats = {"obj", "obj_printable"}
+    if "obj" in export_formats:
+        log_it(t0, f"Saving {name}_not_printable.obj")
+        export_obj(f"{name}_not_printable", vertices, faces_grpd)
+    if "obj_printable" in export_formats:
+        log_it(t0, f"Saving {name}.obj")
+        export_obj_printable(f"{name}", vertices, faces_grpd)
+    if "stl" in export_formats:
+        log_it(t0, f"Saving {name}.stl")
+        export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
+    if "stl_parts" in export_formats:
+        for i, faces in enumerate(faces_grpd):
+            if len(faces) == 0:
+                continue
+            log_it(t0, f"Saving {name}_prt{i:03d}.stl")
+            export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
 def renderAndSave(func, filename, res=1):
     t0 = time.time()
     version_run = __version__
-    try:
-        version_inst = importlib.metadata.version(__package__ or __name__)
-    except importlib.metadata.PackageNotFoundError as e:
-        version_inst = None
+    version_inst = get_installed_version()
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
-    verticesArray, summary = all_njit_func(func, res, t0)
-    print_summary(summary, 14)
-    log_it(t0, "Building mesh")
-    solid = mesh.Mesh(np.zeros(verticesArray.shape[0], dtype=mesh.Mesh.dtype))
-    solid.vectors[:] = verticesArray
-    log_it(t0, f"Saving file: {filename}")
-    solid.save(filename)
+    vertices, faces_grpd, summary = mesh_surface_function(func, res, t0)
+    faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
+    save_files(filename, vertices, faces_grpd_cln, t0)
     log_it(t0, "Done.")
+    print_summary(summary, 14)

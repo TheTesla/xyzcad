@@ -1,0 +1,18 @@
+newmtl mtl0
+Ka 0.75 0.75 0.75
+Kb 0.75 0.75 0.75
+Ks 0.75 0.75 0.75
+d 1.0
+illum 1.0
+newmtl mtl1
+Ka 0.5 0.0 0.0
+Kb 0.5 0.0 0.0
+Ks 0.5 0.0 0.0
+d 1.0
+illum 1.0
+newmtl mtl2
+Ka 0.0 0.5 0.0
+Kb 0.0 0.5 0.0
+Ks 0.0 0.5 0.0
+d 1.0
+illum 1.0

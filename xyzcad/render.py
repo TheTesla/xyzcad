@@ -85,9 +85,9 @@ def findSurfacePnt(func, minVal=-1000.0, maxVal=+1000.0, resSteps=24):
 @njit(cache=True)
 def getSurface(func, startPnt, res=1.3):
     x, y, z = startPnt
-    ptsList = List([(round(x - res / 2), round(y - res / 2), round(z - res /
-                                                                   2), 0,
-                     0,0,0,0)])
+    ptsList = List(
+        [(round(x - res / 2), round(y - res / 2), round(z - res / 2), 0, 0, 0, 0, 0)]
+    )
     cubeCornerValsDict = Dict()
     r = res
     while ptsList:
@@ -102,9 +102,9 @@ def getSurface(func, startPnt, res=1.3):
         if d == 1:
             v000 = va  # v100 old
             v100 = func(xh, y, z)
-            v010 = vb # v110 old
+            v010 = vb  # v110 old
             v110 = func(xh, yh, z)
-            v001 = vc   # v101 old
+            v001 = vc  # v101 old
             v101 = func(xh, y, zh)
             v011 = vd  # v111 old
             v111 = func(xh, yh, zh)
@@ -136,9 +136,9 @@ def getSurface(func, startPnt, res=1.3):
             v011 = vc  # v001 old
             v111 = vd  # v101 old
         elif d == 4:
-            v000 = va # v001 old
+            v000 = va  # v001 old
             v100 = vb  # v101 old
-            v010 = vc # v011 old
+            v010 = vc  # v011 old
             v110 = vd  # v111 old
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
@@ -149,9 +149,9 @@ def getSurface(func, startPnt, res=1.3):
             v100 = func(xh, y, z)
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = va # v000 old
+            v001 = va  # v000 old
             v101 = vb  # v100 old
-            v011 = vc # v010 old
+            v011 = vc  # v010 old
             v111 = vd  # v110 old
         else:
             v000 = func(x, y, z)
@@ -162,41 +162,56 @@ def getSurface(func, startPnt, res=1.3):
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
-        if v000 == v100 and v000 == v010 and v000 == v110 and v000 == v001 \
-        and v000 == v101 and v000 == v011 and v000 ==  v111:
+        if (
+            v000 == v100
+            and v000 == v010
+            and v000 == v110
+            and v000 == v001
+            and v000 == v101
+            and v000 == v011
+            and v000 == v111
+        ):
             continue
         if not (v100 == v110 and v100 == v101 and v100 == v111):
             if not d == -1:
                 if (xh, y, z) not in cubeCornerValsDict:
-                    #ptsList.append((xh, y, z, +1, cVal))
+                    # ptsList.append((xh, y, z, +1, cVal))
                     ptsList.append((xh, y, z, +1, v100, v110, v101, v111))
         if not (v010 == v110 and v010 == v011 and v010 == v111):
             if not d == -2:
                 if (x, yh, z) not in cubeCornerValsDict:
-                    #ptsList.append((x, yh, z, +2, cVal))
+                    # ptsList.append((x, yh, z, +2, cVal))
                     ptsList.append((x, yh, z, +2, v010, v110, v011, v111))
         if not (v001 == v101 and v001 == v011 and v001 == v111):
             if not d == -4:
                 if (x, y, zh) not in cubeCornerValsDict:
-                    #ptsList.append((x, y, zh, +4, cVal))
+                    # ptsList.append((x, y, zh, +4, cVal))
                     ptsList.append((x, y, zh, +4, v001, v101, v011, v111))
         if not (v000 == v010 and v000 == v001 and v000 == v011):
             if not d == 1:
                 if (xl, y, z) not in cubeCornerValsDict:
-                    #ptsList.append((xl, y, z, -1, cVal))
+                    # ptsList.append((xl, y, z, -1, cVal))
                     ptsList.append((xl, y, z, -1, v000, v010, v001, v011))
         if not (v000 == v100 and v000 == v001 and v000 == v101):
             if not d == 2:
                 if (x, yl, z) not in cubeCornerValsDict:
-                    #ptsList.append((x, yl, z, -2, cVal))
+                    # ptsList.append((x, yl, z, -2, cVal))
                     ptsList.append((x, yl, z, -2, v000, v100, v001, v101))
         if not (v000 == v100 and v000 == v010 and v000 == v110):
             if not d == 4:
                 if (x, y, zl) not in cubeCornerValsDict:
-                    #ptsList.append((x, y, zl, -4, cVal))
+                    # ptsList.append((x, y, zl, -4, cVal))
                     ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
-        cubeCornerValsDict[(x, y, z)] = (v111, v110, v101, v100, v011, v010,
-                                         v001, v000) #np.uint8(cVal)
+        cubeCornerValsDict[(x, y, z)] = (
+            v111,
+            v110,
+            v101,
+            v100,
+            v011,
+            v010,
+            v001,
+            v000,
+        )  # np.uint8(cVal)
 
     return cubeCornerValsDict
 
@@ -217,14 +232,14 @@ def convert_corners2pts(cubeCornerValsDict, r):
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        pts_res_dict[(x, y, z)] = v[7] #int(0 < (v & 1))
-        pts_res_dict[(xh, y, z)] = v[3] #int(0 < (v & 16))
-        pts_res_dict[(x, yh, z)] = v[5] #int(0 < (v & 4))
-        pts_res_dict[(x, y, zh)] = v[6] #int(0 < (v & 2))
-        pts_res_dict[(xh, y, zh)] = v[2] #int(0 < (v & 32))
-        pts_res_dict[(x, yh, zh)] = v[4] #int(0 < (v & 8))
-        pts_res_dict[(xh, yh, z)] = v[1] #int(0 < (v & 64))
-        pts_res_dict[(xh, yh, zh)] = v[0] #int(0 < (v & 128))
+        pts_res_dict[(x, y, z)] = v[7]  # int(0 < (v & 1))
+        pts_res_dict[(xh, y, z)] = v[3]  # int(0 < (v & 16))
+        pts_res_dict[(x, yh, z)] = v[5]  # int(0 < (v & 4))
+        pts_res_dict[(x, y, zh)] = v[6]  # int(0 < (v & 2))
+        pts_res_dict[(xh, y, zh)] = v[2]  # int(0 < (v & 32))
+        pts_res_dict[(x, yh, zh)] = v[4]  # int(0 < (v & 8))
+        pts_res_dict[(xh, yh, z)] = v[1]  # int(0 < (v & 64))
+        pts_res_dict[(xh, yh, zh)] = v[0]  # int(0 < (v & 128))
     ptCoordDictKeys = np.asarray(list(pts_res_dict.keys()))
     ptCoordDictVals = np.asarray(list(pts_res_dict.values()))
     return ptCoordDictKeys, ptCoordDictVals
@@ -465,7 +480,7 @@ def mesh_surface_function(func, res, t0):
     summary["cubes"] = len(corners)
     log_it(t0, "Converting corners into points")
     materials = list(set([c for v in corners.values() for c in v]))
-    summary["materials"] = len(materials)-1
+    summary["materials"] = len(materials) - 1
     log_it(t0, "Converting corners into points")
     ptsKeys, pv = convert_corners2pts(corners, res)
     summary["cube points"] = len(pv)
@@ -480,18 +495,25 @@ def mesh_surface_function(func, res, t0):
     log_it(t0, "Approximating exact coordinates of the cuts")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
     poly_vrtx_idx_grpd = []
+    summary["filtered cubes"] = 0
+    summary["polygons"] = 0
+    summary["repaired polygons"] = 0
     for imat, mat in enumerate(materials[1:]):
-        filtered_cv = np.asarray([np.sum((v==mat) *
-                                np.array([128,64,32,16,8,4,2,1])) for v in
-                                  cvList])
-        summary["filtered cubes"] = len(filtered_cv)
-        log_it(t0, "Calculating closed surface")
+        log_it(t0, f"Material {mat}")
+        filtered_cv = np.asarray(
+            [
+                np.sum((v == mat) * np.array([128, 64, 32, 16, 8, 4, 2, 1]))
+                for v in cvList
+            ]
+        )
+        summary["filtered cubes"] += len(filtered_cv)
+        log_it(t0, "  Calculating closed surface")
         corCircList, len_rep = calc_closed_surface(c2e, filtered_cv)
-        summary["polygons"] = len(corCircList)
-        summary["repaired polygons"] = len_rep
-        log_it(t0, "Prepare polygons")
+        summary["polygons"] += len(corCircList)
+        summary["repaired polygons"] += len_rep
+        log_it(t0, "  Prepare polygons")
         poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
-        log_it(t0, "Meshing done")
+        log_it(t0, "  Meshing done")
         poly_vrtx_idx_grpd.append(poly_vrtx_idx)
     return precTrPtsList, poly_vrtx_idx_grpd, summary
 
@@ -499,18 +521,6 @@ def mesh_surface_function(func, res, t0):
 @njit(cache=True)
 def std_clss_fun(x, y, z):
     return 1
-
-
-@njit(cache=True)
-def all_njit_func(func, res, t0, clss_fun=std_clss_fun):
-    precTrPtsList, poly_vrtx_idx_grpd, summary = mesh_surface_function(func, res, t0)
-    log_it(t0, "Calculating classes")
-    clss_arr = calc_classes(clss_fun, precTrPtsList)
-    log_it(t0, "Counting classes")
-    clss_poly_arr = count_clss(clss_arr, poly_vrtx_idx)
-    clss = np.argmax(clss_poly_arr, axis=1)
-    log_it(t0, "Calculations done")
-    return precTrPtsList, poly_vrtx_idx, clss, summary
 
 
 def save_files(name, vertices, faces_grpd, t0):
@@ -539,17 +549,13 @@ def save_files(name, vertices, faces_grpd, t0):
             export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
-def renderAndSave(func, filename, res=1, clss_fun=std_clss_fun):
+def renderAndSave(func, filename, res=1):
     t0 = time.time()
     version_run = __version__
     version_inst = get_installed_version()
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
-    #vertices, faces, clss, summary = all_njit_func(func, res, t0, clss_fun)
-    #faces_grpd = [[] for e in range(1 + max(clss))]
-    #for i in range(len(clss)):
-    #    faces_grpd[clss[i]].append(faces[i])
     vertices, faces_grpd, summary = mesh_surface_function(func, res, t0)
     faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
     save_files(filename, vertices, faces_grpd_cln, t0)

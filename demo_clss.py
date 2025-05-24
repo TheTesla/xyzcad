@@ -39,6 +39,6 @@ def sphere(x, y, z):
 
 t0 = time.time()
 
-render.renderAndSave(sphere_clss, "demo_clss", 1, sphere_clss)
+render.renderAndSave(sphere_clss, "demo_clss", 1)
 
 print(time.time() - t0)

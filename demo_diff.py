@@ -60,16 +60,16 @@ def full_shape(x, y, z):
 @njit
 def shape_diff(x, y, z):
     if old_shape(x, y, z) and new_shape(x, y, z):
-        return 7
+        return 1
     if old_shape(x, y, z) and not new_shape(x, y, z):
-        return 4
-    if not old_shape(x, y, z) and new_shape(x, y, z):
         return 2
+    if not old_shape(x, y, z) and new_shape(x, y, z):
+        return 3
     return 0
 
 
 t0 = time.time()
 
-render.renderAndSave(full_shape, "demo_diff", 0.1, shape_diff)
+render.renderAndSave(shape_diff, "demo_diff", 0.1)
 
 print(time.time() - t0)

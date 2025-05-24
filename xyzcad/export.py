@@ -91,7 +91,7 @@ def write_mtl(mtl_filename, color_mat, mtl_lst=[]):
 def create_gen_color(n):
     color_mat = np.zeros((n, 3))
     for i in range(n):
-        color_mat[i, 2] = (
+        color_mat[i, 0] = (
             1 / 2 * (int(i / 1) % 2)
             + 1 / 4 * (int(i / 8) % 2)
             + 1 / 8 * (int(i / 64) % 2)
@@ -101,7 +101,7 @@ def create_gen_color(n):
             + 1 / 4 * (int(i / 16) % 2)
             + 1 / 8 * (int(i / 128) % 2)
         )
-        color_mat[i, 0] = (
+        color_mat[i, 2] = (
             1 / 2 * (int(i / 4) % 2)
             + 1 / 4 * (int(i / 32) % 2)
             + 1 / 8 * (int(i / 256) % 2)

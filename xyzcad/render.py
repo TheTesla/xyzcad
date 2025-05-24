@@ -432,23 +432,6 @@ def calc_closed_surface(c2e, cvList):
     return polyList, len(rep)
 
 
-@njit(parallel=True, cache=True)
-def calc_classes(clss_fun, prec_pnts):
-    clss_arr = np.zeros((prec_pnts.shape[0], 8), dtype=np.uint8)
-    res = 0.1
-    for i in prange(prec_pnts.shape[0]):
-        x, y, z = prec_pnts[i]
-        clss_arr[i, 0] = clss_fun(x - res, y - res, z - res)
-        clss_arr[i, 1] = clss_fun(x + res, y - res, z - res)
-        clss_arr[i, 2] = clss_fun(x - res, y + res, z - res)
-        clss_arr[i, 3] = clss_fun(x + res, y + res, z - res)
-        clss_arr[i, 4] = clss_fun(x - res, y - res, z + res)
-        clss_arr[i, 5] = clss_fun(x + res, y - res, z + res)
-        clss_arr[i, 6] = clss_fun(x - res, y + res, z + res)
-        clss_arr[i, 7] = clss_fun(x + res, y + res, z + res)
-    return clss_arr
-
-
 @njit
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}

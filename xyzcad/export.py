@@ -111,13 +111,13 @@ def create_gen_color(n):
             + 1 / 4 * (int(c / 32) % 2)
             + 1 / 8 * (int(c / 256) % 2)
         )
-    color_mat[0] = 0., 0., 0.
+    color_mat[0] = 0.0, 0.0, 0.0
     color_mat[1] = 3 / 4, 3 / 4, 3 / 4
     return color_mat
 
 
 def export_obj(obj_filename, vertices, poly_grpd, mats):
-    write_mtl(obj_filename, create_gen_color(max(mats)+1))
+    write_mtl(obj_filename, create_gen_color(max(mats) + 1))
     write_obj(obj_filename, vertices, poly_grpd, mats)
 
 
@@ -126,5 +126,5 @@ def export_obj_printable(obj_filename, vertices, poly_grpd, mats):
         obj_filename,
         vertices,
         [[] if len(e) == 0 else poly2triangle_idx(e) for e in poly_grpd],
-        mats
+        mats,
     )

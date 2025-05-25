@@ -96,12 +96,14 @@ def get_surface(func, start_pnt, res=1.3, params=()):
                 v[i] = vo[j]
                 j += 1
             else:
-                v[i] = func((
-                    xh if i & 4 else x,
-                    yh if i & 2 else y,
-                    zh if i & 1 else z,
-                    params,
-                    ))
+                v[i] = func(
+                    (
+                        xh if i & 4 else x,
+                        yh if i & 2 else y,
+                        zh if i & 1 else z,
+                        params,
+                    )
+                )
         for i2 in range(7):
             if v[7] != v[i2]:
                 break
@@ -355,9 +357,12 @@ def calc_closed_surface(c2e, cvList):
 @njit
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
-    poly_vrtx_idx = List([
-        List([cut_edges_rev[e] for e in f if e in cut_edges_rev]) for f in poly_cube_edge_idx
-    ])
+    poly_vrtx_idx = List(
+        [
+            List([cut_edges_rev[e] for e in f if e in cut_edges_rev])
+            for f in poly_cube_edge_idx
+        ]
+    )
     return poly_vrtx_idx
 
 
@@ -457,7 +462,7 @@ def renderAndSave(func, filename, res=1, params=()):
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
     vertices, faces_grpd, mats, summary = mesh_surface_function(func, res, params, t0)
-    #faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
+    # faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
     save_files(filename, vertices, faces_grpd, mats, t0)
     log_it(t0, "Done.")
     print_summary(summary, 14)

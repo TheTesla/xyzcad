@@ -19,7 +19,8 @@ from xyzcad import render
 
 
 @njit
-def old_shape(x, y, z):
+def old_shape(p):
+    x, y, z = p[:3]
     if x > 2:
         return False
     if x < -2:
@@ -36,7 +37,8 @@ def old_shape(x, y, z):
 
 
 @njit
-def new_shape(x, y, z):
+def new_shape(p):
+    x, y, z = p[:3]
     if x > 1:
         return False
     if x < -2:
@@ -53,17 +55,17 @@ def new_shape(x, y, z):
 
 
 @njit
-def full_shape(x, y, z):
-    return old_shape(x, y, z) or new_shape(x, y, z)
+def full_shape(p):
+    return old_shape(p) or new_shape(p)
 
 
 @njit
-def shape_diff(x, y, z):
-    if old_shape(x, y, z) and new_shape(x, y, z):
+def shape_diff(p):
+    if old_shape(p) and new_shape(p):
         return 1
-    if old_shape(x, y, z) and not new_shape(x, y, z):
+    if old_shape(p) and not new_shape(p):
         return 2
-    if not old_shape(x, y, z) and new_shape(x, y, z):
+    if not old_shape(p) and new_shape(p):
         return 3
     return 0
 

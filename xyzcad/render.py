@@ -36,8 +36,8 @@ def rnd(x):
 
 
 @njit(cache=True)
-def find_init_pnt(func, min_val=-1000.0, max_val=+1000.0, res_steps=24):
-    s0 = func(0.0, 0.0, 0.0)
+def find_init_pnt(func, min_val=-1000.0, max_val=+1000.0, res_steps=24, params=()):
+    s0 = func((0.0, 0.0, 0.0, params))
     for d in range(res_steps):
         for xi in range(2**d):
             x = (xi + 0.5) / (2**d) * (max_val - min_val) + min_val
@@ -45,20 +45,20 @@ def find_init_pnt(func, min_val=-1000.0, max_val=+1000.0, res_steps=24):
                 y = (yi + 0.5) / (2**d) * (max_val - min_val) + min_val
                 for zi in range(2**d):
                     z = (zi + 0.5) / (2**d) * (max_val - min_val) + min_val
-                    s = func(x, y, z)
+                    s = func((x, y, z, params))
                     if s != s0:
                         return np.array([[x, y, z], [0.0, 0.0, 0.0]])
     return np.zeros((3, 2))
 
 
 @njit(cache=True)
-def get_surfacePnt(func, p0, p1, res_steps=24):
-    s0 = func(p0[0], p0[1], p0[2])
+def get_surfacePnt(func, p0, p1, res_steps=24, params=()):
+    s0 = func((p0[0], p0[1], p0[2], params))
     u = 0.0
     d = +1
     for i in range(res_steps):
         p = p0 * (1 - u) + p1 * u
-        s = func(p[0], p[1], p[2])
+        s = func((p[0], p[1], p[2], params))
         if s != s0:
             s0 = s
             d = -d
@@ -67,15 +67,15 @@ def get_surfacePnt(func, p0, p1, res_steps=24):
 
 
 @njit(cache=True)
-def find_surface_pnt(func, min_val=-1000.0, max_val=+1000.0, res=1.3):
+def find_surface_pnt(func, min_val=-1000.0, max_val=+1000.0, res=1.3, params=()):
     res_steps = int(np.floor(np.log2((max_val - min_val) / res)) + 2)
-    p0, p1 = find_init_pnt(func, min_val, max_val, res_steps)
-    p = get_surfacePnt(func, p0, p1, res_steps)
+    p0, p1 = find_init_pnt(func, min_val, max_val, res_steps, params)
+    p = get_surfacePnt(func, p0, p1, res_steps, params)
     return p
 
 
 @njit(cache=True)
-def get_surface(func, start_pnt, res=1.3):
+def get_surface(func, start_pnt, res=1.3, params=()):
     x, y, z = start_pnt
     r = res
     p_nxt = [(rnd(x - r / 2), rnd(y - r / 2), rnd(z - r / 2), 0, 0, 0, 0, 0)]
@@ -96,7 +96,12 @@ def get_surface(func, start_pnt, res=1.3):
                 v[i] = vo[j]
                 j += 1
             else:
-                v[i] = func(xh if i & 4 else x, yh if i & 2 else y, zh if i & 1 else z)
+                v[i] = func((
+                    xh if i & 4 else x,
+                    yh if i & 2 else y,
+                    zh if i & 1 else z,
+                    params,
+                    ))
         for i2 in range(7):
             if v[7] != v[i2]:
                 break
@@ -258,12 +263,12 @@ def cutCedgeIdx(edge2ptIdxList, ptValueList):
 
 
 @njit(cache=True, parallel=True)
-def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray):
+def precTrPnts(func, cutCedgeIdxArray, edge2ptIdxArray, ptCoordArray, params):
     lcceil = len(cutCedgeIdxArray)
     r = np.zeros((lcceil, 3))
     for i in prange(lcceil):
         p0, p1 = edge2ptIdxArray[cutCedgeIdxArray[i]]
-        r[i] = get_surfacePnt(func, ptCoordArray[p0], ptCoordArray[p1])
+        r[i] = get_surfacePnt(func, ptCoordArray[p0], ptCoordArray[p1], 24, params)
     return r
 
 
@@ -350,9 +355,9 @@ def calc_closed_surface(c2e, cvList):
 @njit
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
-    poly_vrtx_idx = [
-        [cut_edges_rev[e] for e in f if e in cut_edges_rev] for f in poly_cube_edge_idx
-    ]
+    poly_vrtx_idx = List([
+        List([cut_edges_rev[e] for e in f if e in cut_edges_rev]) for f in poly_cube_edge_idx
+    ])
     return poly_vrtx_idx
 
 
@@ -369,12 +374,12 @@ def count_clss(clss_arr, poly_vrtx_idx):
 
 
 @njit(cache=True)
-def mesh_surface_function(func, res, t0):
+def mesh_surface_function(func, res, params, t0):
     summary = {}
     log_it(t0, "Searching initial point on surface")
-    p = find_surface_pnt(func, res=res)
+    p = find_surface_pnt(func, res=res, params=params)
     log_it(t0, "Walking over entire surface")
-    corners = get_surface(func, p, res)
+    corners = get_surface(func, p, res, params)
     summary["cubes"] = len(corners)
     log_it(t0, "Converting corners into points")
     materials = list(set([c for v in corners.values() for c in v]))
@@ -391,8 +396,9 @@ def mesh_surface_function(func, res, t0):
     cCeI = cutCedgeIdx(e2p, pv)
     summary["surface points"] = len(cCeI)
     log_it(t0, "Approximating exact coordinates of the cuts")
-    precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys)
+    precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys, params)
     poly_vrtx_idx_grpd = []
+    mats = []
     summary["filtered cubes"] = 0
     summary["polygons"] = 0
     summary["repaired polygons"] = 0
@@ -413,10 +419,11 @@ def mesh_surface_function(func, res, t0):
         poly_vrtx_idx = conv_cube_edge_2_vrtx_idx(corCircList, cCeI)
         log_it(t0, "  Meshing done")
         poly_vrtx_idx_grpd.append(poly_vrtx_idx)
-    return precTrPtsList, poly_vrtx_idx_grpd, summary
+        mats.append(mat)
+    return precTrPtsList, poly_vrtx_idx_grpd, mats, summary
 
 
-def save_files(name, vertices, faces_grpd, t0):
+def save_files(name, vertices, faces_grpd, mats, t0):
     export_formats = {"stl", "obj", "obj_printable"}
     if len(name) > 4:
         if name[-4:] == ".stl":
@@ -427,13 +434,13 @@ def save_files(name, vertices, faces_grpd, t0):
             export_formats = {"obj", "obj_printable"}
     if "obj" in export_formats:
         log_it(t0, f"Saving {name}_not_printable.obj")
-        export_obj(f"{name}_not_printable", vertices, faces_grpd)
+        export_obj(f"{name}_not_printable", vertices, faces_grpd, mats)
     if "obj_printable" in export_formats:
         log_it(t0, f"Saving {name}.obj")
-        export_obj_printable(f"{name}", vertices, faces_grpd)
+        export_obj_printable(f"{name}", vertices, faces_grpd, mats)
     if "stl" in export_formats:
         log_it(t0, f"Saving {name}.stl")
-        export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
+        export_stl(name, vertices, [f for e in faces_grpd for f in e])
     if "stl_parts" in export_formats:
         for i, faces in enumerate(faces_grpd):
             if len(faces) == 0:
@@ -442,15 +449,15 @@ def save_files(name, vertices, faces_grpd, t0):
             export_stl(f"{name}_prt{i:03d}", vertices, List(faces))
 
 
-def renderAndSave(func, filename, res=1):
+def renderAndSave(func, filename, res=1, params=()):
     t0 = time.time()
     version_run = __version__
     version_inst = get_installed_version()
     t0 = time_it()
     log_it(t0, f"running xyzcad version {version_run} (installed: {version_inst})")
     log_it(t0, "Compiling")
-    vertices, faces_grpd, summary = mesh_surface_function(func, res, t0)
-    faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
-    save_files(filename, vertices, faces_grpd_cln, t0)
+    vertices, faces_grpd, mats, summary = mesh_surface_function(func, res, params, t0)
+    #faces_grpd_cln = [[e for e in f if len(e) > 0] for f in faces_grpd]
+    save_files(filename, vertices, faces_grpd, mats, t0)
     log_it(t0, "Done.")
     print_summary(summary, 14)

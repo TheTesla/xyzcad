@@ -19,7 +19,8 @@ from xyzcad import render
 
 
 @njit
-def sphere_clss(x, y, z):
+def sphere_clss(p):
+    x, y, z = p[:3]
     if not sphere(x, y, z):
         return 0
     k = 1

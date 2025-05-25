@@ -19,7 +19,8 @@ from xyzcad import render
 
 
 @jit(nopython=True, cache=True)
-def f(x, y, z):
+def f(p):
+    x, y, z = p[:3]
     r = 70 / 2
     rb = 34 / 2
     hb = 40
@@ -63,7 +64,8 @@ def f(x, y, z):
 
 
 @jit(nopython=True, cache=True)
-def g(x, y, z):
+def g(p):
+    x, y, z = p[:3]
     if 50.1 > x**2 + y**2 + z**2:
         return True
     if 50.1 > (x - 7) ** 2 + y**2 + z**2:
@@ -76,7 +78,8 @@ def g(x, y, z):
 
 
 @jit(nopython=True, cache=True)
-def h(x, y, z):
+def h(p):
+    x, y, z = p[:3]
     if 12**2 > x**2 + y**2 + z**2:
         return True
     return False
@@ -86,7 +89,8 @@ t0 = time.time()
 
 
 @jit
-def k(x, y, z):
+def k(p):
+    x, y, z = p[:3]
     prd = 15.0
     r = (((x + 0) % 33.3 - 16.67) ** 2 + ((y + 16.67) % 33.3 - 16.67) ** 2) ** 0.5
     rd = r - prd
@@ -101,7 +105,8 @@ def k(x, y, z):
 
 
 @njit
-def cube(x, y, z):
+def cube(p):
+    x, y, z = p[:3]
     if z < 0:
         return False
     if z > 2:

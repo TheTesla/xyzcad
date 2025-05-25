@@ -44,7 +44,7 @@ def export_stl(stl_filename, vertices, poly):
     solid.save(stl_filename + ".stl")
 
 
-def write_obj(obj_filename, vertices, poly_grpd, mtl_filename="", mtl_lst=[]):
+def write_obj(obj_filename, vertices, poly_grpd, mats=[], mtl_filename="", mtl_lst=[]):
     if mtl_filename == "":
         mtl_filename = obj_filename
     with open(obj_filename + ".obj", "w") as obj_file:
@@ -52,7 +52,11 @@ def write_obj(obj_filename, vertices, poly_grpd, mtl_filename="", mtl_lst=[]):
         for v in vertices:
             obj_file.write(f"v {v[0]} {v[1]} {v[2]}\n")
         for i, faces in enumerate(poly_grpd):
-            mtl_name = mtl_lst[i] if i < len(mtl_lst) else f"mtl{i}"
+            if i >= len(mats):
+                mat = i
+            else:
+                mat = mats[i]
+            mtl_name = mtl_lst[mat] if mat < len(mtl_lst) else f"mtl{mat}"
             obj_file.write(f"usemtl {mtl_name}\n")
             for f in faces:
                 obj_file.write(f"f {' '.join(str(np.uint64(k+1)) for k in f)}\n")
@@ -91,33 +95,36 @@ def write_mtl(mtl_filename, color_mat, mtl_lst=[]):
 def create_gen_color(n):
     color_mat = np.zeros((n, 3))
     for i in range(n):
+        c = i - 1
         color_mat[i, 0] = (
-            1 / 2 * (int(i / 1) % 2)
-            + 1 / 4 * (int(i / 8) % 2)
-            + 1 / 8 * (int(i / 64) % 2)
+            1 / 2 * (int(c / 1) % 2)
+            + 1 / 4 * (int(c / 8) % 2)
+            + 1 / 8 * (int(c / 64) % 2)
         )
         color_mat[i, 1] = (
-            1 / 2 * (int(i / 2) % 2)
-            + 1 / 4 * (int(i / 16) % 2)
-            + 1 / 8 * (int(i / 128) % 2)
+            1 / 2 * (int(c / 2) % 2)
+            + 1 / 4 * (int(c / 16) % 2)
+            + 1 / 8 * (int(c / 128) % 2)
         )
         color_mat[i, 2] = (
-            1 / 2 * (int(i / 4) % 2)
-            + 1 / 4 * (int(i / 32) % 2)
-            + 1 / 8 * (int(i / 256) % 2)
+            1 / 2 * (int(c / 4) % 2)
+            + 1 / 4 * (int(c / 32) % 2)
+            + 1 / 8 * (int(c / 256) % 2)
         )
-    color_mat[0] = 3 / 4, 3 / 4, 3 / 4
+    color_mat[0] = 0., 0., 0.
+    color_mat[1] = 3 / 4, 3 / 4, 3 / 4
     return color_mat
 
 
-def export_obj(obj_filename, vertices, poly_grpd):
-    write_mtl(obj_filename, create_gen_color(len(poly_grpd)))
-    write_obj(obj_filename, vertices, poly_grpd)
+def export_obj(obj_filename, vertices, poly_grpd, mats):
+    write_mtl(obj_filename, create_gen_color(max(mats)+1))
+    write_obj(obj_filename, vertices, poly_grpd, mats)
 
 
-def export_obj_printable(obj_filename, vertices, poly_grpd):
+def export_obj_printable(obj_filename, vertices, poly_grpd, mats):
     export_obj(
         obj_filename,
         vertices,
         [[] if len(e) == 0 else poly2triangle_idx(e) for e in poly_grpd],
+        mats
     )

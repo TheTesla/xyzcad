@@ -416,11 +416,6 @@ def mesh_surface_function(func, res, t0):
     return precTrPtsList, poly_vrtx_idx_grpd, summary
 
 
-@njit(cache=True)
-def std_clss_fun(x, y, z):
-    return 1
-
-
 def save_files(name, vertices, faces_grpd, t0):
     export_formats = {"stl", "obj", "obj_printable"}
     if len(name) > 4:

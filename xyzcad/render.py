@@ -36,49 +36,41 @@ def round(x):
 
 
 @njit(cache=True)
-def getInitPnt(func, minVal=-1000.0, maxVal=+1000.0, resSteps=24):
+def find_init_pnt(func, min_val=-1000.0, max_val=+1000.0, res_steps=24):
     s0 = func(0.0, 0.0, 0.0)
-    for d in range(resSteps):
+    for d in range(res_steps):
         for xi in range(2**d):
-            x = (xi + 0.5) / (2**d) * (maxVal - minVal) + minVal
+            x = (xi + 0.5) / (2**d) * (max_val - min_val) + min_val
             for yi in range(2**d):
-                y = (yi + 0.5) / (2**d) * (maxVal - minVal) + minVal
+                y = (yi + 0.5) / (2**d) * (max_val - min_val) + min_val
                 for zi in range(2**d):
-                    z = (zi + 0.5) / (2**d) * (maxVal - minVal) + minVal
+                    z = (zi + 0.5) / (2**d) * (max_val - min_val) + min_val
                     s = func(x, y, z)
                     if s != s0:
-                        return x, y, z, 0.0, 0.0, 0.0
-    return 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+                        return np.array([[x, y, z], [0.0, 0.0, 0.0]])
+    return np.zeros((3,2))
 
 
 @njit(cache=True)
 def getSurfacePnt(func, p0, p1, resSteps=24):
-    x1 = p1[0]
-    y1 = p1[1]
-    z1 = p1[2]
-    x0 = p0[0]
-    y0 = p0[1]
-    z0 = p0[2]
-
-    s0 = func(x0, y0, z0)
-    u = 0
+    s0 = func(p0[0], p0[1], p0[2])
+    u = 0.
     d = +1
     for i in range(resSteps):
-        x = x0 * (1 - u) + x1 * u
-        y = y0 * (1 - u) + y1 * u
-        z = z0 * (1 - u) + z1 * u
-        s = func(x, y, z)
+        p = p0 * (1 - u) + p1 * u
+        s = func(p[0], p[1], p[2])
         if s != s0:
             s0 = s
             d = -d
         u += d * 1 / 2**i
-    return (x, y, z)
+    return p #(p[0], p[1], p[2])
 
 
 @njit(cache=True)
-def findSurfacePnt(func, minVal=-1000.0, maxVal=+1000.0, resSteps=24):
-    ps = getInitPnt(func, minVal, maxVal, resSteps)
-    p = getSurfacePnt(func, (ps[0], ps[1], ps[2]), (ps[3], ps[4], ps[5]), resSteps)
+def findSurfacePnt(func, min_val=-1000.0, max_val=+1000.0, res=1.3):
+    res_steps = int(np.floor(np.log2((max_val-min_val)/res))+2)
+    p0, p1 = find_init_pnt(func, min_val, max_val, res_steps)
+    p = getSurfacePnt(func, p0, p1, res_steps)
     return p
 
 
@@ -98,48 +90,47 @@ def getSurface(func, startPnt, res=1.3):
         xl = round(x - r)
         yl = round(y - r)
         zl = round(z - r)
-
         if d == 1:
-            v000 = va  # v100 old
+            v000 = va
             v100 = func(xh, y, z)
-            v010 = vb  # v110 old
+            v010 = vb
             v110 = func(xh, yh, z)
-            v001 = vc  # v101 old
+            v001 = vc
             v101 = func(xh, y, zh)
-            v011 = vd  # v111 old
+            v011 = vd
             v111 = func(xh, yh, zh)
         elif d == -1:
             v000 = func(x, y, z)
-            v100 = va  # v000 old
+            v100 = va
             v010 = func(x, yh, z)
-            v110 = vb  # v010 old
+            v110 = vb
             v001 = func(x, y, zh)
-            v101 = vc  # v001 old
+            v101 = vc
             v011 = func(x, yh, zh)
-            v111 = vd  # v011 old
+            v111 = vd
         elif d == 2:
-            v000 = va  # v010 old
-            v100 = vb  # v110 old
+            v000 = va
+            v100 = vb
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = vc  # v011 old
-            v101 = vd  # v111 old
+            v001 = vc
+            v101 = vd
             v011 = func(x, yh, zh)
             v111 = func(xh, yh, zh)
         elif d == -2:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
-            v010 = va  # v000 old
-            v110 = vb  # v100 old
+            v010 = va
+            v110 = vb
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
-            v011 = vc  # v001 old
-            v111 = vd  # v101 old
+            v011 = vc
+            v111 = vd
         elif d == 4:
-            v000 = va  # v001 old
-            v100 = vb  # v101 old
-            v010 = vc  # v011 old
-            v110 = vd  # v111 old
+            v000 = va
+            v100 = vb
+            v010 = vc
+            v110 = vd
             v001 = func(x, y, zh)
             v101 = func(xh, y, zh)
             v011 = func(x, yh, zh)
@@ -149,10 +140,10 @@ def getSurface(func, startPnt, res=1.3):
             v100 = func(xh, y, z)
             v010 = func(x, yh, z)
             v110 = func(xh, yh, z)
-            v001 = va  # v000 old
-            v101 = vb  # v100 old
-            v011 = vc  # v010 old
-            v111 = vd  # v110 old
+            v001 = va
+            v101 = vb
+            v011 = vc
+            v111 = vd
         else:
             v000 = func(x, y, z)
             v100 = func(xh, y, z)
@@ -175,32 +166,26 @@ def getSurface(func, startPnt, res=1.3):
         if not (v100 == v110 and v100 == v101 and v100 == v111):
             if not d == -1:
                 if (xh, y, z) not in cubeCornerValsDict:
-                    # ptsList.append((xh, y, z, +1, cVal))
                     ptsList.append((xh, y, z, +1, v100, v110, v101, v111))
         if not (v010 == v110 and v010 == v011 and v010 == v111):
             if not d == -2:
                 if (x, yh, z) not in cubeCornerValsDict:
-                    # ptsList.append((x, yh, z, +2, cVal))
                     ptsList.append((x, yh, z, +2, v010, v110, v011, v111))
         if not (v001 == v101 and v001 == v011 and v001 == v111):
             if not d == -4:
                 if (x, y, zh) not in cubeCornerValsDict:
-                    # ptsList.append((x, y, zh, +4, cVal))
                     ptsList.append((x, y, zh, +4, v001, v101, v011, v111))
         if not (v000 == v010 and v000 == v001 and v000 == v011):
             if not d == 1:
                 if (xl, y, z) not in cubeCornerValsDict:
-                    # ptsList.append((xl, y, z, -1, cVal))
                     ptsList.append((xl, y, z, -1, v000, v010, v001, v011))
         if not (v000 == v100 and v000 == v001 and v000 == v101):
             if not d == 2:
                 if (x, yl, z) not in cubeCornerValsDict:
-                    # ptsList.append((x, yl, z, -2, cVal))
                     ptsList.append((x, yl, z, -2, v000, v100, v001, v101))
         if not (v000 == v100 and v000 == v010 and v000 == v110):
             if not d == 4:
                 if (x, y, zl) not in cubeCornerValsDict:
-                    # ptsList.append((x, y, zl, -4, cVal))
                     ptsList.append((x, y, zl, -4, v000, v100, v010, v110))
         cubeCornerValsDict[(x, y, z)] = (
             v111,
@@ -211,7 +196,7 @@ def getSurface(func, startPnt, res=1.3):
             v010,
             v001,
             v000,
-        )  # np.uint8(cVal)
+        )
 
     return cubeCornerValsDict
 
@@ -232,14 +217,14 @@ def convert_corners2pts(cubeCornerValsDict, r):
         xh = round(x + r)
         yh = round(y + r)
         zh = round(z + r)
-        pts_res_dict[(x, y, z)] = v[7]  # int(0 < (v & 1))
-        pts_res_dict[(xh, y, z)] = v[3]  # int(0 < (v & 16))
-        pts_res_dict[(x, yh, z)] = v[5]  # int(0 < (v & 4))
-        pts_res_dict[(x, y, zh)] = v[6]  # int(0 < (v & 2))
-        pts_res_dict[(xh, y, zh)] = v[2]  # int(0 < (v & 32))
-        pts_res_dict[(x, yh, zh)] = v[4]  # int(0 < (v & 8))
-        pts_res_dict[(xh, yh, z)] = v[1]  # int(0 < (v & 64))
-        pts_res_dict[(xh, yh, zh)] = v[0]  # int(0 < (v & 128))
+        pts_res_dict[(x, y, z)] = v[7]
+        pts_res_dict[(xh, y, z)] = v[3]
+        pts_res_dict[(x, yh, z)] = v[5]
+        pts_res_dict[(x, y, zh)] = v[6]
+        pts_res_dict[(xh, y, zh)] = v[2]
+        pts_res_dict[(x, yh, zh)] = v[4]
+        pts_res_dict[(xh, yh, z)] = v[1]
+        pts_res_dict[(xh, yh, zh)] = v[0]
     ptCoordDictKeys = np.asarray(list(pts_res_dict.keys()))
     ptCoordDictVals = np.asarray(list(pts_res_dict.values()))
     return ptCoordDictKeys, ptCoordDictVals
@@ -457,7 +442,7 @@ def count_clss(clss_arr, poly_vrtx_idx):
 def mesh_surface_function(func, res, t0):
     summary = {}
     log_it(t0, "Searching initial point on surface")
-    p = findSurfacePnt(func)
+    p = findSurfacePnt(func, res=res)
     log_it(t0, "Walking over entire surface")
     corners = getSurface(func, p, res)
     summary["cubes"] = len(corners)

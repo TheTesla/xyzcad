@@ -48,13 +48,13 @@ def find_init_pnt(func, min_val=-1000.0, max_val=+1000.0, res_steps=24):
                     s = func(x, y, z)
                     if s != s0:
                         return np.array([[x, y, z], [0.0, 0.0, 0.0]])
-    return np.zeros((3,2))
+    return np.zeros((3, 2))
 
 
 @njit(cache=True)
 def get_surfacePnt(func, p0, p1, res_steps=24):
     s0 = func(p0[0], p0[1], p0[2])
-    u = 0.
+    u = 0.0
     d = +1
     for i in range(res_steps):
         p = p0 * (1 - u) + p1 * u
@@ -68,7 +68,7 @@ def get_surfacePnt(func, p0, p1, res_steps=24):
 
 @njit(cache=True)
 def find_surface_pnt(func, min_val=-1000.0, max_val=+1000.0, res=1.3):
-    res_steps = int(np.floor(np.log2((max_val-min_val)/res))+2)
+    res_steps = int(np.floor(np.log2((max_val - min_val) / res)) + 2)
     p0, p1 = find_init_pnt(func, min_val, max_val, res_steps)
     p = get_surfacePnt(func, p0, p1, res_steps)
     return p
@@ -80,8 +80,8 @@ def get_surface(func, start_pnt, res=1.3):
     r = res
     p_nxt = [(rnd(x - r / 2), rnd(y - r / 2), rnd(z - r / 2), 0, 0, 0, 0, 0)]
     corners = Dict()
-    v = np.zeros(8,dtype=np.int64)
-    vo = np.zeros(4,dtype=np.int64)
+    v = np.zeros(8, dtype=np.int64)
+    vo = np.zeros(4, dtype=np.int64)
     while p_nxt:
         x, y, z, d, vo[0], vo[1], vo[2], vo[3] = p_nxt.pop()
         xh = rnd(x + r)
@@ -92,12 +92,11 @@ def get_surface(func, start_pnt, res=1.3):
         zl = rnd(z - r)
         j = 0
         for i in range(8):
-            if (0==(i & abs(d))) == (1 == np.sign(d)):
+            if (0 == (i & abs(d))) == (1 == np.sign(d)):
                 v[i] = vo[j]
                 j += 1
             else:
-                v[i] = func(xh if i & 4 else x, yh if i & 2 else y, zh if i & 1
-                            else z)
+                v[i] = func(xh if i & 4 else x, yh if i & 2 else y, zh if i & 1 else z)
         for i2 in range(7):
             if v[7] != v[i2]:
                 break

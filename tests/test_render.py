@@ -7,7 +7,8 @@ from xyzcad import render
 
 
 @njit
-def sphere(x, y, z):
+def sphere(p):
+    x, y, z = p[:3]
     return 20**2 > x**2 + y**2 + z**2
 
 

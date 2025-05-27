@@ -1,54 +1,54 @@
 newmtl mtl0
+Ka 0.0 0.0 0.0
+Kb 0.0 0.0 0.0
+Ks 0.0 0.0 0.0
+d 1.0
+illum 1.0
+newmtl mtl1
 Ka 0.75 0.75 0.75
 Kb 0.75 0.75 0.75
 Ks 0.75 0.75 0.75
 d 1.0
 illum 1.0
-newmtl mtl1
+newmtl mtl2
 Ka 0.5 0.0 0.0
 Kb 0.5 0.0 0.0
 Ks 0.5 0.0 0.0
 d 1.0
 illum 1.0
-newmtl mtl2
+newmtl mtl3
 Ka 0.0 0.5 0.0
 Kb 0.0 0.5 0.0
 Ks 0.0 0.5 0.0
 d 1.0
 illum 1.0
-newmtl mtl3
+newmtl mtl4
 Ka 0.5 0.5 0.0
 Kb 0.5 0.5 0.0
 Ks 0.5 0.5 0.0
 d 1.0
 illum 1.0
-newmtl mtl4
+newmtl mtl5
 Ka 0.0 0.0 0.5
 Kb 0.0 0.0 0.5
 Ks 0.0 0.0 0.5
 d 1.0
 illum 1.0
-newmtl mtl5
+newmtl mtl6
 Ka 0.5 0.0 0.5
 Kb 0.5 0.0 0.5
 Ks 0.5 0.0 0.5
 d 1.0
 illum 1.0
-newmtl mtl6
+newmtl mtl7
 Ka 0.0 0.5 0.5
 Kb 0.0 0.5 0.5
 Ks 0.0 0.5 0.5
 d 1.0
 illum 1.0
-newmtl mtl7
+newmtl mtl8
 Ka 0.5 0.5 0.5
 Kb 0.5 0.5 0.5
 Ks 0.5 0.5 0.5
-d 1.0
-illum 1.0
-newmtl mtl8
-Ka 0.25 0.0 0.0
-Kb 0.25 0.0 0.0
-Ks 0.25 0.0 0.0
 d 1.0
 illum 1.0

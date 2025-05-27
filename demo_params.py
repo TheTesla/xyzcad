@@ -19,13 +19,17 @@ from xyzcad import render
 
 
 @njit
-def sphere(x, y, z):
-    return r**2 > x**2 + y**2 + z**2
+def sphere(p):
+    x, y, z, params = p
+    a, b, c, r = params
+    return r**2 > (a * x) ** 2 + (b * y) ** 2 + (c * z) ** 2
 
 
 t0 = time.time()
 
-
-render.renderAndSave(sphere, "demo_params.stl", 1)
+for a in range(8):
+    render.renderAndSave(
+        sphere, f"build/demo_params_{a}", 0.1, (1.0 + a, 5.0, 3.0, 20.0)
+    )
 
 print(time.time() - t0)

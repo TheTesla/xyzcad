@@ -28,6 +28,7 @@ def get_installed_version():
         version_inst = importlib.metadata.version(__package__ or __name__)
     except importlib.metadata.PackageNotFoundError as e:
         version_inst = None
+    return version_inst
 
 
 @njit(cache=True)

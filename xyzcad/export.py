@@ -1,9 +1,9 @@
+import os
+
 import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
-import os
-
 
 
 # @njit(cache=True)

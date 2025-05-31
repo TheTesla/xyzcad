@@ -72,6 +72,6 @@ def shape_diff(p):
 
 t0 = time.time()
 
-render.renderAndSave(shape_diff, "demo_diff", 0.1)
+render.renderAndSave(shape_diff, "build/demo_diff", 0.1)
 
 print(time.time() - t0)

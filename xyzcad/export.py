@@ -2,6 +2,8 @@ import numpy as np
 from numba import njit, objmode, prange, types
 from numba.typed import Dict, List
 from stl import mesh
+import os
+
 
 
 # @njit(cache=True)
@@ -118,7 +120,8 @@ def create_gen_color(n):
 
 def export_obj(obj_filename, vertices, poly_grpd, mats):
     write_mtl(obj_filename, create_gen_color(max(mats) + 1))
-    write_obj(obj_filename, vertices, poly_grpd, mats)
+    mtl_filename = os.path.basename(obj_filename)
+    write_obj(obj_filename, vertices, poly_grpd, mats, mtl_filename)
 
 
 def export_obj_printable(obj_filename, vertices, poly_grpd, mats):

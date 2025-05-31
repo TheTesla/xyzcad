@@ -19,12 +19,13 @@ from xyzcad import render
 
 
 @njit
-def sphere(x, y, z):
-    return 3**2 > x**2 + y**2 + z**2
+def sphere(p):
+    x, y, z = p[:3]
+    return 30**2 > x**2 + y**2 + z**2
 
 
 t0 = time.time()
 
-render.renderAndSave(sphere, "demo.stl", 1)
+render.renderAndSave(sphere, "demo.stl", 0.1)
 
 print(time.time() - t0)

@@ -359,10 +359,12 @@ def calc_closed_surface(c2e, cvList):
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
     poly_vrtx_idx = List(
-        List([
-            List([cut_edges_rev[e] for e in f if e in cut_edges_rev])
-            for f in poly_cube_edge_idx
-        ])
+        List(
+            [
+                List([cut_edges_rev[e] for e in f if e in cut_edges_rev])
+                for f in poly_cube_edge_idx
+            ]
+        )
     )
     return poly_vrtx_idx
 

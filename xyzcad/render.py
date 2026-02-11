@@ -359,10 +359,10 @@ def calc_closed_surface(c2e, cvList):
 def conv_cube_edge_2_vrtx_idx(poly_cube_edge_idx, cut_edges):
     cut_edges_rev = {e: i for i, e in enumerate(cut_edges)}
     poly_vrtx_idx = List(
-        [
+        List([
             List([cut_edges_rev[e] for e in f if e in cut_edges_rev])
             for f in poly_cube_edge_idx
-        ]
+        ])
     )
     return poly_vrtx_idx
 
@@ -403,8 +403,8 @@ def mesh_surface_function(func, res, params, t0):
     summary["surface points"] = len(cCeI)
     log_it(t0, "Approximating exact coordinates of the cuts")
     precTrPtsList = precTrPnts(func, cCeI, e2p, ptsKeys, params)
-    poly_vrtx_idx_grpd = []
-    mats = []
+    poly_vrtx_idx_grpd = List()
+    mats = List()
     summary["filtered cubes"] = 0
     summary["polygons"] = 0
     summary["repaired polygons"] = 0
@@ -446,7 +446,7 @@ def save_files(name, vertices, faces_grpd, mats, t0):
         export_obj_printable(f"{name}", vertices, faces_grpd, mats)
     if "stl" in export_formats:
         log_it(t0, f"Saving {name}.stl")
-        export_stl(name, vertices, [f for e in faces_grpd for f in e])
+        export_stl(name, vertices, List([f for e in faces_grpd for f in e]))
     if "stl_parts" in export_formats:
         for i, faces in enumerate(faces_grpd):
             if len(faces) == 0:
